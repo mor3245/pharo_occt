@@ -46,10 +46,10 @@ CxxBoxLibrary class >> cxxBoxShape: makeBoxHandle [
 	^ self ffiCall: #( void* cxxBoxShape ( void* makeBoxHandle ) )
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'ffi-calls' }
 CxxBoxLibrary class >> cxxGetAllNormals: shapeHandle buffer: bufferPtr [
 	"bufferPtr points to `vertexCount*3` doubles (8 bytes each)."
-	
+
 	^ self ffiCall: #( void cxxGetAllNormals ( void* shapeHandle, void* bufferPtr ) )
 ]
 
@@ -60,10 +60,10 @@ CxxBoxLibrary class >> cxxGetAllTriangles: shapeHandle buffer: bufferPtr [
 	^ self ffiCall: #( void cxxGetAllTriangles ( void* shapeHandle, void* bufferPtr ) )
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'ffi-calls' }
 CxxBoxLibrary class >> cxxGetAllVertices: shapeHandle buffer: bufferPtr [
 	"bufferPtr points to `vertexCount*3` doubles (8 bytes each)."
-	
+
 	^ self ffiCall: #( void cxxGetAllVertices ( void* shapeHandle, void* bufferPtr ) )
 ]
 
