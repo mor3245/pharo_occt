@@ -1,3 +1,29 @@
+"
+I represent a 3D geometric shape managed by the OpenCascade C++ engine. 
+
+I act as a high-level wrapper around an external memory handle, providing a Smalltalk-friendly interface to access geometric data such as vertices, normals, and triangles. I am typically instantiated by 'MyBoxMaker'.
+
+Responsibilities:
+- Data Access: I retrieve raw geometric data from the C++ layer and coordinate with 'MyBoxMaker' to convert that data into Pharo-native arrays (Float64Array and Int32Array).
+- Tessellation: I provide the ability to trigger surface tessellation at a specific deflection tolerance via the underlying library.
+- Woden Integration: I can transform myself into a 'WDMesh' or a complete 'WDScene' for 3D rendering within the Woden engine.
+- Resource Management: I manage the lifecycle of my external handle. I implement #free to explicitly release C++ memory and #finalize as a safety net during garbage collection.
+
+Public API:
+- #vertices / #normals / #triangles - Return Pharo arrays containing the mesh data.
+- #asWDMesh - Converts the shape's geometry into a mesh compatible with the Woden engine.
+- #tessellateDeflection: - Instructs the C++ engine to generate a mesh for the shape.
+- #free - Manually releases the external C++ object.
+
+Internal Representation:
+- handle: An ExternalAddress pointing to the C++ 'Shape' object.
+
+Example:
+    shape := MyBoxMaker makeBoxDx: 1.0 dy: 1.0 dz: 1.0.
+    shape tessellateDeflection: 0.1.
+    mesh := shape asWDMesh.
+    shape free.
+
 Class {
 	#name : 'MyShape',
 	#superclass : 'Object',
@@ -6,6 +32,17 @@ Class {
 	],
 	#category : 'MyOpenCascade-UFFI',
 	#package : 'MyOpenCascade-UFFI'
+}
+"
+Class {
+	#name : 'MyShape',
+	#superclass : 'Object',
+	#instVars : [
+		'handle'
+	],
+	#category : 'MyOpenCascade-UFFI-Base',
+	#package : 'MyOpenCascade-UFFI',
+	#tag : 'Base'
 }
 
 { #category : 'instance creation' }
@@ -71,7 +108,7 @@ MyShape >> asWodenSceneNode [
 { #category : 'finalization' }
 MyShape >> finalize [
 	"Best-effort; prefer calling #free explicitly."
-	self free.
+	self free
 ]
 
 { #category : 'finalization' }
@@ -95,7 +132,7 @@ MyShape >> normals [
 	^ MyBoxMaker float64ArrayFromBytes: self normalsBytes
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'low level buffer management' }
 MyShape >> normalsBytes [
 	| count bytes |
 	count := self vertexCount * 3.
@@ -104,22 +141,22 @@ MyShape >> normalsBytes [
 	^ bytes
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'converting' }
 MyShape >> tessellateDeflection: deflection [
-	CxxBoxLibrary cxxTessellate: handle deflection: deflection.
+	CxxBoxLibrary cxxTessellate: handle deflection: deflection
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'accessing' }
 MyShape >> triangleCount [
 	^ CxxBoxLibrary cxxTriangleCount: handle
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'access' }
 MyShape >> triangles [
 	^ MyBoxMaker int32ArrayFromBytes: self trianglesBytes
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'low level buffer management' }
 MyShape >> trianglesBytes [
 	| count bytes |
 	count := self triangleCount * 3.
@@ -139,7 +176,7 @@ MyShape >> vertices [
 	^ MyBoxMaker float64ArrayFromBytes: self verticesBytes
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'low level buffer management' }
 MyShape >> verticesBytes [
 	| count bytes |
 	count := self vertexCount * 3.

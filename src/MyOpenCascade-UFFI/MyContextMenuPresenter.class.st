@@ -1,3 +1,27 @@
+"
+I am a Spec2 presenter that provides an interactive 3D viewport with a context menu for managing geometric objects.
+
+I integrate the Woden 3D engine with the Pharo Spec framework, allowing users to dynamically add and remove 3D boxes within a scene via a ctrl-right-click menu. I act as the controller that coordinates between the user interface, the Woden scene graph, and the OpenCascade-based 'MyBoxMaker' logic.
+
+Responsibilities:
+- Scene Management: I initialize and maintain a 'WDScene', including lighting and a camera positioned to view the 3D workspace.
+- Interactive Commands: I provide logic to create tessellated boxes (using 'MyBoxMaker') and add them to the scene as nodes.
+- Resource Tracking: I maintain a collection of 'meshNodes' (associations between scene nodes and their underlying 'MyShape' objects) to ensure that when a box is deleted, its external C++ memory is correctly freed.
+- Event Handling: I intercept mouse events on the Woden widget to detect ctrl-right-clicks and trigger the display of a context menu at the cursor position.
+
+Public API:
+- #openWithContextMenu - Opens the presenter window and attaches the right-click event handlers.
+- #addBox - Generates a new 1x1x1 tessellated box and adds it to the 3D scene.
+- #deleteBox - Removes the most recently added box from the scene and frees its associated external resources.
+
+Internal Representation:
+- wodenPresenter: The 'WDSpInteractiveScenePresenter' that handles the actual 3D rendering.
+- scene: The 'WDScene' instance containing the lights and geometric nodes.
+- meshNodes: An 'OrderedCollection' used to track the relationship between visual nodes and 'MyShape' handles for cleanup.
+
+Example:
+    MyContextMenuPresenter new openWithContextMenu.
+
 Class {
 	#name : 'MyContextMenuPresenter',
 	#superclass : 'SpPresenter',
@@ -9,8 +33,21 @@ Class {
 	#category : 'MyOpenCascade-UFFI',
 	#package : 'MyOpenCascade-UFFI'
 }
+"
+Class {
+	#name : 'MyContextMenuPresenter',
+	#superclass : 'SpPresenter',
+	#instVars : [
+		'wodenPresenter',
+		'scene',
+		'meshNodes'
+	],
+	#category : 'MyOpenCascade-UFFI-Base',
+	#package : 'MyOpenCascade-UFFI',
+	#tag : 'Base'
+}
 
-{ #category : 'as yet unclassified' }
+{ #category : 'scene geometry management' }
 MyContextMenuPresenter >> addBox [
 
 	| shape mesh node |
@@ -28,7 +65,7 @@ MyContextMenuPresenter >> addBox [
 	wodenPresenter adapter widget changed
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'event handling and interactive menu' }
 MyContextMenuPresenter >> buildContextMenu [
 
 	^ SpMenuPresenter new addGroup: [ :group |
@@ -40,12 +77,12 @@ MyContextMenuPresenter >> buildContextMenu [
 						item
 							name: 'Delete Box';
 							action: [ self deleteBox ] ]
-					
-					
+
+
 					] yourself
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'scene geometry management' }
 MyContextMenuPresenter >> buildScene [
 
 	"| mesh light lightNode |"
@@ -70,14 +107,14 @@ MyContextMenuPresenter >> buildScene [
 ]
 
 { #category : 'layout' }
-MyContextMenuPresenter >> defaultLayout [ 
+MyContextMenuPresenter >> defaultLayout [
 
-	^ SpBoxLayout newTopToBottom 
+	^ SpBoxLayout newTopToBottom
 		add: wodenPresenter ;
 		yourself
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'scene geometry management' }
 MyContextMenuPresenter >> deleteBox [
 
 	| entry |
@@ -90,16 +127,17 @@ MyContextMenuPresenter >> deleteBox [
 	wodenPresenter adapter widget changed
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'event handling and interactive menu' }
 MyContextMenuPresenter >> handleMouseEvent: anEvent [
 
 	Transcript
 		nextPutAll: 'Mouse button: ';
 		nextPutAll: anEvent whichButton asString;
 		cr.
-	( anEvent yellowButtonPressed ) ifFalse: [ ^ self ].
+	anEvent controlKeyPressed ifFalse: [ ^ self ].
+	anEvent yellowButtonPressed ifFalse: [ ^ self ].
 	Transcript
-		nextPutAll: 'Right-click detected - showing menu';
+		nextPutAll: 'Ctrl-Right-click detected - showing menu';
 		cr.
 	self showContextMenuAt: anEvent position
 ]
@@ -129,25 +167,25 @@ MyContextMenuPresenter >> initializeWindow: aWindowPresenter [
 	aWindowPresenter whenOpenedDo: [ self setupContextMenu ]
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'event handling and interactive menu' }
 MyContextMenuPresenter >> openWithContextMenu [
 
 	self open.
 	self withWindowDo: [ :widnow | self setupContextMenu ]
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'event handling and interactive menu' }
 MyContextMenuPresenter >> setupContextMenu [
 
 	| widget |
 	widget := wodenPresenter adapter widget.
 	widget ifNil: [ ^ self ].
-	
+
 	Transcript
 		nextPutAll: 'Setting up context menu on: ';
 		nextPutAll: widget asString;
 		cr.
-		
+
 	widget on: #mouseDown send: #handleMouseEvent: to: self
 ]
 

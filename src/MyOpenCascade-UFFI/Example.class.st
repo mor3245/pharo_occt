@@ -1,8 +1,16 @@
+"
+I represent the example usage of the classes in MyOpenCascade-UFFI package.
+
+I contain executable methods.
+
+I am not and should not be referenced
+"
 Class {
 	#name : 'Example',
 	#superclass : 'Object',
-	#category : 'MyOpenCascade-UFFI',
-	#package : 'MyOpenCascade-UFFI'
+	#category : 'MyOpenCascade-UFFI-Base',
+	#package : 'MyOpenCascade-UFFI',
+	#tag : 'Base'
 }
 
 { #category : 'examples' }
@@ -31,10 +39,10 @@ Example class >> exampleBoxRender [
 	CxxBoxLibrary dumpMemoryDifference
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'examples' }
 Example class >> exampleBoxRenderWithContextMenu [
 	"Example exampleBoxRenderWithContextMenu"
-	
+
 	CxxBoxLibrary memoryCheckpoint.
 	MyContextMenuPresenter new open.
 	CxxBoxLibrary dumpMemoryDifference

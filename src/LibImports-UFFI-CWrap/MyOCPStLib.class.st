@@ -26,5 +26,5 @@ MyOCPStLib >> unixLibraryName [
 { #category : 'accessing - platform' }
 MyOCPStLib >> win32LibraryName [
 
-	^ 'box_c_wrapper.dll'
+	^ 'my_occt_c_wrapper.dll'
 ]
