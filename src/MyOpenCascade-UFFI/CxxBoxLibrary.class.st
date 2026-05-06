@@ -41,12 +41,6 @@ CxxBoxLibrary class >> cxxBoxNewDx: dx dy: dy dz: dz [
 ]
 
 { #category : 'ffi-calls' }
-CxxBoxLibrary class >> cxxBoxShape: makeBoxHandle [
-
-	^ self ffiCall: #( void* cxxBoxShape ( void* makeBoxHandle ) )
-]
-
-{ #category : 'ffi-calls' }
 CxxBoxLibrary class >> cxxGetAllNormals: shapeHandle buffer: bufferPtr [
 	"bufferPtr points to `vertexCount*3` doubles (8 bytes each)."
 
@@ -88,6 +82,12 @@ CxxBoxLibrary class >> cxxTessellate: shapeHandle deflection: deflection [
 ]
 
 { #category : 'ffi-calls' }
+CxxBoxLibrary class >> cxxToShape: makeBoxHandle [
+
+	^ self ffiCall: #( void* cxxToShape ( void* makeBoxHandle ) )
+]
+
+{ #category : 'ffi-calls' }
 CxxBoxLibrary class >> cxxTriangleCount: shapeHandle [
 
 
@@ -121,7 +121,7 @@ CxxBoxLibrary class >> hasNoMemoryDifference [
 CxxBoxLibrary class >> isDone: makeBoxHandle [
 	"Returns 1/0."
 
-	^ self ffiCall: #( int IsDone ( void* makeBoxHandle ) )
+	^ self ffiCall: #( int cxxIsDone ( void* makeBoxHandle ) )
 ]
 
 { #category : 'ffi-calls' }

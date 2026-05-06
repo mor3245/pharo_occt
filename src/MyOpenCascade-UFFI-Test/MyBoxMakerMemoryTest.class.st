@@ -12,6 +12,7 @@ MyBoxMakerMemoryTest >> hasNoMemoryDifference [
 
 { #category : 'tests' }
 MyBoxMakerMemoryTest >> testTessellatedBoxDoesNotLeakNativeMemory [
+	"MyBoxMakerMemoryTest new testTessellatedBoxDoesNotLeakNativeMemory"
 
 	CxxBoxLibrary memoryCheckpoint.
 

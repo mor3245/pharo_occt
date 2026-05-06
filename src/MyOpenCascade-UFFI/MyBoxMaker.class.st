@@ -82,7 +82,7 @@ MyBoxMaker class >> makeBoxDx: dx dy: dy dz: dz [
 		CxxBoxLibrary cxxMakeBoxDelete: makeBox.
 		self error: 'cxxBoxNew failed (IsDone=0)' ].
 
-	shape := CxxBoxLibrary cxxBoxShape: makeBox.
+	shape := CxxBoxLibrary cxxToShape: makeBox.
 	CxxBoxLibrary cxxMakeBoxDelete: makeBox.
 	^ MyShape on: shape
 ]
