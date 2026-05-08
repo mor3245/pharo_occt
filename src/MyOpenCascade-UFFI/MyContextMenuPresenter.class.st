@@ -65,6 +65,20 @@ MyContextMenuPresenter >> addBox [
 	wodenPresenter adapter widget changed
 ]
 
+{ #category : 'adding' }
+MyContextMenuPresenter >> addCylinder [
+
+	| shape mesh node |
+	shape := MyCylinderMaker tessellatedCylinderRadius: 1 height: 1 deflection: 0.01.
+	mesh := shape asWDMesh.
+	node := mesh asSceneNode.
+
+	scene add: node.
+	meshNodes addLast: node -> shape.
+
+	wodenPresenter adapter widget changed
+]
+
 { #category : 'event handling and interactive menu' }
 MyContextMenuPresenter >> buildContextMenu [
 
@@ -76,7 +90,11 @@ MyContextMenuPresenter >> buildContextMenu [
 					addItem: [ :item |
 						item
 							name: 'Delete Box';
-							action: [ self deleteBox ] ]
+							action: [ self deleteLastAdded ] ];
+					addItem: [ :item |
+						item
+							name: 'Add Cylinder';
+							action: [ self addCylinder ] ]
 
 
 					] yourself
@@ -115,7 +133,7 @@ MyContextMenuPresenter >> defaultLayout [
 ]
 
 { #category : 'scene geometry management' }
-MyContextMenuPresenter >> deleteBox [
+MyContextMenuPresenter >> deleteLastAdded [
 
 	| entry |
 	meshNodes ifEmpty: [ ^ self ].

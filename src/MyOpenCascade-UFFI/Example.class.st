@@ -18,7 +18,7 @@ Example class >> exampleBoxRender [
 	"Box display example."
 
 	| shape mesh light lightNode |
-	CxxBoxLibrary memoryCheckpoint. "create and tessellate the box via OCC"
+	CxxOcctLibrary memoryCheckpoint. "create and tessellate the box via OCC"
 	shape := MyBoxMaker
 		         tessellatedBoxDx: 1
 		         dy: 1
@@ -36,14 +36,14 @@ Example class >> exampleBoxRender [
 			add: lightNode;
 			openInWindow ] ensure: [ shape free ].
 
-	CxxBoxLibrary dumpMemoryDifference
+	CxxOcctLibrary dumpMemoryDifference
 ]
 
 { #category : 'examples' }
 Example class >> exampleBoxRenderWithContextMenu [
 	"Example exampleBoxRenderWithContextMenu"
 
-	CxxBoxLibrary memoryCheckpoint.
+	CxxOcctLibrary memoryCheckpoint.
 	MyContextMenuPresenter new open.
-	CxxBoxLibrary dumpMemoryDifference
+	CxxOcctLibrary dumpMemoryDifference
 ]

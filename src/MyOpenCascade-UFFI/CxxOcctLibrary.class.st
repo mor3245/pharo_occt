@@ -27,7 +27,7 @@ Class {
 }
 "
 Class {
-	#name : 'CxxBoxLibrary',
+	#name : 'CxxOcctLibrary',
 	#superclass : 'Object',
 	#category : 'MyOpenCascade-UFFI-Base',
 	#package : 'MyOpenCascade-UFFI',
@@ -35,101 +35,113 @@ Class {
 }
 
 { #category : 'ffi-calls' }
-CxxBoxLibrary class >> cxxBoxNewDx: dx dy: dy dz: dz [
+CxxOcctLibrary class >> cxxBoxNewDx: dx dy: dy dz: dz [
 
 	^ self ffiCall: #( void* cxxBoxNew ( double dx, double dy, double dz ) )
 ]
 
 { #category : 'ffi-calls' }
-CxxBoxLibrary class >> cxxGetAllNormals: shapeHandle buffer: bufferPtr [
+CxxOcctLibrary class >> cxxCylinderNewRadius: radius height: height [
+
+	^ self ffiCall: #(void* cxxCylinderNew(double radius, double height))
+]
+
+{ #category : 'ffi-calls' }
+CxxOcctLibrary class >> cxxGetAllNormals: shapeHandle buffer: bufferPtr [
 	"bufferPtr points to `vertexCount*3` doubles (8 bytes each)."
 
 	^ self ffiCall: #( void cxxGetAllNormals ( void* shapeHandle, void* bufferPtr ) )
 ]
 
 { #category : 'ffi-calls' }
-CxxBoxLibrary class >> cxxGetAllTriangles: shapeHandle buffer: bufferPtr [
+CxxOcctLibrary class >> cxxGetAllTriangles: shapeHandle buffer: bufferPtr [
 	"bufferPtr points to `triangleCount*3` int32 (4 bytes each)."
 
 	^ self ffiCall: #( void cxxGetAllTriangles ( void* shapeHandle, void* bufferPtr ) )
 ]
 
 { #category : 'ffi-calls' }
-CxxBoxLibrary class >> cxxGetAllVertices: shapeHandle buffer: bufferPtr [
+CxxOcctLibrary class >> cxxGetAllVertices: shapeHandle buffer: bufferPtr [
 	"bufferPtr points to `vertexCount*3` doubles (8 bytes each)."
 
 	^ self ffiCall: #( void cxxGetAllVertices ( void* shapeHandle, void* bufferPtr ) )
 ]
 
 { #category : 'ffi-calls' }
-CxxBoxLibrary class >> cxxMakeBoxDelete: makeBoxHandle [
+CxxOcctLibrary class >> cxxMakeBoxDelete: makeBoxHandle [
 
 	^ self ffiCall: #( void cxxMakeBoxDelete ( void* makeBoxHandle ) )
 ]
 
+{ #category : 'ffi' }
+CxxOcctLibrary class >> cxxMakeCylinderDelete: handle [
+
+	^ self ffiCall: #( void cxxMakeCylinderDelete(void* handle) )
+]
+
 { #category : 'ffi-calls' }
-CxxBoxLibrary class >> cxxShapeDelete: shapeHandle [
+CxxOcctLibrary class >> cxxShapeDelete: shapeHandle [
 
 
 	^ self ffiCall: #( void cxxShapeDelete ( void* shapeHandle ) )
 ]
 
 { #category : 'ffi-calls' }
-CxxBoxLibrary class >> cxxTessellate: shapeHandle deflection: deflection [
+CxxOcctLibrary class >> cxxTessellate: shapeHandle deflection: deflection [
 
 
 	^ self ffiCall: #( void cxxTessellate ( void* shapeHandle, double deflection ) )
 ]
 
 { #category : 'ffi-calls' }
-CxxBoxLibrary class >> cxxToShape: makeBoxHandle [
+CxxOcctLibrary class >> cxxToShape: makeBoxHandle [
 
 	^ self ffiCall: #( void* cxxToShape ( void* makeBoxHandle ) )
 ]
 
 { #category : 'ffi-calls' }
-CxxBoxLibrary class >> cxxTriangleCount: shapeHandle [
+CxxOcctLibrary class >> cxxTriangleCount: shapeHandle [
 
 
 	^ self ffiCall: #( int cxxTriangleCount ( void* shapeHandle ) )
 ]
 
 { #category : 'ffi-calls' }
-CxxBoxLibrary class >> cxxVertexCount: shapeHandle [
+CxxOcctLibrary class >> cxxVertexCount: shapeHandle [
 
 
 	^ self ffiCall: #( int cxxVertexCount ( void* shapeHandle ) )
 ]
 
 { #category : 'ffi-calls' }
-CxxBoxLibrary class >> dumpMemoryDifference [
+CxxOcctLibrary class >> dumpMemoryDifference [
     ^ self ffiCall: #(void cxxDumpMemoryDifference())
 ]
 
 { #category : 'accessing' }
-CxxBoxLibrary class >> ffiLibrary [
+CxxOcctLibrary class >> ffiLibrary [
 
 	^ MyOCPStLib
 ]
 
 { #category : 'ffi-calls' }
-CxxBoxLibrary class >> hasNoMemoryDifference [
+CxxOcctLibrary class >> hasNoMemoryDifference [
     ^ self ffiCall: #(int cxxHasMemoryDifference())
 ]
 
 { #category : 'ffi-calls' }
-CxxBoxLibrary class >> isDone: makeBoxHandle [
+CxxOcctLibrary class >> isDone: makeBoxHandle [
 	"Returns 1/0."
 
 	^ self ffiCall: #( int cxxIsDone ( void* makeBoxHandle ) )
 ]
 
 { #category : 'ffi-calls' }
-CxxBoxLibrary class >> memoryCheckpoint [
+CxxOcctLibrary class >> memoryCheckpoint [
     ^ self ffiCall: #(void cxxMemoryCheckpoint())
 ]
 
 { #category : 'accessing' }
-CxxBoxLibrary >> ffiLibrary [
+CxxOcctLibrary >> ffiLibrary [
 	^ self class ffiLibrary
 ]

@@ -115,7 +115,7 @@ MyShape >> finalize [
 MyShape >> free [
 
 	handle ifNil: [ ^ self ].
-	CxxBoxLibrary cxxShapeDelete: handle.
+	CxxOcctLibrary cxxShapeDelete: handle.
 	handle := nil
 ]
 
@@ -137,18 +137,18 @@ MyShape >> normalsBytes [
 	| count bytes |
 	count := self vertexCount * 3.
 	bytes := ByteArray new: count * 8.
-	CxxBoxLibrary cxxGetAllNormals: handle buffer: bytes.
+	CxxOcctLibrary cxxGetAllNormals: handle buffer: bytes.
 	^ bytes
 ]
 
 { #category : 'converting' }
 MyShape >> tessellateDeflection: deflection [
-	CxxBoxLibrary cxxTessellate: handle deflection: deflection
+	CxxOcctLibrary cxxTessellate: handle deflection: deflection
 ]
 
 { #category : 'accessing' }
 MyShape >> triangleCount [
-	^ CxxBoxLibrary cxxTriangleCount: handle
+	^ CxxOcctLibrary cxxTriangleCount: handle
 ]
 
 { #category : 'access' }
@@ -161,13 +161,13 @@ MyShape >> trianglesBytes [
 	| count bytes |
 	count := self triangleCount * 3.
 	bytes := ByteArray new: count * 4.
-	CxxBoxLibrary cxxGetAllTriangles: handle buffer: bytes.
+	CxxOcctLibrary cxxGetAllTriangles: handle buffer: bytes.
 	^ bytes
 ]
 
 { #category : 'accessing' }
 MyShape >> vertexCount [
-	^ CxxBoxLibrary cxxVertexCount: handle
+	^ CxxOcctLibrary cxxVertexCount: handle
 ]
 
 { #category : 'accessing' }
@@ -181,6 +181,6 @@ MyShape >> verticesBytes [
 	| count bytes |
 	count := self vertexCount * 3.
 	bytes := ByteArray new: count * 8.
-	CxxBoxLibrary cxxGetAllVertices: handle buffer: bytes.
+	CxxOcctLibrary cxxGetAllVertices: handle buffer: bytes.
 	^ bytes
 ]
