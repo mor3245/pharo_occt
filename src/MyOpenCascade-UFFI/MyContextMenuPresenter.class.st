@@ -233,11 +233,39 @@ MyContextMenuPresenter >> initializeWindow: aWindowPresenter [
 	aWindowPresenter whenOpenedDo: [ self setupContextMenu ]
 ]
 
+{ #category : 'geometry selection' }
+MyContextMenuPresenter >> normalizedScreenPosition: aPoint [
+
+    | widget localPoint widgetExtent |
+    widget := wodenPresenter adapter widget.
+    localPoint := aPoint - widget bounds origin.
+    widgetExtent := widget extent.
+
+    ^ (localPoint x / widgetExtent x asFloat)
+        @ (1.0 - (localPoint y / widgetExtent y asFloat))
+
+]
+
 { #category : 'user interface' }
 MyContextMenuPresenter >> openWithContextMenu [
 
 	self open.
 	self withWindowDo: [ :widnow | self setupContextMenu ]
+]
+
+{ #category : 'geometry selection' }
+MyContextMenuPresenter >> rayForScreenPosition: aPoint [
+
+    | widget widgetExtent aspect frustum ray |
+    widget := wodenPresenter adapter widget.
+    widgetExtent := widget extent.
+    aspect := widgetExtent x asFloat / (widgetExtent y max: 1).
+
+    frustum := cameraNode cameras first frustumWithAspect: aspect.
+    ray := frustum rayForNormalizedPoint:
+        (self normalizedScreenPosition: aPoint).
+
+    ^ ray transformedWith: cameraNode transform
 ]
 
 { #category : 'accessing' }
