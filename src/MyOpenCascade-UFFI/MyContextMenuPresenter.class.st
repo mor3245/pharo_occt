@@ -3,36 +3,9 @@ I am a Spec2 presenter that provides an interactive 3D viewport with a context m
 
 I integrate the Woden 3D engine with the Pharo Spec framework, allowing users to dynamically add and remove 3D boxes within a scene via a ctrl-right-click menu. I act as the controller that coordinates between the user interface, the Woden scene graph, and the OpenCascade-based 'MyBoxMaker' logic.
 
-Responsibilities:
-- Scene Management: I initialize and maintain a 'WDScene', including lighting and a camera positioned to view the 3D workspace.
-- Interactive Commands: I provide logic to create tessellated boxes (using 'MyBoxMaker') and add them to the scene as nodes.
-- Resource Tracking: I maintain a collection of 'meshNodes' (associations between scene nodes and their underlying 'MyShape' objects) to ensure that when a box is deleted, its external C++ memory is correctly freed.
-- Event Handling: I intercept mouse events on the Woden widget to detect ctrl-right-clicks and trigger the display of a context menu at the cursor position.
+Note to self: Clicking on overlapping shapes cycles to the other shape
 
-Public API:
-- #openWithContextMenu - Opens the presenter window and attaches the right-click event handlers.
-- #addBox - Generates a new 1x1x1 tessellated box and adds it to the 3D scene.
-- #deleteBox - Removes the most recently added box from the scene and frees its associated external resources.
 
-Internal Representation:
-- wodenPresenter: The 'WDSpInteractiveScenePresenter' that handles the actual 3D rendering.
-- scene: The 'WDScene' instance containing the lights and geometric nodes.
-- meshNodes: An 'OrderedCollection' used to track the relationship between visual nodes and 'MyShape' handles for cleanup.
-
-Example:
-    MyContextMenuPresenter new openWithContextMenu.
-
-Class {
-	#name : 'MyContextMenuPresenter',
-	#superclass : 'SpPresenter',
-	#instVars : [
-		'wodenPresenter',
-		'scene',
-		'meshNodes'
-	],
-	#category : 'MyOpenCascade-UFFI',
-	#package : 'MyOpenCascade-UFFI'
-}
 "
 Class {
 	#name : 'MyContextMenuPresenter',
@@ -167,14 +140,21 @@ MyContextMenuPresenter >> defaultLayout [
 { #category : 'rendered geometry management' }
 MyContextMenuPresenter >> deleteLastAdded [
 
-	| entry |
-	meshNodes ifEmpty: [ ^ self ].
+    | entry |
+    meshNodes ifEmpty: [ ^ self ].
 
-	entry := meshNodes removeLast.
-	scene remove: entry key.
-	entry value free.
+    entry := meshNodes removeLast.
 
-	wodenPresenter adapter widget changed
+    selectedEntry == entry ifTrue: [
+        self restoreSelectedVisual.
+        selectedEntry := nil.
+        selectedOriginalRenderables := nil
+    ].
+
+    scene remove: entry key.
+    entry value free.
+
+    wodenPresenter adapter widget changed
 ]
 
 { #category : 'rendered geometry management' }
@@ -300,12 +280,11 @@ MyContextMenuPresenter >> rayForScreenPosition: aPoint [
 ]
 
 { #category : 'accessing' }
-MyContextMenuPresenter >> rayPickEntryAt: aPoint [
+MyContextMenuPresenter >> rayPickEntriesAt: aPoint [
 
-    | ray bestEntry bestDistance |
+    | ray hits |
     ray := self rayForScreenPosition: aPoint.
-    bestEntry := nil.
-    bestDistance := nil.
+    hits := OrderedCollection new.
 
     meshNodes do: [ :entry |
         | node box distance |
@@ -314,14 +293,12 @@ MyContextMenuPresenter >> rayPickEntryAt: aPoint [
         distance := box intersectionWithRay: ray.
 
         distance ifNotNil: [
-            (bestDistance isNil or: [ distance < bestDistance ]) ifTrue: [
-                bestDistance := distance.
-                bestEntry := entry
-            ]
+            hits add: distance -> entry
         ]
     ].
 
-    ^ bestEntry
+    ^ (hits asSortedCollection: [ :a :b | a key < b key ])
+        collect: [ :each | each value ]
 ]
 
 { #category : 'geometry selection' }
@@ -337,15 +314,23 @@ MyContextMenuPresenter >> restoreSelectedVisual [
 { #category : 'accessing' }
 MyContextMenuPresenter >> selectShapeAt: aPoint [
 
-    | pickedEntry |
-    pickedEntry := self rayPickEntryAt: aPoint.
+    | pickedEntries pickedIndex pickedEntry |
+    pickedEntries := self rayPickEntriesAt: aPoint.
+
+    pickedEntries ifEmpty: [
+        self clearSelection.
+        ^ self
+    ].
+
+    pickedIndex := selectedEntry
+        ifNil: [ 0 ]
+        ifNotNil: [ pickedEntries indexOf: selectedEntry ifAbsent: [ 0 ] ].
+
+    pickedEntry := pickedEntries at: (pickedIndex \\ pickedEntries size) + 1.
 
     self restoreSelectedVisual.
     selectedEntry := pickedEntry.
-
-    selectedEntry ifNotNil: [
-        self applySelectedVisualTo: selectedEntry key
-    ].
+    self applySelectedVisualTo: selectedEntry key.
 
     wodenPresenter adapter widget changed.
 ]
