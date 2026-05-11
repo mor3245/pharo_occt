@@ -43,7 +43,9 @@ Class {
 		'meshNodes',
 		'cameraNode',
 		'selectedEntry',
-		'selectedOriginalRenderables'
+		'selectedOriginalRenderables',
+		'contextMenuDownPosition',
+		'contextMenuWasDragged'
 	],
 	#category : 'MyOpenCascade-UFFI-Base',
 	#package : 'MyOpenCascade-UFFI',
@@ -148,6 +150,12 @@ MyContextMenuPresenter >> clearSelection [
     wodenPresenter adapter widget changed.
 ]
 
+{ #category : 'events-processing' }
+MyContextMenuPresenter >> contextMenuDragThreshold [
+
+    ^ 4
+]
+
 { #category : 'layout' }
 MyContextMenuPresenter >> defaultLayout [
 
@@ -190,17 +198,40 @@ MyContextMenuPresenter >> deleteSelected [
     wodenPresenter adapter widget changed.
 ]
 
-{ #category : 'input event handling' }
-MyContextMenuPresenter >> handleMouseEvent: anEvent [
+{ #category : 'event handling' }
+MyContextMenuPresenter >> handleMouseDown: anEvent [
 
-    (anEvent controlKeyPressed and: [ anEvent yellowButtonPressed ]) ifTrue: [
-        ^ self showContextMenuAt: anEvent position
+    anEvent yellowButtonPressed ifTrue: [
+        contextMenuDownPosition := anEvent position.
+        contextMenuWasDragged := false
     ].
 
     anEvent redButtonPressed ifTrue: [
         self selectShapeAt: anEvent position
-    ].
+    ]
+]
 
+{ #category : 'events-processing' }
+MyContextMenuPresenter >> handleMouseMove: anEvent [
+
+    contextMenuDownPosition ifNil: [ ^ self ].
+    anEvent yellowButtonPressed ifFalse: [ ^ self ].
+
+    ((anEvent position - contextMenuDownPosition) r > self contextMenuDragThreshold)
+        ifTrue: [ contextMenuWasDragged := true ]
+]
+
+{ #category : 'events-processing' }
+MyContextMenuPresenter >> handleMouseUp: anEvent [
+
+	| shouldOpen |
+	shouldOpen := contextMenuDownPosition notNil and: [ anEvent yellowButtonChanged and: [ contextMenuWasDragged not ] ].
+	contextMenuDownPosition := nil.
+	contextMenuWasDragged := false.
+
+	shouldOpen ifFalse: [ ^ self ].
+	anEvent wasHandled: true.
+	^ self showContextMenuAt: anEvent position
 ]
 
 { #category : 'initialization' }
@@ -340,16 +371,15 @@ MyContextMenuPresenter >> selectionMaterial [
 { #category : 'input event handling' }
 MyContextMenuPresenter >> setupContextMenu [
 
-	| widget |
-	widget := wodenPresenter adapter widget.
-	widget ifNil: [ ^ self ].
+    | widget |
+    widget := wodenPresenter adapter widget.
+    widget ifNil: [ ^ self ].
 
-	Transcript
-		nextPutAll: 'Setting up context menu on: ';
-		nextPutAll: widget asString;
-		cr.
+    widget
+        on: #mouseDown send: #handleMouseDown: to: self;
+        on: #mouseMove send: #handleMouseMove: to: self;
+        on: #mouseUp send: #handleMouseUp: to: self
 
-	widget on: #mouseDown send: #handleMouseEvent: to: self
 ]
 
 { #category : 'accessing' }
