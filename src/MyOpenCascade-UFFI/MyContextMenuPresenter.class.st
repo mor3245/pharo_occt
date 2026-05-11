@@ -40,14 +40,17 @@ Class {
 	#instVars : [
 		'wodenPresenter',
 		'scene',
-		'meshNodes'
+		'meshNodes',
+		'cameraNode',
+		'selectedEntry',
+		'selectedOriginalRenderables'
 	],
 	#category : 'MyOpenCascade-UFFI-Base',
 	#package : 'MyOpenCascade-UFFI',
 	#tag : 'Base'
 }
 
-{ #category : 'scene geometry management' }
+{ #category : 'rendered geometry management' }
 MyContextMenuPresenter >> addBox [
 
 	| shape mesh node |
@@ -65,7 +68,7 @@ MyContextMenuPresenter >> addBox [
 	wodenPresenter adapter widget changed
 ]
 
-{ #category : 'adding' }
+{ #category : 'rendered geometry management' }
 MyContextMenuPresenter >> addCylinder [
 
 	| shape mesh node |
@@ -79,28 +82,41 @@ MyContextMenuPresenter >> addCylinder [
 	wodenPresenter adapter widget changed
 ]
 
-{ #category : 'event handling and interactive menu' }
+{ #category : 'geometry selection' }
+MyContextMenuPresenter >> applySelectedVisualTo: aNode [
+
+    selectedOriginalRenderables := aNode renderables.
+
+    aNode renderables:
+        (selectedOriginalRenderables collect: [ :each |
+            each copyWithMaterial: self selectionMaterial
+        ]).
+]
+
+{ #category : 'user interface' }
 MyContextMenuPresenter >> buildContextMenu [
 
 	^ SpMenuPresenter new addGroup: [ :group |
-			  group addItem: [ :item |
-					  item
-						  name: 'Add Box';
-						  action: [ self addBox ] ] ;
-					addItem: [ :item |
-						item
-							name: 'Delete Box';
-							action: [ self deleteLastAdded ] ];
-					addItem: [ :item |
-						item
-							name: 'Add Cylinder';
-							action: [ self addCylinder ] ]
-
-
-					] yourself
+			  group
+				  addItem: [ :item |
+						  item
+							  name: 'Add Box';
+							  action: [ self addBox ] ];
+				  addItem: [ :item |
+						  item
+							  name: 'Delete last inserted';
+							  action: [ self deleteLastAdded ] ];
+				  addItem: [ :item |
+						  item
+							  name: 'Add Cylinder';
+							  action: [ self addCylinder ] ];
+				  addItem: [ :item |
+						  item
+							  name: 'Delete Selected';
+							  action: [ self deleteSelected ] ] ] yourself
 ]
 
-{ #category : 'scene geometry management' }
+{ #category : 'rendered geometry management' }
 MyContextMenuPresenter >> buildScene [
 
 	"| mesh light lightNode |"
@@ -124,6 +140,14 @@ MyContextMenuPresenter >> buildScene [
 	^ scene
 ]
 
+{ #category : 'geometry selection' }
+MyContextMenuPresenter >> clearSelection [
+
+    self restoreSelectedVisual.
+    selectedEntry := nil.
+    wodenPresenter adapter widget changed.
+]
+
 { #category : 'layout' }
 MyContextMenuPresenter >> defaultLayout [
 
@@ -132,7 +156,7 @@ MyContextMenuPresenter >> defaultLayout [
 		yourself
 ]
 
-{ #category : 'scene geometry management' }
+{ #category : 'rendered geometry management' }
 MyContextMenuPresenter >> deleteLastAdded [
 
 	| entry |
@@ -145,19 +169,38 @@ MyContextMenuPresenter >> deleteLastAdded [
 	wodenPresenter adapter widget changed
 ]
 
-{ #category : 'event handling and interactive menu' }
+{ #category : 'rendered geometry management' }
+MyContextMenuPresenter >> deleteSelected [
+
+    | node shape |
+    selectedEntry ifNil: [ ^ self ].
+
+    node := selectedEntry key.
+    shape := selectedEntry value.
+
+    self restoreSelectedVisual.
+
+    meshNodes remove: selectedEntry ifAbsent: [ ].
+    scene remove: node.
+    shape free.
+
+    selectedEntry := nil.
+    selectedOriginalRenderables := nil.
+
+    wodenPresenter adapter widget changed.
+]
+
+{ #category : 'input event handling' }
 MyContextMenuPresenter >> handleMouseEvent: anEvent [
 
-	Transcript
-		nextPutAll: 'Mouse button: ';
-		nextPutAll: anEvent whichButton asString;
-		cr.
-	anEvent controlKeyPressed ifFalse: [ ^ self ].
-	anEvent yellowButtonPressed ifFalse: [ ^ self ].
-	Transcript
-		nextPutAll: 'Ctrl-Right-click detected - showing menu';
-		cr.
-	self showContextMenuAt: anEvent position
+    (anEvent controlKeyPressed and: [ anEvent yellowButtonPressed ]) ifTrue: [
+        ^ self showContextMenuAt: anEvent position
+    ].
+
+    anEvent redButtonPressed ifTrue: [
+        self selectShapeAt: anEvent position
+    ].
+
 ]
 
 { #category : 'initialization' }
@@ -166,12 +209,17 @@ MyContextMenuPresenter >> initializePresenters [
 	super initializePresenters.
 
 	meshNodes := OrderedCollection new.
-	scene := self buildScene.
+selectedEntry := nil.
+selectedOriginalRenderables := nil.
+scene := self buildScene.
 
-	wodenPresenter := self instantiate: WDSpInteractiveScenePresenter.
-	wodenPresenter
-		scene: scene;
-		camera: (WDCamera new asSceneNode position: (Vector3 x: 0 y: 0 z: 3))
+cameraNode := WDCamera new asSceneNode.
+cameraNode position: (Vector3 x: 0 y: 0 z: 3).
+
+wodenPresenter := self instantiate: WDSpInteractiveScenePresenter.
+wodenPresenter
+    scene: scene;
+    camera: cameraNode
 ]
 
 { #category : 'initialization' }
@@ -185,14 +233,83 @@ MyContextMenuPresenter >> initializeWindow: aWindowPresenter [
 	aWindowPresenter whenOpenedDo: [ self setupContextMenu ]
 ]
 
-{ #category : 'event handling and interactive menu' }
+{ #category : 'user interface' }
 MyContextMenuPresenter >> openWithContextMenu [
 
 	self open.
 	self withWindowDo: [ :widnow | self setupContextMenu ]
 ]
 
-{ #category : 'event handling and interactive menu' }
+{ #category : 'accessing' }
+MyContextMenuPresenter >> rayPickEntryAt: aPoint [
+
+    | ray bestEntry bestDistance |
+    ray := self rayForScreenPosition: aPoint.
+    bestEntry := nil.
+    bestDistance := nil.
+
+    meshNodes do: [ :entry |
+        | node box distance |
+        node := entry key.
+        box := node localBoundingBox transformedWith: node globalTransform.
+        distance := box intersectionWithRay: ray.
+
+        distance ifNotNil: [
+            (bestDistance isNil or: [ distance < bestDistance ]) ifTrue: [
+                bestDistance := distance.
+                bestEntry := entry
+            ]
+        ]
+    ].
+
+    ^ bestEntry
+]
+
+{ #category : 'geometry selection' }
+MyContextMenuPresenter >> restoreSelectedVisual [
+
+    selectedEntry ifNil: [ ^ self ].
+    selectedOriginalRenderables ifNil: [ ^ self ].
+
+    selectedEntry key renderables: selectedOriginalRenderables.
+    selectedOriginalRenderables := nil.
+]
+
+{ #category : 'accessing' }
+MyContextMenuPresenter >> selectShapeAt: aPoint [
+
+    | pickedEntry |
+    pickedEntry := self rayPickEntryAt: aPoint.
+
+    self restoreSelectedVisual.
+    selectedEntry := pickedEntry.
+
+    selectedEntry ifNotNil: [
+        self applySelectedVisualTo: selectedEntry key
+    ].
+
+    wodenPresenter adapter widget changed.
+]
+
+{ #category : 'accessing' }
+MyContextMenuPresenter >> selectedNode [
+    ^ selectedEntry ifNil: [ nil ] ifNotNil: [ selectedEntry key ]
+]
+
+{ #category : 'accessing' }
+MyContextMenuPresenter >> selectedShape [
+    ^ selectedEntry ifNil: [ nil ] ifNotNil: [ selectedEntry value ]
+]
+
+{ #category : 'geometry selection' }
+MyContextMenuPresenter >> selectionMaterial [
+
+    ^ WDUnlitMaterial new
+        colorFactor: Color yellow;
+        yourself
+]
+
+{ #category : 'input event handling' }
 MyContextMenuPresenter >> setupContextMenu [
 
 	| widget |
@@ -213,4 +330,12 @@ MyContextMenuPresenter >> showContextMenuAt: aPoint [
 	| menu |
 	menu := self buildContextMenu.
 	menu openWithSpecAt: aPoint
+]
+
+{ #category : 'geometry translation' }
+MyContextMenuPresenter >> translateSelectedBy: aVector [
+    self selectedNode ifNotNil: [ :node |
+        node translateBy: aVector.
+        wodenPresenter adapter widget changed
+    ].
 ]
