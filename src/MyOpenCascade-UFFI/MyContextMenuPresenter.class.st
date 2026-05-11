@@ -266,17 +266,17 @@ MyContextMenuPresenter >> openWithContextMenu [
 
 { #category : 'geometry selection' }
 MyContextMenuPresenter >> rayForScreenPosition: aPoint [
+	"""Screen point -> normalized viewport point -> camera-space ray -> world-space ray"""
 
-    | widget widgetExtent aspect frustum ray |
-    widget := wodenPresenter adapter widget.
-    widgetExtent := widget extent.
-    aspect := widgetExtent x asFloat / (widgetExtent y max: 1).
+	| widget widgetExtent aspect frustum ray |
+	widget := wodenPresenter adapter widget.
+	widgetExtent := widget extent.
+	aspect := widgetExtent x asFloat / (widgetExtent y max: 1).
 
-    frustum := cameraNode cameras first frustumWithAspect: aspect.
-    ray := frustum rayForNormalizedPoint:
-        (self normalizedScreenPosition: aPoint).
+	frustum := cameraNode cameras first frustumWithAspect: aspect. "Get the viewing frustum"
+	ray := frustum rayForNormalizedPoint: (self normalizedScreenPosition: aPoint). "construct a picking ray relative to the viewing frustum"
 
-    ^ ray transformedWith: cameraNode transform
+	^ ray transformedWith: cameraNode transform "Convert ray position to woden/scene coordinates"
 ]
 
 { #category : 'accessing' }
