@@ -25,7 +25,7 @@ Example class >> exampleBoxRender [
 		         dz: 1
 		         deflection: 0.01. "convert to WODEN mesh"
 	[
-		mesh := shape asWDMesh. "set up light"
+		mesh := MyShapeWodenAdapter new asWDMesh: shape. "set up light"
 		light := WDPointLightSource new
 			         intensity: 5.0;
 			         yourself.

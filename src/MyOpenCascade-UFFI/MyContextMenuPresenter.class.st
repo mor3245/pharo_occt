@@ -34,7 +34,7 @@ MyContextMenuPresenter >> addBox [
 		          dy: 1
 		          dz: 1
 		          deflection: 0.01).
-	mesh := shape asWDMesh.
+	mesh := MyShapeWodenAdapter new asWDMesh: shape.
 	node := mesh asSceneNode.
 
 	scene add: node.
@@ -48,7 +48,7 @@ MyContextMenuPresenter >> addCylinder [
 
 	| shape mesh node |
 	shape := MyCylinderMaker tessellatedCylinderRadius: 1 height: 1 deflection: 0.01.
-	mesh := shape asWDMesh.
+	mesh := MyShapeWodenAdapter new asWDMesh: shape.
 	node := mesh asSceneNode.
 
 	scene add: node.
@@ -88,7 +88,12 @@ MyContextMenuPresenter >> buildContextMenu [
 				  addItem: [ :item |
 						  item
 							  name: 'Delete Selected';
-							  action: [ self deleteSelected ] ] ] yourself
+							  action: [ self deleteSelected ] ];
+				 addItem: [ :item |
+						  item
+							  name: 'Inspect Selected';
+							  action: [ self inspectSelectedShape ] ]
+						] yourself
 ]
 
 { #category : 'rendered geometry management' }
@@ -242,6 +247,11 @@ MyContextMenuPresenter >> initializeWindow: aWindowPresenter [
 		initialExtent: 650 @ 500.
 
 	aWindowPresenter whenOpenedDo: [ self setupContextMenu ]
+]
+
+{ #category : 'rendered geometry management' }
+MyContextMenuPresenter >> inspectSelectedShape [
+    self selectedShape ifNotNil: [ :shape | shape inspect ]
 ]
 
 { #category : 'geometry selection' }
