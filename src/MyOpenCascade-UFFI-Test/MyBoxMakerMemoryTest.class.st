@@ -6,15 +6,15 @@ Class {
 }
 
 { #category : 'testing' }
-MyBoxMakerMemoryTest >> hasNoMemoryDifference [ 
-	^ CxxBoxLibrary hasNoMemoryDifference = 0
+MyBoxMakerMemoryTest >> cxxHasNoMemoryDifference [ 
+	^ CxxOcctLibrary cxxHasNoMemoryDifference = 0
 ]
 
 { #category : 'tests' }
 MyBoxMakerMemoryTest >> testTessellatedBoxDoesNotLeakNativeMemory [
 	"MyBoxMakerMemoryTest new testTessellatedBoxDoesNotLeakNativeMemory"
 
-	CxxBoxLibrary memoryCheckpoint.
+	CxxOcctLibrary cxxMemoryCheckpoint.
 
 	100 timesRepeat: [
 			| shape |
@@ -28,13 +28,13 @@ MyBoxMakerMemoryTest >> testTessellatedBoxDoesNotLeakNativeMemory [
 
 	Smalltalk garbageCollect.
 
-	self assert: self hasNoMemoryDifference
+	self assert: self cxxHasNoMemoryDifference
 ]
 
 { #category : 'tests' }
 MyBoxMakerMemoryTest >> testTessllatedBoxWillLeakNativeMemory [
 
-	CxxBoxLibrary memoryCheckpoint.
+	CxxOcctLibrary cxxMemoryCheckpoint.
 
 	100 timesRepeat: [
 			| shape |
@@ -48,5 +48,5 @@ MyBoxMakerMemoryTest >> testTessllatedBoxWillLeakNativeMemory [
 
 	Smalltalk garbageCollect.
 
-	self deny: self hasNoMemoryDifference
+	self deny: self cxxHasNoMemoryDifference
 ]

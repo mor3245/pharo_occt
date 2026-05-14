@@ -40,8 +40,8 @@ Class {
 	#instVars : [
 		'handle'
 	],
-	#category : 'MyOpenCascade-UFFI-Base',
-	#package : 'MyOpenCascade-UFFI',
+	#category : 'MyOpenCascade-Base',
+	#package : 'MyOpenCascade',
 	#tag : 'Base'
 }
 

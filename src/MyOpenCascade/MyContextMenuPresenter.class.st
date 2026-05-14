@@ -20,9 +20,9 @@ Class {
 		'contextMenuDownPosition',
 		'contextMenuWasDragged'
 	],
-	#category : 'MyOpenCascade-UFFI-Base',
-	#package : 'MyOpenCascade-UFFI',
-	#tag : 'Base'
+	#category : 'MyOpenCascade-Woden',
+	#package : 'MyOpenCascade',
+	#tag : 'Woden'
 }
 
 { #category : 'rendered geometry management' }

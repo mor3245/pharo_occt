@@ -8,8 +8,8 @@ Public API:
 Class {
 	#name : 'MyCylinderMaker',
 	#superclass : 'MyMakeShape',
-	#category : 'MyOpenCascade-UFFI-Base',
-	#package : 'MyOpenCascade-UFFI',
+	#category : 'MyOpenCascade-Base',
+	#package : 'MyOpenCascade',
 	#tag : 'Base'
 }
 
@@ -17,7 +17,7 @@ Class {
 MyCylinderMaker class >> makeCylinderRadius: radius height: height [
 	| makeCylinder shape |
 	makeCylinder := CxxOcctLibrary cxxCylinderNewRadius: radius height: height.
-	(CxxOcctLibrary isDone: makeCylinder) = 0 ifTrue: [
+	(CxxOcctLibrary cxxIsDone: makeCylinder) = 0 ifTrue: [
 		CxxOcctLibrary cxxMakeCylinderDelete: makeCylinder.
 		self error: 'cxxCylinderNew failed (IsDone=0)' ].
 

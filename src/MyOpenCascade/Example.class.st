@@ -8,9 +8,9 @@ I am not and should not be referenced
 Class {
 	#name : 'Example',
 	#superclass : 'Object',
-	#category : 'MyOpenCascade-UFFI-Base',
-	#package : 'MyOpenCascade-UFFI',
-	#tag : 'Base'
+	#category : 'MyOpenCascade-Example',
+	#package : 'MyOpenCascade',
+	#tag : 'Example'
 }
 
 { #category : 'examples' }
@@ -18,7 +18,7 @@ Example class >> exampleBoxRender [
 	"Box display example."
 
 	| shape mesh light lightNode |
-	CxxOcctLibrary memoryCheckpoint. "create and tessellate the box via OCC"
+	CxxOcctLibrary cxxMemoryCheckpoint. "create and tessellate the box via OCC"
 	shape := MyBoxMaker
 		         tessellatedBoxDx: 1
 		         dy: 1
@@ -36,14 +36,14 @@ Example class >> exampleBoxRender [
 			add: lightNode;
 			openInWindow ] ensure: [ shape free ].
 
-	CxxOcctLibrary dumpMemoryDifference
+	CxxOcctLibrary cxxDumpMemoryDifference
 ]
 
 { #category : 'examples' }
 Example class >> exampleBoxRenderWithContextMenu [
 	"Example exampleBoxRenderWithContextMenu"
 
-	CxxOcctLibrary memoryCheckpoint.
+	CxxOcctLibrary cxxMemoryCheckpoint.
 	MyContextMenuPresenter new open.
-	CxxOcctLibrary dumpMemoryDifference
+	CxxOcctLibrary cxxDumpMemoryDifference
 ]

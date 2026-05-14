@@ -7,8 +7,8 @@ Public API:
 Class {
 	#name : 'MyBoxMaker',
 	#superclass : 'MyMakeShape',
-	#category : 'MyOpenCascade-UFFI-Base',
-	#package : 'MyOpenCascade-UFFI',
+	#category : 'MyOpenCascade-Base',
+	#package : 'MyOpenCascade',
 	#tag : 'Base'
 }
 
@@ -16,7 +16,7 @@ Class {
 MyBoxMaker class >> makeBoxDx: dx dy: dy dz: dz [
 	| makeBox shape |
 	makeBox := CxxOcctLibrary cxxBoxNewDx: dx dy: dy dz: dz.
-	(CxxOcctLibrary isDone: makeBox) = 0 ifTrue: [
+	(CxxOcctLibrary cxxIsDone: makeBox) = 0 ifTrue: [
 		CxxOcctLibrary cxxMakeBoxDelete: makeBox.
 		self error: 'cxxBoxNew failed (IsDone=0)' ].
 

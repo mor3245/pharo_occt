@@ -1,9 +1,9 @@
 Class {
 	#name : 'MyShapeWodenAdapter',
 	#superclass : 'Object',
-	#category : 'MyOpenCascade-UFFI-Base',
-	#package : 'MyOpenCascade-UFFI',
-	#tag : 'Base'
+	#category : 'MyOpenCascade-Woden',
+	#package : 'MyOpenCascade',
+	#tag : 'Woden'
 }
 
 { #category : 'converting' }

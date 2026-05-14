@@ -29,8 +29,8 @@ Class {
 Class {
 	#name : 'CxxOcctLibrary',
 	#superclass : 'Object',
-	#category : 'MyOpenCascade-UFFI-Base',
-	#package : 'MyOpenCascade-UFFI',
+	#category : 'MyOpenCascade-Base',
+	#package : 'MyOpenCascade',
 	#tag : 'Base'
 }
 
@@ -44,6 +44,11 @@ CxxOcctLibrary class >> cxxBoxNewDx: dx dy: dy dz: dz [
 CxxOcctLibrary class >> cxxCylinderNewRadius: radius height: height [
 
 	^ self ffiCall: #(void* cxxCylinderNew(double radius, double height))
+]
+
+{ #category : 'ffi-calls' }
+CxxOcctLibrary class >> cxxDumpMemoryDifference [
+    ^ self ffiCall: #(void cxxDumpMemoryDifference())
 ]
 
 { #category : 'ffi-calls' }
@@ -68,15 +73,32 @@ CxxOcctLibrary class >> cxxGetAllVertices: shapeHandle buffer: bufferPtr [
 ]
 
 { #category : 'ffi-calls' }
+CxxOcctLibrary class >> cxxHasNoMemoryDifference [
+    ^ self ffiCall: #(int cxxHasMemoryDifference())
+]
+
+{ #category : 'ffi-calls' }
+CxxOcctLibrary class >> cxxIsDone: makeBoxHandle [
+	"Returns 1/0."
+
+	^ self ffiCall: #( int cxxIsDone ( void* makeBoxHandle ) )
+]
+
+{ #category : 'ffi-calls' }
 CxxOcctLibrary class >> cxxMakeBoxDelete: makeBoxHandle [
 
 	^ self ffiCall: #( void cxxMakeBoxDelete ( void* makeBoxHandle ) )
 ]
 
-{ #category : 'ffi' }
+{ #category : 'ffi-calls' }
 CxxOcctLibrary class >> cxxMakeCylinderDelete: handle [
 
 	^ self ffiCall: #( void cxxMakeCylinderDelete(void* handle) )
+]
+
+{ #category : 'ffi-calls' }
+CxxOcctLibrary class >> cxxMemoryCheckpoint [
+    ^ self ffiCall: #(void cxxMemoryCheckpoint())
 ]
 
 { #category : 'ffi-calls' }
@@ -113,32 +135,10 @@ CxxOcctLibrary class >> cxxVertexCount: shapeHandle [
 	^ self ffiCall: #( int cxxVertexCount ( void* shapeHandle ) )
 ]
 
-{ #category : 'ffi-calls' }
-CxxOcctLibrary class >> dumpMemoryDifference [
-    ^ self ffiCall: #(void cxxDumpMemoryDifference())
-]
-
 { #category : 'accessing' }
 CxxOcctLibrary class >> ffiLibrary [
 
 	^ MyOCPStLib
-]
-
-{ #category : 'ffi-calls' }
-CxxOcctLibrary class >> hasNoMemoryDifference [
-    ^ self ffiCall: #(int cxxHasMemoryDifference())
-]
-
-{ #category : 'ffi-calls' }
-CxxOcctLibrary class >> isDone: makeBoxHandle [
-	"Returns 1/0."
-
-	^ self ffiCall: #( int cxxIsDone ( void* makeBoxHandle ) )
-]
-
-{ #category : 'ffi-calls' }
-CxxOcctLibrary class >> memoryCheckpoint [
-    ^ self ffiCall: #(void cxxMemoryCheckpoint())
 ]
 
 { #category : 'accessing' }

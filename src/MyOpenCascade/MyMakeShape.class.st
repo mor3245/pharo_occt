@@ -4,8 +4,8 @@ I am responsible for translating byte arrays for Woden to understand.
 Class {
 	#name : 'MyMakeShape',
 	#superclass : 'Object',
-	#category : 'MyOpenCascade-UFFI-Base',
-	#package : 'MyOpenCascade-UFFI',
+	#category : 'MyOpenCascade-Base',
+	#package : 'MyOpenCascade',
 	#tag : 'Base'
 }
 
