@@ -52,6 +52,11 @@ MyShape class >> on: anExternalHandle [
 	^ self new initializeOn: anExternalHandle
 ]
 
+{ #category : 'as yet unclassified' }
+MyShape >> cutWith: anotherShape [
+	CxxOcctLibrary cxxCutShape1: handle shape2: anotherShape handle
+]
+
 { #category : 'finalization' }
 MyShape >> finalize [
 	"Best-effort; prefer calling #free explicitly."
@@ -64,6 +69,18 @@ MyShape >> free [
 	handle ifNil: [ ^ self ].
 	CxxOcctLibrary cxxShapeDelete: handle.
 	handle := nil
+]
+
+{ #category : 'accessing' }
+MyShape >> handle [
+
+	^ handle
+]
+
+{ #category : 'accessing' }
+MyShape >> handle: anObject [
+
+	handle := anObject
 ]
 
 { #category : 'initialization' }

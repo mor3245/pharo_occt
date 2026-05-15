@@ -40,6 +40,12 @@ CxxOcctLibrary class >> cxxBoxNewDx: dx dy: dy dz: dz [
 	^ self ffiCall: #( void* cxxBoxNew ( double dx, double dy, double dz ) )
 ]
 
+{ #category : 'ffi' }
+CxxOcctLibrary class >> cxxCutShape1: hShape1 shape2: hShape2 [
+
+	^ self ffiCall: #( void* cxxCut(void* hShape1, void* hShape2) )
+]
+
 { #category : 'ffi-calls' }
 CxxOcctLibrary class >> cxxCylinderNewRadius: radius height: height [
 
