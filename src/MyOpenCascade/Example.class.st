@@ -62,7 +62,7 @@ Example class >> exampleCutRender [
 
 	cylinder := MyCylinderMaker makeCylinderRadius: 0.25 height: 1.5.
 
-	cutShape := MyShape new on: (CxxOcctLibrary cxxCut: box handle with: cylinder handle).
+	cutShape := CxxOcctLibrary cxxCut: box with: cylinder.
 
 	[
 		cutShape tessellateDeflection: 0.01.

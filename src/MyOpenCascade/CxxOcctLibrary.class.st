@@ -52,7 +52,7 @@ CxxOcctLibrary class >> cxxCreateBoxDx: dx dy: dy dz: dz [
 CxxOcctLibrary class >> cxxCreateCylinderRadius: radius height: height [
 	"Creates and returns a completed cylinder shape directly, bypassing the MakeBox builder step."
 
-	^ self
+	^ self ffiCall: #( MyShape* cxxCreateCylinder ( double radius, double height ) )
 ]
 
 { #category : 'as yet unclassified' }

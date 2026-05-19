@@ -19,7 +19,7 @@ MyCylinderMaker class >> makeCylinderRadius: radius height: height [
 
 	| shape |
 	shape := CxxOcctLibrary cxxCreateCylinderRadius: radius height: height.
-	shape isNull ifTrue: [ self error: 'cxxCreateBox failed' ].
+	shape isNull ifTrue: [ self error: 'cxxCreateCylinder failed' ].
 	^ shape
 ]
 
