@@ -36,25 +36,25 @@ Class {
 "
 Class {
 	#name : 'MyShape',
-	#superclass : 'Object',
-	#instVars : [
-		'handle'
-	],
+	#superclass : 'FFIOpaqueObject',
 	#category : 'MyOpenCascade-Base',
 	#package : 'MyOpenCascade',
 	#tag : 'Base'
 }
 
-{ #category : 'instance creation' }
-MyShape class >> on: anExternalHandle [
-
-
-	^ self new initializeOn: anExternalHandle
+{ #category : 'accessing' }
+MyShape class >> ffiLibrary [
+	^ MyOCPStLib
 ]
 
 { #category : 'as yet unclassified' }
 MyShape >> cutWith: anotherShape [
-	CxxOcctLibrary cxxCutShape1: handle shape2: anotherShape handle
+	CxxOcctLibrary cxxCut: handle with: anotherShape handle
+]
+
+{ #category : 'accessing' }
+MyShape >> ffiLibrary [ 
+	^ self class ffiLibrary
 ]
 
 { #category : 'finalization' }
@@ -65,10 +65,10 @@ MyShape >> finalize [
 
 { #category : 'finalization' }
 MyShape >> free [
-
-	handle ifNil: [ ^ self ].
-	CxxOcctLibrary cxxShapeDelete: handle.
-	handle := nil
+    handle ifNil: [ ^ self ].
+    handle isNull ifTrue: [ ^ self ].
+    CxxOcctLibrary cxxShapeDelete: self.
+    handle beNull
 ]
 
 { #category : 'accessing' }
@@ -83,68 +83,57 @@ MyShape >> handle: anObject [
 	handle := anObject
 ]
 
-{ #category : 'initialization' }
-MyShape >> initializeOn: anExternalHandle [
-
-
-	handle := anExternalHandle.
-	^ self
+{ #category : 'as yet unclassified' }
+MyShape >> normalBufferLength [
+    ^ CxxOcctLibrary cxxGetNormalBufferLength: self
 ]
 
 { #category : 'accessing' }
 MyShape >> normals [
-	^ MyBoxMaker float64ArrayFromBytes: self normalsBytes
-]
-
-{ #category : 'low level buffer management' }
-MyShape >> normalsBytes [
-	| count bytes |
-	count := self vertexCount * 3.
-	bytes := ByteArray new: count * 8.
-	CxxOcctLibrary cxxGetAllNormals: handle buffer: bytes.
-	^ bytes
+    | address |
+    address := CxxOcctLibrary cxxGetNormals: self.
+    address isNull ifTrue: [ ^ Float64Array new: 0 ].
+    ^ MyMakeShape float64ArrayFromExternalAddress: address count: self normalBufferLength
 ]
 
 { #category : 'converting' }
 MyShape >> tessellateDeflection: deflection [
-	CxxOcctLibrary cxxTessellate: handle deflection: deflection
+    CxxOcctLibrary cxxTessellate: self deflection: deflection
 ]
 
 { #category : 'accessing' }
 MyShape >> triangleCount [
-	^ CxxOcctLibrary cxxTriangleCount: handle
+    ^ CxxOcctLibrary cxxTriangleCount: self
+
+]
+
+{ #category : 'as yet unclassified' }
+MyShape >> triangleIndexCount [
+    ^ CxxOcctLibrary cxxGetTriangleIndexCount: self
 ]
 
 { #category : 'access' }
 MyShape >> triangles [
-	^ MyBoxMaker int32ArrayFromBytes: self trianglesBytes
+    | address |
+    address := CxxOcctLibrary cxxGetTriangles: self.
+    address isNull ifTrue: [ ^ Array new: 0 ].
+    ^ MyMakeShape int32ArrayFromExternalAddress: address count: self triangleIndexCount
 ]
 
-{ #category : 'low level buffer management' }
-MyShape >> trianglesBytes [
-	| count bytes |
-	count := self triangleCount * 3.
-	bytes := ByteArray new: count * 4.
-	CxxOcctLibrary cxxGetAllTriangles: handle buffer: bytes.
-	^ bytes
+{ #category : 'as yet unclassified' }
+MyShape >> vertexBufferLength [
+    ^ CxxOcctLibrary cxxGetVertexBufferLength: self
 ]
 
 { #category : 'accessing' }
 MyShape >> vertexCount [
-	^ CxxOcctLibrary cxxVertexCount: handle
+    ^ CxxOcctLibrary cxxVertexCount: self
 ]
 
 { #category : 'accessing' }
 MyShape >> vertices [
-
-	^ MyBoxMaker float64ArrayFromBytes: self verticesBytes
-]
-
-{ #category : 'low level buffer management' }
-MyShape >> verticesBytes [
-	| count bytes |
-	count := self vertexCount * 3.
-	bytes := ByteArray new: count * 8.
-	CxxOcctLibrary cxxGetAllVertices: handle buffer: bytes.
-	^ bytes
+    | address |
+    address := CxxOcctLibrary cxxGetVertices: self.
+    address isNull ifTrue: [ ^ Float64Array new: 0 ].
+    ^ MyMakeShape float64ArrayFromExternalAddress: address count: self vertexBufferLength
 ]

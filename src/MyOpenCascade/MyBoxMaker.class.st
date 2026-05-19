@@ -14,15 +14,11 @@ Class {
 
 { #category : 'factory' }
 MyBoxMaker class >> makeBoxDx: dx dy: dy dz: dz [
-	| makeBox shape |
-	makeBox := CxxOcctLibrary cxxBoxNewDx: dx dy: dy dz: dz.
-	(CxxOcctLibrary cxxIsDone: makeBox) = 0 ifTrue: [
-		CxxOcctLibrary cxxMakeBoxDelete: makeBox.
-		self error: 'cxxBoxNew failed (IsDone=0)' ].
-
-	shape := CxxOcctLibrary cxxToShape: makeBox.
-	CxxOcctLibrary cxxMakeBoxDelete: makeBox.
-	^ MyShape on: shape
+    | shape |
+    shape := CxxOcctLibrary cxxCreateBoxDx: dx dy: dy dz: dz.
+    shape isNull ifTrue: [
+        self error: 'cxxCreateBox failed' ].
+    ^ shape
 ]
 
 { #category : 'factory' }

@@ -50,48 +50,36 @@ Example class >> exampleBoxRenderWithContextMenu [
 
 { #category : 'as yet unclassified' }
 Example class >> exampleCutRender [
-    "Boolean cut display example."
+	"Boolean cut display example."
 
-    | box cylinder cutShape mesh light lightNode |
+	| box cylinder cutShape mesh light lightNode |
+	CxxOcctLibrary cxxMemoryCheckpoint.
 
-    CxxOcctLibrary cxxMemoryCheckpoint.
+	box := MyBoxMaker makeBoxDx: 1 dy: 1 dz: 1.
 
-    box := MyBoxMaker
-        makeBoxDx: 1
-        dy: 1
-        dz: 1.
+	cylinder := MyCylinderMaker makeCylinderRadius: 0.25 height: 1.5.
 
-    cylinder := MyCylinderMaker
-        makeCylinderRadius: 0.25
-        height: 1.5.
+	cutShape := MyShape on: (CxxOcctLibrary cxxCut: box handle with: cylinder handle).
 
-    cutShape := MyShape on: (
-        CxxOcctLibrary
-            cxxCutShape1: box handle
-            shape2: cylinder handle).
+	[
+		cutShape tessellateDeflection: 0.01.
 
-    [
-        cutShape tessellateDeflection: 0.01.
+		mesh := MyShapeWodenAdapter new asWDMesh: cutShape.
 
-        mesh := MyShapeWodenAdapter new asWDMesh: cutShape.
+		light := WDPointLightSource new
+			         intensity: 5.0;
+			         yourself.
 
-        light := WDPointLightSource new
-            intensity: 5.0;
-            yourself.
+		lightNode := light asSceneNode.
+		lightNode position: (Vector3 x: -1.5 y: 1.5 z: 1.0).
 
-        lightNode := light asSceneNode.
-        lightNode position: (Vector3 x: -1.5 y: 1.5 z: 1.0).
+		WDScene new
+			add: mesh;
+			add: lightNode;
+			openInWindow ] ensure: [
+			cutShape free.
+			cylinder free.
+			box free ].
 
-        WDScene new
-            add: mesh;
-            add: lightNode;
-            openInWindow
-    ] ensure: [
-        cutShape free.
-        cylinder free.
-        box free
-    ].
-
-    CxxOcctLibrary cxxDumpMemoryDifference
-
+	CxxOcctLibrary cxxDumpMemoryDifference
 ]

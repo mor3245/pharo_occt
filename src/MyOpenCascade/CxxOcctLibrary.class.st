@@ -37,13 +37,17 @@ Class {
 { #category : 'ffi-calls' }
 CxxOcctLibrary class >> cxxBoxNewDx: dx dy: dy dz: dz [
 
-	^ self ffiCall: #( void* cxxBoxNew ( double dx, double dy, double dz ) )
+	^ self ffiCall: #( MyShape* cxxBoxNew ( double dx, double dy, double dz ) )
 ]
 
-{ #category : 'ffi' }
-CxxOcctLibrary class >> cxxCutShape1: hShape1 shape2: hShape2 [
+{ #category : 'as yet unclassified' }
+CxxOcctLibrary class >> cxxCreateBoxDx: dx dy: dy dz: dz [
+    ^ self ffiCall: #( MyShape* cxxCreateBox ( double dx, double dy, double dz ) )
+]
 
-	^ self ffiCall: #( void* cxxCut(void* hShape1, void* hShape2) )
+{ #category : 'as yet unclassified' }
+CxxOcctLibrary class >> cxxCut: shape1 with: shape2 [
+    ^ self ffiCall: #( MyShape* cxxCut ( MyShape* shape1, MyShape* shape2 ) )
 ]
 
 { #category : 'ffi-calls' }
@@ -76,6 +80,36 @@ CxxOcctLibrary class >> cxxGetAllVertices: shapeHandle buffer: bufferPtr [
 	"bufferPtr points to `vertexCount*3` doubles (8 bytes each)."
 
 	^ self ffiCall: #( void cxxGetAllVertices ( void* shapeHandle, void* bufferPtr ) )
+]
+
+{ #category : 'as yet unclassified' }
+CxxOcctLibrary class >> cxxGetNormalBufferLength: shape [
+    ^ self ffiCall: #( int cxxGetNormalBufferLength ( MyShape* shape ) )
+]
+
+{ #category : 'as yet unclassified' }
+CxxOcctLibrary class >> cxxGetNormals: shape [
+    ^ self ffiCall: #( void* cxxGetNormals ( MyShape* shape ) )
+]
+
+{ #category : 'as yet unclassified' }
+CxxOcctLibrary class >> cxxGetTriangleIndexCount: shape [
+    ^ self ffiCall: #( int cxxGetTriangleIndexCount ( MyShape* shape ) )
+]
+
+{ #category : 'as yet unclassified' }
+CxxOcctLibrary class >> cxxGetTriangles: shape [
+    ^ self ffiCall: #( void* cxxGetTriangles ( MyShape* shape ) )
+]
+
+{ #category : 'as yet unclassified' }
+CxxOcctLibrary class >> cxxGetVertexBufferLength: shape [
+    ^ self ffiCall: #( int cxxGetVertexBufferLength ( MyShape* shape ) )
+]
+
+{ #category : 'as yet unclassified' }
+CxxOcctLibrary class >> cxxGetVertices: shape [
+    ^ self ffiCall: #( void* cxxGetVertices ( MyShape* shape ) )
 ]
 
 { #category : 'ffi-calls' }
@@ -111,14 +145,14 @@ CxxOcctLibrary class >> cxxMemoryCheckpoint [
 CxxOcctLibrary class >> cxxShapeDelete: shapeHandle [
 
 
-	^ self ffiCall: #( void cxxShapeDelete ( void* shapeHandle ) )
+	^ self ffiCall: #( void cxxShapeDelete ( MyShape* shapeHandle ) )
 ]
 
 { #category : 'ffi-calls' }
 CxxOcctLibrary class >> cxxTessellate: shapeHandle deflection: deflection [
 
 
-	^ self ffiCall: #( void cxxTessellate ( void* shapeHandle, double deflection ) )
+	^ self ffiCall: #( void cxxTessellate ( MyShape* shapeHandle, double deflection ) )
 ]
 
 { #category : 'ffi-calls' }
@@ -131,14 +165,14 @@ CxxOcctLibrary class >> cxxToShape: makeBoxHandle [
 CxxOcctLibrary class >> cxxTriangleCount: shapeHandle [
 
 
-	^ self ffiCall: #( int cxxTriangleCount ( void* shapeHandle ) )
+	^ self ffiCall: #( int cxxTriangleCount ( MyShape* shapeHandle ) )
 ]
 
 { #category : 'ffi-calls' }
 CxxOcctLibrary class >> cxxVertexCount: shapeHandle [
 
 
-	^ self ffiCall: #( int cxxVertexCount ( void* shapeHandle ) )
+	^ self ffiCall: #( int cxxVertexCount ( MyShape* shapeHandle ) )
 ]
 
 { #category : 'accessing' }
