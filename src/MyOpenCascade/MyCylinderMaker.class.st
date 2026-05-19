@@ -15,19 +15,18 @@ Class {
 
 { #category : 'factory' }
 MyCylinderMaker class >> makeCylinderRadius: radius height: height [
-	| makeCylinder shape |
-	makeCylinder := CxxOcctLibrary cxxCylinderNewRadius: radius height: height.
-	(CxxOcctLibrary cxxIsDone: makeCylinder) = 0 ifTrue: [
-		CxxOcctLibrary cxxMakeCylinderDelete: makeCylinder.
-		self error: 'cxxCylinderNew failed (IsDone=0)' ].
+	"Creates a cylinder shape via the direct C++ factory call. Raises an error if the result is null."
 
-	shape := CxxOcctLibrary cxxToShape: makeCylinder.
-	CxxOcctLibrary cxxMakeCylinderDelete: makeCylinder.
-	^ MyShape on: shape
+	| shape |
+	shape := CxxOcctLibrary cxxCreateCylinderRadius: radius height: height.
+	shape isNull ifTrue: [ self error: 'cxxCreateBox failed' ].
+	^ shape
 ]
 
 { #category : 'factory' }
 MyCylinderMaker class >> tessellatedCylinderRadius: radius height: height deflection: deflection [
+	"Creates a cylinder and immediately tessellates it at the given deflection. Returns a ready-to-render shape."
+
 	| shape |
 	shape := self makeCylinderRadius: radius height: height.
 	shape tessellateDeflection: deflection.

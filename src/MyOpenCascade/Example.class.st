@@ -16,6 +16,7 @@ Class {
 { #category : 'examples' }
 Example class >> exampleBoxRender [
 	"Box display example."
+	"Creates a 1×1×1 tessellated box, converts it to a Woden mesh, adds a point light, and opens a render window. Memory usage before and after is logged."
 
 	| shape mesh light lightNode |
 	CxxOcctLibrary cxxMemoryCheckpoint. "create and tessellate the box via OCC"
@@ -42,6 +43,7 @@ Example class >> exampleBoxRender [
 { #category : 'examples' }
 Example class >> exampleBoxRenderWithContextMenu [
 	"Example exampleBoxRenderWithContextMenu"
+	"Opens the interactive context-menu presenter and logs memory usage around it."
 
 	CxxOcctLibrary cxxMemoryCheckpoint.
 	MyContextMenuPresenter new open.
@@ -51,6 +53,7 @@ Example class >> exampleBoxRenderWithContextMenu [
 { #category : 'as yet unclassified' }
 Example class >> exampleCutRender [
 	"Boolean cut display example."
+	"Creates a box, cuts a cylinder through it using a Boolean operation, tessellates the result, and renders it. Frees all three shapes when done."
 
 	| box cylinder cutShape mesh light lightNode |
 	CxxOcctLibrary cxxMemoryCheckpoint.
@@ -59,7 +62,7 @@ Example class >> exampleCutRender [
 
 	cylinder := MyCylinderMaker makeCylinderRadius: 0.25 height: 1.5.
 
-	cutShape := MyShape on: (CxxOcctLibrary cxxCut: box handle with: cylinder handle).
+	cutShape := MyShape new on: (CxxOcctLibrary cxxCut: box handle with: cylinder handle).
 
 	[
 		cutShape tessellateDeflection: 0.01.
