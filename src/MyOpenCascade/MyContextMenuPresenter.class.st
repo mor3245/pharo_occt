@@ -93,7 +93,19 @@ MyContextMenuPresenter >> buildContextMenu [
 				  addItem: [ :item |
 						  item
 							  name: 'Inspect Selected';
-							  action: [ self inspectSelectedShape ] ] ] yourself
+							  action: [ self inspectSelectedShape ] ];
+				  addItem: [ :item |
+						  item
+							  name: 'Fit All';
+							  action: [ self fitAll ] ];
+				  addItem: [ :item |
+						  item
+							  name: 'Fit Selected';
+							  action: [ self fitSelected ] ];
+				  addItem: [ :item |
+						  item
+							  name: 'Use Selected as Pivot';
+							  action: [ self useSelectedAsPivot ] ] ] yourself
 ]
 
 { #category : 'rendered geometry management' }
@@ -110,6 +122,12 @@ MyContextMenuPresenter >> buildScene [
 	lightNode position: (Vector3 x: -1.5 y: 1.5 z: 1.0). "scene add: mesh."
 	scene add: lightNode.
 	^ scene
+]
+
+{ #category : 'as yet unclassified' }
+MyContextMenuPresenter >> cameraControlMorph [
+
+	^ wodenPresenter adapter widget
 ]
 
 { #category : 'geometry selection' }
@@ -177,6 +195,18 @@ MyContextMenuPresenter >> deleteSelected [
 	selectedOriginalRenderables := nil.
 
 	wodenPresenter adapter widget changed
+]
+
+{ #category : 'as yet unclassified' }
+MyContextMenuPresenter >> fitAll [
+
+	self cameraControlMorph fitScene
+]
+
+{ #category : 'as yet unclassified' }
+MyContextMenuPresenter >> fitSelected [
+
+	self selectedNode ifNotNil: [ :node | self cameraControlMorph fitNode: node ]
 ]
 
 { #category : 'event handling' }
@@ -395,4 +425,10 @@ MyContextMenuPresenter >> translateSelectedBy: aVector [
 	self selectedNode ifNotNil: [ :node |
 			node translateBy: aVector.
 			wodenPresenter adapter widget changed ]
+]
+
+{ #category : 'as yet unclassified' }
+MyContextMenuPresenter >> useSelectedAsPivot [
+
+	self selectedNode ifNotNil: [ :node | self cameraControlMorph useNodePivot: node ]
 ]
