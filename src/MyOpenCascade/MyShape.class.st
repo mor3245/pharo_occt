@@ -46,7 +46,7 @@ Class {
 MyShape >> cutWith: anotherShape [
 	"Performs a Boolean cut of anotherShape from this shape via the C++ layer."
 
-	CxxOcctLibrary cxxCut: handle with: anotherShape handle
+	^ CxxOcctLibrary cxxCut: self with: anotherShape
 ]
 
 { #category : 'finalization' }
@@ -82,6 +82,13 @@ MyShape >> handle: anObject [
 	handle := anObject
 ]
 
+{ #category : 'testing' }
+MyShape >> isNull [
+	"Answers whether this shape has no valid native handle."
+
+	^ handle isNil or: [ handle isNull ]
+]
+
 { #category : 'as yet unclassified' }
 MyShape >> normalBufferLength [
 	"Returns the number of doubles in the normal buffer (vertexCount * 3)."
@@ -99,11 +106,44 @@ MyShape >> normals [
 	^ MyMakeShape float64ArrayFromExternalAddress: address count: self normalBufferLength
 ]
 
+{ #category : 'as yet unclassified' }
+MyShape >> rotateDegreesOnX: xDegrees y: yDegrees z: zDegrees [
+	"Applies CAD-level Euler rotation to the underlying OpenCascade shape."
+
+	CxxOcctLibrary
+		cxxRotateShape: self
+		xDegrees: xDegrees
+		yDegrees: yDegrees
+		zDegrees: zDegrees
+]
+
+{ #category : 'transforming' }
+MyShape >> scaleBy: aVector [
+	"Applies CAD-level non-uniform scale to the underlying OpenCascade shape."
+
+	CxxOcctLibrary
+		cxxScaleShape: self
+		sx: aVector x
+		sy: aVector y
+		sz: aVector z
+]
+
 { #category : 'converting' }
 MyShape >> tessellateDeflection: deflection [
 	"Instructs the C++ engine to generate a mesh for this shape at the given chord deflection."
 
 	CxxOcctLibrary cxxTessellate: self deflection: deflection
+]
+
+{ #category : 'transforming' }
+MyShape >> translateBy: aVector [
+	"Applies a CAD-level translation to the underlying OpenCascade shape."
+
+	CxxOcctLibrary
+		cxxTranslateShape: self
+		x: aVector x
+		y: aVector y
+		z: aVector z
 ]
 
 { #category : 'accessing' }

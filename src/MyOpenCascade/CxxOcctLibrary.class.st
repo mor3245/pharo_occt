@@ -174,6 +174,20 @@ CxxOcctLibrary class >> cxxMemoryCheckpoint [
     ^ self ffiCall: #(void cxxMemoryCheckpoint())
 ]
 
+{ #category : 'as yet unclassified' }
+CxxOcctLibrary class >> cxxRotateShape: shape xDegrees: xDegrees yDegrees: yDegrees zDegrees: zDegrees [
+	"Applies Euler rotations in degrees to the underlying OpenCascade shape."
+
+	^ self ffiCall: #( void cxxRotateShapeDegrees ( MyShape* shape, double xDegrees, double yDegrees, double zDegrees ) )
+]
+
+{ #category : 'as yet unclassified' }
+CxxOcctLibrary class >> cxxScaleShape: shape sx: sx sy: sy sz: sz [
+	"Applies non-uniform scale to the underlying OpenCascade shape."
+
+	^ self ffiCall: #( void cxxScaleShape ( MyShape* shape, double sx, double sy, double sz ) )
+]
+
 { #category : 'ffi-calls' }
 CxxOcctLibrary class >> cxxShapeDelete: shapeHandle [
 	"Frees the C++ Shape object, releasing its tessellation and geometry data."
@@ -193,6 +207,14 @@ CxxOcctLibrary class >> cxxToShape: makeBoxHandle [
 	"Extracts the completed TopoDS_Shape from the builder and returns its handle."
 
 	^ self ffiCall: #( void* cxxToShape ( void* makeBoxHandle ) )
+]
+
+{ #category : 'as yet unclassified' }
+CxxOcctLibrary class >> cxxTranslateShape: shape x: x y: y z: z [
+	"Applies a translation to the underlying OpenCascade shape."
+
+	^ self ffiCall: #( void cxxTranslateShape ( MyShape* shape, double x, double y, double z ) )
+ 
 ]
 
 { #category : 'ffi-calls' }

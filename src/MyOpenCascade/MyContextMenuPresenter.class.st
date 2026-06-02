@@ -68,6 +68,34 @@ MyContextMenuPresenter >> applySelectedVisualTo: aNode [
 	aNode renderables: (selectedOriginalRenderables collect: [ :each | each copyWithMaterial: self selectionMaterial ])
 ]
 
+{ #category : 'rendered geometry management' }
+MyContextMenuPresenter >> bakeRenderedTranslationAndRebuildFor: anEntry [
+	"Applies the rendered node translation to the CAD shape, removes the old rendered node,
+	retessellates, creates a fresh render node, and returns the new node -> shape entry."
+
+	| oldNode shape translation mesh newNode newEntry |
+	oldNode := anEntry key.
+	shape := anEntry value.
+	translation := oldNode position.
+
+	shape translateBy: translation.
+	shape tessellateDeflection: 0.01.
+
+	mesh := MyShapeWodenAdapter new asWDMesh: shape.
+	newNode := mesh asSceneNode.
+	newEntry := newNode -> shape.
+
+	scene remove: oldNode.
+	scene add: newNode.
+
+	meshNodes remove: anEntry ifAbsent: [ ].
+	meshNodes addLast: newEntry.
+
+	selectedEntry == anEntry ifTrue: [ selectedEntry := newEntry ].
+
+	^ newEntry
+]
+
 { #category : 'user interface' }
 MyContextMenuPresenter >> buildContextMenu [
 	"Constructs and returns the right-click SpMenuPresenter with Add Box, Add Cylinder, Delete, and Inspect items."
@@ -90,6 +118,10 @@ MyContextMenuPresenter >> buildContextMenu [
 						  item
 							  name: 'Delete Selected';
 							  action: [ self deleteSelected ] ];
+				  addItem: [ :item |
+						  item
+							  name: 'Cut Selected With Last Added';
+							  action: [ self cutSelectedWithLastAdded ] ];
 				  addItem: [ :item |
 						  item
 							  name: 'Inspect Selected';
@@ -144,6 +176,48 @@ MyContextMenuPresenter >> contextMenuDragThreshold [
 	"Returns the pixel radius beyond which a right-button drag suppresses the context menu."
 
 	^ 4
+]
+
+{ #category : 'boolean operations' }
+MyContextMenuPresenter >> cutSelectedWithLastAdded [
+	"Cut the selected shape with the last inserted shape, after baking visible translations into CAD space."
+
+	| targetEntry toolEntry targetShape toolShape resultShape resultMesh resultNode |
+	selectedEntry ifNil: [ ^ self ].
+	meshNodes size < 2 ifTrue: [ ^ self ].
+
+	targetEntry := selectedEntry.
+	toolEntry := meshNodes last.
+	targetEntry == toolEntry ifTrue: [ ^ self ].
+
+	self restoreSelectedVisual.
+
+	targetEntry := self bakeRenderedTranslationAndRebuildFor: targetEntry.
+	toolEntry := self bakeRenderedTranslationAndRebuildFor: toolEntry.
+
+	targetShape := targetEntry value.
+	toolShape := toolEntry value.
+
+	(targetShape isNull or: [ toolShape isNull ]) ifTrue: [ ^ self ].
+
+	resultShape := targetShape cutWith: toolShape.
+	(resultShape isNil or: [ resultShape isNull ]) ifTrue: [ ^ self ].
+
+	resultShape tessellateDeflection: 0.01.
+	resultMesh := MyShapeWodenAdapter new asWDMesh: resultShape.
+	resultNode := resultMesh asSceneNode.
+
+	scene remove: targetEntry key.
+	meshNodes remove: targetEntry ifAbsent: [ ].
+	targetShape free.
+
+	scene add: resultNode.
+	meshNodes addLast: resultNode -> resultShape.
+
+	selectedEntry := nil.
+	selectedOriginalRenderables := nil.
+
+	wodenPresenter adapter widget changed
 ]
 
 { #category : 'layout' }
