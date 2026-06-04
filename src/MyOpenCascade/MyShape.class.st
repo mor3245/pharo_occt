@@ -106,6 +106,32 @@ MyShape >> normals [
 	^ MyMakeShape float64ArrayFromExternalAddress: address count: self normalBufferLength
 ]
 
+{ #category : 'transforming' }
+MyShape >> rotateDegrees: degrees aroundAxis: axisSymbol center: centerPoint [
+	"Applies CAD-level rotation around one global axis and a world-space center point."
+
+	axisSymbol = #x ifTrue: [
+			^ self
+				  rotateDegreesOnX: degrees
+				  y: 0
+				  z: 0
+				  around: centerPoint ].
+
+	axisSymbol = #y ifTrue: [
+			^ self
+				  rotateDegreesOnX: 0
+				  y: degrees
+				  z: 0
+				  around: centerPoint ].
+
+	axisSymbol = #z ifTrue: [
+			^ self
+				  rotateDegreesOnX: 0
+				  y: 0
+				  z: degrees
+				  around: centerPoint ]
+]
+
 { #category : 'as yet unclassified' }
 MyShape >> rotateDegreesOnX: xDegrees y: yDegrees z: zDegrees [
 	"Applies CAD-level Euler rotation to the underlying OpenCascade shape."
@@ -115,6 +141,20 @@ MyShape >> rotateDegreesOnX: xDegrees y: yDegrees z: zDegrees [
 		xDegrees: xDegrees
 		yDegrees: yDegrees
 		zDegrees: zDegrees
+]
+
+{ #category : 'transforming' }
+MyShape >> rotateDegreesOnX: xDegrees y: yDegrees z: zDegrees around: centerPoint [
+	"Applies CAD-level Euler rotation around a world-space center point."
+
+	CxxOcctLibrary
+		cxxRotateShape: self
+		xDegrees: xDegrees
+		yDegrees: yDegrees
+		zDegrees: zDegrees
+		centerX: centerPoint x
+		centerY: centerPoint y
+		centerZ: centerPoint z
 ]
 
 { #category : 'transforming' }

@@ -182,6 +182,20 @@ CxxOcctLibrary class >> cxxRotateShape: shape xDegrees: xDegrees yDegrees: yDegr
 ]
 
 { #category : 'as yet unclassified' }
+CxxOcctLibrary class >> cxxRotateShape: shape xDegrees: xDegrees yDegrees: yDegrees zDegrees: zDegrees centerX: centerX centerY: centerY centerZ: centerZ [
+	"Applies Euler rotations in degrees around a specific world-space point."
+
+	^ self ffiCall: #( void cxxRotateShapeDegreesAboutPoint (
+		MyShape* shape,
+		double xDegrees,
+		double yDegrees,
+		double zDegrees,
+		double centerX,
+		double centerY,
+		double centerZ ) )
+]
+
+{ #category : 'as yet unclassified' }
 CxxOcctLibrary class >> cxxScaleShape: shape sx: sx sy: sy sz: sz [
 	"Applies non-uniform scale to the underlying OpenCascade shape."
 
