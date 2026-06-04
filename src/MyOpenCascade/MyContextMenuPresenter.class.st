@@ -22,7 +22,10 @@ Class {
 		'grabModeActive',
 		'grabStartMousePosition',
 		'grabStartNodePosition',
-		'grabAxisLock'
+		'grabAxisLock',
+		'grabDragPlanePoint',
+		'grabDragPlaneNormal',
+		'grabStartWorldPoint'
 	],
 	#category : 'MyOpenCascade-Woden',
 	#package : 'MyOpenCascade',
@@ -39,6 +42,9 @@ MyContextMenuPresenter >> activateTranslationMode [
 	grabAxisLock := nil.
 	grabStartMousePosition := nil.
 	grabStartNodePosition := selectedEntry key position.
+	grabDragPlanePoint := grabStartNodePosition.
+	grabDragPlaneNormal := self cameraForwardDirection.
+	grabStartWorldPoint := nil.
 
 	self focusWodenWidget
 ]
@@ -185,6 +191,19 @@ MyContextMenuPresenter >> cameraControlMorph [
 ]
 
 { #category : 'geometry translation' }
+MyContextMenuPresenter >> cameraForwardDirection [
+	"Returns the camera forward direction in world space."
+
+	| transform localForward |
+	transform := cameraNode transform.
+	localForward := Vector3 x: 0 y: 0 z: -1.
+
+	(transform respondsTo: #transformVector3:) ifTrue: [ ^ (transform transformVector3: localForward) normalized ].
+
+	^ (transform transformVector: localForward) normalized
+]
+
+{ #category : 'geometry translation' }
 MyContextMenuPresenter >> cancelTranslationMode [
 	"Restores the selected node to its position before grab mode started."
 
@@ -196,6 +215,9 @@ MyContextMenuPresenter >> cancelTranslationMode [
 	grabStartMousePosition := nil.
 	grabStartNodePosition := nil.
 	grabAxisLock := nil.
+	grabDragPlanePoint := nil.
+	grabDragPlaneNormal := nil.
+	grabStartWorldPoint := nil.
 
 	wodenPresenter adapter widget changed
 ]
@@ -217,8 +239,26 @@ MyContextMenuPresenter >> confirmTranslationMode [
 	grabStartMousePosition := nil.
 	grabStartNodePosition := nil.
 	grabAxisLock := nil.
+	grabDragPlanePoint := nil.
+	grabDragPlaneNormal := nil.
+	grabStartWorldPoint := nil.
 
 	wodenPresenter adapter widget changed
+]
+
+{ #category : 'geometry translation' }
+MyContextMenuPresenter >> constrainedTranslation: aVector [
+	"Constrains a drag translation to the selected global axis."
+
+	| axis amount |
+	grabAxisLock ifNil: [ ^ aVector ].
+
+	grabAxisLock = #x ifTrue: [ axis := Vector3 x: 1 y: 0 z: 0 ].
+	grabAxisLock = #y ifTrue: [ axis := Vector3 x: 0 y: 1 z: 0 ].
+	grabAxisLock = #z ifTrue: [ axis := Vector3 x: 0 y: 0 z: 1 ].
+
+	amount := aVector dot: axis.
+	^ axis * amount
 ]
 
 { #category : 'events-processing' }
@@ -319,6 +359,26 @@ MyContextMenuPresenter >> deleteSelected [
 	selectedOriginalRenderables := nil.
 
 	wodenPresenter adapter widget changed
+]
+
+{ #category : 'geometry translation' }
+MyContextMenuPresenter >> dragPlanePointAtScreenPosition: aPoint [
+	"Returns the point where the screen ray intersects the current grab plane.
+	This avoids requiring a PlaneF64 class."
+
+	| ray denominator distance |
+	grabDragPlanePoint ifNil: [ ^ nil ].
+	grabDragPlaneNormal ifNil: [ ^ nil ].
+
+	ray := self rayForScreenPosition: aPoint.
+
+	denominator := ray direction dot: grabDragPlaneNormal.
+	denominator abs < 1.0e-6 ifTrue: [ ^ nil ].
+
+	distance := (grabDragPlanePoint - ray origin dot: grabDragPlaneNormal) / denominator.
+	distance < 0 ifTrue: [ ^ nil ].
+
+	^ ray pointAtDistance: distance
 ]
 
 { #category : 'as yet unclassified' }
@@ -441,6 +501,10 @@ MyContextMenuPresenter >> initializePresenters [
 	grabStartMousePosition := nil.
 	grabStartNodePosition := nil.
 	grabAxisLock := nil.
+	grabDragPlanePoint := nil.
+	grabDragPlaneNormal := nil.
+	grabStartWorldPoint := nil.
+	grabStartWorldPoint := nil.
 	scene := self buildScene.
 
 	cameraNode := WDCamera new asSceneNode.
@@ -449,7 +513,14 @@ MyContextMenuPresenter >> initializePresenters [
 	wodenPresenter := self instantiate: WDSpInteractiveScenePresenter.
 	wodenPresenter
 		scene: scene;
-		camera: cameraNode
+		camera: cameraNode.
+	scene add: ((WDPointLightSource new
+			  color: (Vector3 x: 0.8 y: 0.8 z: 0.2);
+			  intensity: 5.0;
+			  influenceRadius: 4.0;
+			  asSceneNode)
+			 position: (Vector3 x: -1.5 y: 1.5 z: 1.6);
+			 yourself)
 ]
 
 { #category : 'initialization' }
@@ -663,16 +734,20 @@ MyContextMenuPresenter >> translationVectorForMouseDelta: aPoint [
 
 { #category : 'geometry translation' }
 MyContextMenuPresenter >> updateTranslationPreviewAt: aPoint [
-	"Moves the selected rendered node according to mouse movement."
+	"Moves the selected rendered node by dragging across a camera-facing world plane."
 
-	| node delta translation newPosition |
+	| node currentWorldPoint translation newPosition |
 	selectedEntry ifNil: [ ^ self ].
 
-	grabStartMousePosition ifNil: [ grabStartMousePosition := aPoint ].
+	currentWorldPoint := self dragPlanePointAtScreenPosition: aPoint.
+	currentWorldPoint ifNil: [ ^ self ].
+
+	grabStartWorldPoint ifNil: [ grabStartWorldPoint := currentWorldPoint ].
 
 	node := selectedEntry key.
-	delta := aPoint - grabStartMousePosition.
-	translation := self translationVectorForMouseDelta: delta.
+	translation := currentWorldPoint - grabStartWorldPoint.
+	translation := self constrainedTranslation: translation.
+
 	newPosition := grabStartNodePosition + translation.
 
 	node position: newPosition.
