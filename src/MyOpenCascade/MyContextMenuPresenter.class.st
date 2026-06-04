@@ -18,12 +18,30 @@ Class {
 		'selectedEntry',
 		'selectedOriginalRenderables',
 		'contextMenuDownPosition',
-		'contextMenuWasDragged'
+		'contextMenuWasDragged',
+		'grabModeActive',
+		'grabStartMousePosition',
+		'grabStartNodePosition',
+		'grabAxisLock'
 	],
 	#category : 'MyOpenCascade-Woden',
 	#package : 'MyOpenCascade',
 	#tag : 'Woden'
 }
+
+{ #category : 'geometry translation' }
+MyContextMenuPresenter >> activateTranslationMode [
+	"Starts interactive translation for the selected rendered node."
+
+	selectedEntry ifNil: [ ^ self ].
+
+	grabModeActive := true.
+	grabAxisLock := nil.
+	grabStartMousePosition := nil.
+	grabStartNodePosition := selectedEntry key position.
+
+	self focusWodenWidget
+]
 
 { #category : 'rendered geometry management' }
 MyContextMenuPresenter >> addBox [
@@ -112,6 +130,10 @@ MyContextMenuPresenter >> buildContextMenu [
 							  action: [ self deleteLastAdded ] ];
 				  addItem: [ :item |
 						  item
+							  name: 'Translate Selected';
+							  action: [ self activateTranslationMode ] ];
+				  addItem: [ :item |
+						  item
 							  name: 'Add Cylinder';
 							  action: [ self addCylinder ] ];
 				  addItem: [ :item |
@@ -162,12 +184,40 @@ MyContextMenuPresenter >> cameraControlMorph [
 	^ wodenPresenter adapter widget
 ]
 
+{ #category : 'geometry translation' }
+MyContextMenuPresenter >> cancelTranslationMode [
+	"Restores the selected node to its position before grab mode started."
+
+	grabModeActive ifFalse: [ ^ self ].
+
+	selectedEntry ifNotNil: [ grabStartNodePosition ifNotNil: [ selectedEntry key position: grabStartNodePosition ] ].
+
+	grabModeActive := false.
+	grabStartMousePosition := nil.
+	grabStartNodePosition := nil.
+	grabAxisLock := nil.
+
+	wodenPresenter adapter widget changed
+]
+
 { #category : 'geometry selection' }
 MyContextMenuPresenter >> clearSelection [
 	"Restores the previously selected node's visuals and clears the selection state."
 
 	self restoreSelectedVisual.
 	selectedEntry := nil.
+	wodenPresenter adapter widget changed
+]
+
+{ #category : 'geometry translation' }
+MyContextMenuPresenter >> confirmTranslationMode [
+	"Accepts the current rendered-node translation."
+
+	grabModeActive := false.
+	grabStartMousePosition := nil.
+	grabStartNodePosition := nil.
+	grabAxisLock := nil.
+
 	wodenPresenter adapter widget changed
 ]
 
@@ -283,9 +333,64 @@ MyContextMenuPresenter >> fitSelected [
 	self selectedNode ifNotNil: [ :node | self cameraControlMorph fitNode: node ]
 ]
 
+{ #category : 'input event handling' }
+MyContextMenuPresenter >> focusWodenWidget [
+	"Best-effort keyboard focus so X/Y/Z/Enter work after choosing the menu item."
+
+	| widget |
+	widget := wodenPresenter adapter widget.
+	widget ifNil: [ ^ self ].
+
+	(widget respondsTo: #takeKeyboardFocus) ifTrue: [ widget takeKeyboardFocus ].
+
+	(widget respondsTo: #activeHand) ifTrue: [ widget activeHand ifNotNil: [ :hand | hand newKeyboardFocus: widget ] ]
+]
+
+{ #category : 'input event handling' }
+MyContextMenuPresenter >> handleKeyStroke: anEvent [
+	"Handles grab-mode axis constraints and confirmation."
+
+	| key |
+	grabModeActive ifFalse: [ ^ self ].
+
+	key := self keyStringFromEvent: anEvent.
+
+	key = 'x' ifTrue: [
+			grabAxisLock := #x.
+			anEvent wasHandled: true.
+			^ self ].
+
+	key = 'y' ifTrue: [
+			grabAxisLock := #y.
+			anEvent wasHandled: true.
+			^ self ].
+
+	key = 'z' ifTrue: [
+			grabAxisLock := #z.
+			anEvent wasHandled: true.
+			^ self ].
+
+	(key = 'enter' or: [ key = 'return' ]) ifTrue: [
+			anEvent wasHandled: true.
+			self confirmTranslationMode.
+			^ self ].
+
+	key = 'escape' ifTrue: [
+			anEvent wasHandled: true.
+			self cancelTranslationMode.
+			^ self ]
+]
+
 { #category : 'event handling' }
 MyContextMenuPresenter >> handleMouseDown: anEvent [
-	"Records the right-button down position for drag detection; performs a pick on left click."
+	"Records the right-button down position for drag detection; performs a pick on left click.
+	When grab mode is active, left click confirms the translation."
+
+	grabModeActive ifTrue: [
+			anEvent redButtonPressed ifTrue: [
+					anEvent wasHandled: true.
+					self confirmTranslationMode.
+					^ self ] ].
 
 	anEvent yellowButtonPressed ifTrue: [
 			contextMenuDownPosition := anEvent position.
@@ -296,7 +401,12 @@ MyContextMenuPresenter >> handleMouseDown: anEvent [
 
 { #category : 'events-processing' }
 MyContextMenuPresenter >> handleMouseMove: anEvent [
-	"Marks the gesture as a drag if the cursor has moved beyond the threshold while right-button is held."
+	"Updates grab-mode preview, or marks right-button drags for context-menu suppression."
+
+	grabModeActive ifTrue: [
+			self updateTranslationPreviewAt: anEvent position.
+			anEvent wasHandled: true.
+			^ self ].
 
 	contextMenuDownPosition ifNil: [ ^ self ].
 	anEvent yellowButtonPressed ifFalse: [ ^ self ].
@@ -327,6 +437,10 @@ MyContextMenuPresenter >> initializePresenters [
 	meshNodes := OrderedCollection new.
 	selectedEntry := nil.
 	selectedOriginalRenderables := nil.
+	grabModeActive := false.
+	grabStartMousePosition := nil.
+	grabStartNodePosition := nil.
+	grabAxisLock := nil.
 	scene := self buildScene.
 
 	cameraNode := WDCamera new asSceneNode.
@@ -355,6 +469,23 @@ MyContextMenuPresenter >> inspectSelectedShape [
 	"Opens a Pharo inspector on the currently selected C++ shape, if any."
 
 	self selectedShape ifNotNil: [ :shape | shape inspect ]
+]
+
+{ #category : 'input event handling' }
+MyContextMenuPresenter >> keyStringFromEvent: anEvent [
+	"Normalizes common Morphic key event variants."
+
+	(anEvent respondsTo: #keyCharacter) ifTrue: [ anEvent keyCharacter ifNotNil: [ :character | ^ character asString asLowercase ] ].
+
+	(anEvent respondsTo: #key) ifTrue: [
+			anEvent key ifNotNil: [ :key |
+					(key respondsTo: #name)
+						ifTrue: [ ^ key name asString asLowercase ]
+						ifFalse: [ ^ key asString asLowercase ] ] ].
+
+	(anEvent respondsTo: #character) ifTrue: [ anEvent character ifNotNil: [ :character | ^ character asString asLowercase ] ].
+
+	^ ''
 ]
 
 { #category : 'geometry selection' }
@@ -480,7 +611,10 @@ MyContextMenuPresenter >> setupContextMenu [
 	widget
 		on: #mouseDown send: #handleMouseDown: to: self;
 		on: #mouseMove send: #handleMouseMove: to: self;
-		on: #mouseUp send: #handleMouseUp: to: self
+		on: #mouseUp send: #handleMouseUp: to: self;
+		on: #keyStroke send: #handleKeyStroke: to: self "If your image does not understand #keyStroke, try this instead:
+
+	on: #keyDown send: #handleKeyStroke: to: self"
 ]
 
 { #category : 'accessing' }
@@ -499,6 +633,50 @@ MyContextMenuPresenter >> translateSelectedBy: aVector [
 	self selectedNode ifNotNil: [ :node |
 			node translateBy: aVector.
 			wodenPresenter adapter widget changed ]
+]
+
+{ #category : 'geometry translation' }
+MyContextMenuPresenter >> translationUnitsPerPixel [
+	"World units moved per screen pixel during grab mode."
+
+	^ 0.01
+]
+
+{ #category : 'geometry translation' }
+MyContextMenuPresenter >> translationVectorForMouseDelta: aPoint [
+	"Converts screen-space mouse delta into a simple global translation.
+	Free mode moves in global X/Y. Axis locks constrain to global X, Y, or Z."
+
+	| scale x y z |
+	scale := self translationUnitsPerPixel.
+
+	x := aPoint x * scale.
+	y := aPoint y negated * scale.
+	z := aPoint y negated * scale.
+
+	grabAxisLock = #x ifTrue: [ ^ Vector3 x: x y: 0 z: 0 ].
+	grabAxisLock = #y ifTrue: [ ^ Vector3 x: 0 y: y z: 0 ].
+	grabAxisLock = #z ifTrue: [ ^ Vector3 x: 0 y: 0 z: z ].
+
+	^ Vector3 x: x y: y z: 0
+]
+
+{ #category : 'geometry translation' }
+MyContextMenuPresenter >> updateTranslationPreviewAt: aPoint [
+	"Moves the selected rendered node according to mouse movement."
+
+	| node delta translation newPosition |
+	selectedEntry ifNil: [ ^ self ].
+
+	grabStartMousePosition ifNil: [ grabStartMousePosition := aPoint ].
+
+	node := selectedEntry key.
+	delta := aPoint - grabStartMousePosition.
+	translation := self translationVectorForMouseDelta: delta.
+	newPosition := grabStartNodePosition + translation.
+
+	node position: newPosition.
+	wodenPresenter adapter widget changed
 ]
 
 { #category : 'as yet unclassified' }
