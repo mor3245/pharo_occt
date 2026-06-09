@@ -19,6 +19,7 @@ MyBoxMaker class >> makeBoxDx: dx dy: dy dz: dz [
 	| shape |
 	shape := CxxOcctLibrary cxxCreateBoxDx: dx dy: dy dz: dz.
 	shape isNull ifTrue: [ self error: 'cxxCreateBox failed' ].
+	shape captureBRepData.
 	^ shape
 ]
 

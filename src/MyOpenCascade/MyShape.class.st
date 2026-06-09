@@ -37,16 +37,64 @@ Class {
 Class {
 	#name : 'MyShape',
 	#superclass : 'FFIOpaqueObject',
+	#instVars : [
+		'brepData'
+	],
 	#category : 'MyOpenCascade-Base',
 	#package : 'MyOpenCascade',
 	#tag : 'Base'
 }
 
-{ #category : 'as yet unclassified' }
+{ #category : 'persistence' }
+MyShape >> brepData [
+	"Answers the Smalltalk-owned OCCT BREP snapshot used to recreate the native handle."
+
+	^ brepData
+]
+
+{ #category : 'persistence' }
+MyShape >> captureBRepData [
+	"Refreshes the Smalltalk-owned BREP snapshot from the current native shape."
+
+	| size buffer written |
+	self hasNativeHandle ifFalse: [ ^ self ].
+
+	size := CxxOcctLibrary cxxExportBRepSize: self.
+	size <= 0 ifTrue: [ ^ self ].
+
+	buffer := ByteArray new: size.
+	written := CxxOcctLibrary cxxExportBRep: self buffer: buffer length: size.
+	written = size ifFalse: [ ^ self ].
+
+	brepData := buffer
+]
+
+{ #category : 'boolean operation' }
 MyShape >> cutWith: anotherShape [
 	"Performs a Boolean cut of anotherShape from this shape via the C++ layer."
 
-	^ CxxOcctLibrary cxxCut: self with: anotherShape
+	| result |
+	self ensureNativeHandle.
+	anotherShape ensureNativeHandle.
+	result := CxxOcctLibrary cxxCut: self with: anotherShape.
+	result isNil ifTrue: [ ^ nil ].
+	result captureBRepData.
+	^ result
+]
+
+{ #category : 'private' }
+MyShape >> ensureNativeHandle [
+	"Recreates the native OCCT shape from the BREP snapshot after an image restart."
+
+	| restored |
+	self hasNativeHandle ifTrue: [ ^ self ].
+	(brepData isNil or: [ brepData isEmpty ]) ifTrue: [ ^ self ].
+
+	restored := CxxOcctLibrary cxxImportBRep: brepData length: brepData size.
+	(restored isNil or: [ restored hasNativeHandle not ]) ifTrue: [ ^ self ].
+
+	handle := restored handle.
+	restored handle: nil
 ]
 
 { #category : 'finalization' }
@@ -82,17 +130,26 @@ MyShape >> handle: anObject [
 	handle := anObject
 ]
 
+{ #category : 'private' }
+MyShape >> hasNativeHandle [
+	"Answers whether the native pointer is currently usable without rehydration."
+
+	^ handle notNil and: [ handle isNull not ]
+]
+
 { #category : 'testing' }
 MyShape >> isNull [
 	"Answers whether this shape has no valid native handle."
 
-	^ handle isNil or: [ handle isNull ]
+	self ensureNativeHandle.
+	^ self hasNativeHandle not
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'accessing' }
 MyShape >> normalBufferLength [
 	"Returns the number of doubles in the normal buffer (vertexCount * 3)."
 
+	self ensureNativeHandle.
 	^ CxxOcctLibrary cxxGetNormalBufferLength: self
 ]
 
@@ -101,6 +158,7 @@ MyShape >> normals [
 	"Returns a Float64Array of per-vertex normals, or an empty array if not yet tessellated."
 
 	| address |
+	self ensureNativeHandle.
 	address := CxxOcctLibrary cxxGetNormals: self.
 	address isNull ifTrue: [ ^ Float64Array new: 0 ].
 	^ MyMakeShape float64ArrayFromExternalAddress: address count: self normalBufferLength
@@ -132,21 +190,11 @@ MyShape >> rotateDegrees: degrees aroundAxis: axisSymbol center: centerPoint [
 				  around: centerPoint ]
 ]
 
-{ #category : 'as yet unclassified' }
-MyShape >> rotateDegreesOnX: xDegrees y: yDegrees z: zDegrees [
-	"Applies CAD-level Euler rotation to the underlying OpenCascade shape."
-
-	CxxOcctLibrary
-		cxxRotateShape: self
-		xDegrees: xDegrees
-		yDegrees: yDegrees
-		zDegrees: zDegrees
-]
-
 { #category : 'transforming' }
 MyShape >> rotateDegreesOnX: xDegrees y: yDegrees z: zDegrees around: centerPoint [
 	"Applies CAD-level Euler rotation around a world-space center point."
 
+	self ensureNativeHandle.
 	CxxOcctLibrary
 		cxxRotateShape: self
 		xDegrees: xDegrees
@@ -154,7 +202,8 @@ MyShape >> rotateDegreesOnX: xDegrees y: yDegrees z: zDegrees around: centerPoin
 		zDegrees: zDegrees
 		centerX: centerPoint x
 		centerY: centerPoint y
-		centerZ: centerPoint z
+		centerZ: centerPoint z.
+	self captureBRepData
 ]
 
 { #category : 'transforming' }
@@ -172,6 +221,7 @@ MyShape >> scaleBy: aVector [
 MyShape >> tessellateDeflection: deflection [
 	"Instructs the C++ engine to generate a mesh for this shape at the given chord deflection."
 
+	self ensureNativeHandle.
 	CxxOcctLibrary cxxTessellate: self deflection: deflection
 ]
 
@@ -179,41 +229,47 @@ MyShape >> tessellateDeflection: deflection [
 MyShape >> translateBy: aVector [
 	"Applies a CAD-level translation to the underlying OpenCascade shape."
 
+	self ensureNativeHandle.
 	CxxOcctLibrary
 		cxxTranslateShape: self
 		x: aVector x
 		y: aVector y
-		z: aVector z
+		z: aVector z.
+	self captureBRepData
 ]
 
 { #category : 'accessing' }
 MyShape >> triangleCount [
 	"Returns the number of triangles in the tessellated mesh."
 
+	self ensureNativeHandle.
 	^ CxxOcctLibrary cxxTriangleCount: self
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'accessing' }
 MyShape >> triangleIndexCount [
 	"Returns the total number of indices in the triangle buffer (triangleCount * 3)."
 
+	self ensureNativeHandle.
 	^ CxxOcctLibrary cxxGetTriangleIndexCount: self
 ]
 
-{ #category : 'access' }
+{ #category : 'accessing' }
 MyShape >> triangles [
 	"Returns an Array of triangle vertex indices, or an empty array if not yet tessellated."
 
 	| address |
+	self ensureNativeHandle.
 	address := CxxOcctLibrary cxxGetTriangles: self.
 	address isNull ifTrue: [ ^ Array new: 0 ].
 	^ MyMakeShape int32ArrayFromExternalAddress: address count: self triangleIndexCount
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'accessing' }
 MyShape >> vertexBufferLength [
 	"Returns the number of doubles in the vertex buffer (vertexCount * 3)."
 
+	self ensureNativeHandle.
 	^ CxxOcctLibrary cxxGetVertexBufferLength: self
 ]
 
@@ -221,6 +277,7 @@ MyShape >> vertexBufferLength [
 MyShape >> vertexCount [
 	"Returns the number of vertices in the tessellated mesh."
 
+	self ensureNativeHandle.
 	^ CxxOcctLibrary cxxVertexCount: self
 ]
 
@@ -229,6 +286,7 @@ MyShape >> vertices [
 	"Returns a Float64Array of vertex positions, or an empty array if not yet tessellated."
 
 	| address |
+	self ensureNativeHandle.
 	address := CxxOcctLibrary cxxGetVertices: self.
 	address isNull ifTrue: [ ^ Float64Array new: 0 ].
 	^ MyMakeShape float64ArrayFromExternalAddress: address count: self vertexBufferLength

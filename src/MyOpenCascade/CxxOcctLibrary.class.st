@@ -76,6 +76,20 @@ CxxOcctLibrary class >> cxxDumpMemoryDifference [
     ^ self ffiCall: #(void cxxDumpMemoryDifference())
 ]
 
+{ #category : 'persistence' }
+CxxOcctLibrary class >> cxxExportBRep: shape buffer: buffer length: bufferLength [
+	"Serializes shape into buffer as OCCT BREP bytes. Answers the number of bytes written."
+
+	^ self ffiCall: #( int cxxExportBRep ( MyShape* shape, void* buffer, int bufferLength ) )
+]
+
+{ #category : 'persistence' }
+CxxOcctLibrary class >> cxxExportBRepSize: shape [
+	"Returns the number of bytes required to serialize shape as OCCT BREP data."
+
+	^ self ffiCall: #( int cxxExportBRepSize ( MyShape* shape ) )
+]
+
 { #category : 'unused' }
 CxxOcctLibrary class >> cxxGetAllNormals: shapeHandle buffer: bufferPtr [
 	"Fills bufferPtr with vertexCount*3 doubles representing per-vertex normals."
@@ -144,6 +158,13 @@ CxxOcctLibrary class >> cxxHasNoMemoryDifference [
 	"Returns non-zero if no memory change has occurred since the last checkpoint."
 	
     ^ self ffiCall: #(int cxxHasMemoryDifference())
+]
+
+{ #category : 'persistence' }
+CxxOcctLibrary class >> cxxImportBRep: buffer length: bufferLength [
+	"Recreates a native shape from OCCT BREP bytes."
+
+	^ self ffiCall: #( MyShape* cxxImportBRep ( void* buffer, int bufferLength ) )
 ]
 
 { #category : 'unused' }
