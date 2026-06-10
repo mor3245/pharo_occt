@@ -13,9 +13,7 @@ Class {
 	#instVars : [
 		'wodenPresenter',
 		'scene',
-		'meshNodes',
 		'cameraNode',
-		'selectedEntry',
 		'selectedOriginalRenderables',
 		'contextMenuDownPosition',
 		'contextMenuWasDragged',
@@ -32,7 +30,9 @@ Class {
 		'rotationAxisLock',
 		'rotationTypedDegreesString',
 		'rotationCurrentDegrees',
-		'rotationStartCenter'
+		'rotationStartCenter',
+		'renderedShapes',
+		'selectedRenderedShape'
 	],
 	#category : 'MyOpenCascade-Woden',
 	#package : 'MyOpenCascade',
@@ -43,15 +43,18 @@ Class {
 MyContextMenuPresenter >> activateRotationMode [
 	"Starts interactive rotation for the selected rendered node, around its visible center."
 
-	selectedEntry ifNil: [ ^ self ].
+	| change |
+	selectedRenderedShape ifNil: [ ^ self ].
 
 	grabModeActive ifTrue: [ self confirmTranslationMode ].
-	
-	selectedEntry := self bakeRenderedTranslationAndRebuildFor: selectedEntry.
-	
+
+
+	change := selectedRenderedShape bakeTranslation.
+	self applyRenderNodeChange: change.
+
 	rotationModeActive := true.
 	rotationStartMousePosition := nil.
-	rotationStartNodeTransform := selectedEntry key transform copy.
+	rotationStartNodeTransform := selectedRenderedShape node transform copy.
 	rotationStartCenter := self selectedNodeRotationCenter.
 	rotationAxisLock := #z.
 	rotationTypedDegreesString := ''.
@@ -64,12 +67,12 @@ MyContextMenuPresenter >> activateRotationMode [
 MyContextMenuPresenter >> activateTranslationMode [
 	"Starts interactive translation for the selected rendered node."
 
-	selectedEntry ifNil: [ ^ self ].
+	selectedRenderedShape ifNil: [ ^ self ].
 
 	grabModeActive := true.
 	grabAxisLock := nil.
 	grabStartMousePosition := nil.
-	grabStartNodePosition := selectedEntry key position.
+	grabStartNodePosition := selectedRenderedShape node position.
 	grabDragPlanePoint := grabStartNodePosition.
 	grabDragPlaneNormal := self cameraForwardDirection.
 	grabStartWorldPoint := nil.
@@ -81,17 +84,11 @@ MyContextMenuPresenter >> activateTranslationMode [
 MyContextMenuPresenter >> addBox [
 	"Creates a 1×1×1 tessellated box, adds it to the Woden scene, and records the node-shape pair."
 
-	| shape mesh node |
-	shape := MyBoxMaker
-		         tessellatedBoxDx: 1
-		         dy: 1
-		         dz: 1
-		         deflection: 0.01.
-	mesh := MyShapeWodenAdapter new asWDMesh: shape.
-	node := mesh asSceneNode.
+	| renderedShape |
+	renderedShape := MyRenderedShape shape: (MyBoxMaker makeBoxDx: 1 dy: 1 dz: 1) deflection: 0.01.
 
-	scene add: node.
-	meshNodes addLast: node -> shape.
+	scene add: renderedShape node.
+	renderedShapes addLast: renderedShape.
 
 	wodenPresenter adapter widget changed
 ]
@@ -100,13 +97,11 @@ MyContextMenuPresenter >> addBox [
 MyContextMenuPresenter >> addCylinder [
 	"Creates a tessellated cylinder, adds it to the Woden scene, and records the node-shape pair."
 
-	| shape mesh node |
-	shape := MyCylinderMaker tessellatedCylinderRadius: 1 height: 1 deflection: 0.01.
-	mesh := MyShapeWodenAdapter new asWDMesh: shape.
-	node := mesh asSceneNode.
+	| renderedShape |
+	renderedShape := MyRenderedShape shape: (MyCylinderMaker makeCylinderRadius: 1 height: 1) deflection: 0.01.
 
-	scene add: node.
-	meshNodes addLast: node -> shape.
+	scene add: renderedShape node.
+	renderedShapes addLast: renderedShape.
 
 	wodenPresenter adapter widget changed
 ]
@@ -127,16 +122,27 @@ MyContextMenuPresenter >> appendRotationTypedCharacter: key [
 	self applyRotationDegrees: degrees
 ]
 
+{ #category : 'rendered geometry management' }
+MyContextMenuPresenter >> applyRenderNodeChange: aChange [
+
+	aChange isUnchanged ifTrue: [ ^ self ].
+
+	scene remove: aChange oldNode.
+	scene add: aChange newNode.
+
+	wodenPresenter adapter widget changed
+]
+
 { #category : 'geometry rotation' }
 MyContextMenuPresenter >> applyRotationDegrees: degrees [
 	"Applies the given rotation angle around the selected object's visible center."
 
 	| node startPosition startOffset rotatedOffset newPosition |
-	selectedEntry ifNil: [ ^ self ].
+	selectedRenderedShape ifNil: [ ^ self ].
 	rotationStartNodeTransform ifNil: [ ^ self ].
 	rotationStartCenter ifNil: [ ^ self ].
 
-	node := selectedEntry key.
+	node := selectedRenderedShape node.
 
 	node transform: rotationStartNodeTransform copy.
 
@@ -162,71 +168,6 @@ MyContextMenuPresenter >> applySelectedVisualTo: aNode [
 	selectedOriginalRenderables := aNode renderables.
 
 	aNode renderables: (selectedOriginalRenderables collect: [ :each | each copyWithMaterial: self selectionMaterial ])
-]
-
-{ #category : 'rendered geometry management' }
-MyContextMenuPresenter >> bakeRenderedRotationAndRebuildFor: anEntry axis: axisSymbol degrees: degrees center: centerPoint [
-	"Applies rendered rotation to CAD shape, rebuilds a fresh render node, and prevents stale selection renderables."
-
-	| oldNode shape mesh newNode newEntry wasSelected |
-	oldNode := anEntry key.
-	shape := anEntry value.
-	wasSelected := selectedEntry == anEntry.
-
-	wasSelected ifTrue: [ self restoreSelectedVisual ].
-
-	shape rotateDegrees: degrees aroundAxis: axisSymbol center: centerPoint.
-	shape tessellateDeflection: 0.01.
-
-	mesh := MyShapeWodenAdapter new asWDMesh: shape.
-	newNode := mesh asSceneNode.
-	newEntry := newNode -> shape.
-
-	scene remove: oldNode.
-	scene add: newNode.
-
-	meshNodes remove: anEntry ifAbsent: [ ].
-	meshNodes addLast: newEntry.
-
-	wasSelected ifTrue: [
-			selectedEntry := newEntry.
-			selectedOriginalRenderables := nil.
-			self applySelectedVisualTo: newNode ].
-
-	^ newEntry
-]
-
-{ #category : 'rendered geometry management' }
-MyContextMenuPresenter >> bakeRenderedTranslationAndRebuildFor: anEntry [
-	"Applies rendered translation to CAD shape, rebuilds a fresh render node, and prevents stale selection renderables."
-
-	| oldNode shape translation mesh newNode newEntry wasSelected |
-	oldNode := anEntry key.
-	shape := anEntry value.
-	translation := oldNode position.
-	wasSelected := selectedEntry == anEntry.
-
-	wasSelected ifTrue: [ self restoreSelectedVisual ].
-
-	shape translateBy: translation.
-	shape tessellateDeflection: 0.01.
-
-	mesh := MyShapeWodenAdapter new asWDMesh: shape.
-	newNode := mesh asSceneNode.
-	newEntry := newNode -> shape.
-
-	scene remove: oldNode.
-	scene add: newNode.
-
-	meshNodes remove: anEntry ifAbsent: [ ].
-	meshNodes addLast: newEntry.
-
-	wasSelected ifTrue: [
-			selectedEntry := newEntry.
-			selectedOriginalRenderables := nil.
-			self applySelectedVisualTo: newNode ].
-
-	^ newEntry
 ]
 
 { #category : 'user interface' }
@@ -322,9 +263,9 @@ MyContextMenuPresenter >> cancelRotationMode [
 
 	rotationModeActive ifFalse: [ ^ self ].
 
-	selectedEntry ifNotNil: [
+	selectedRenderedShape ifNotNil: [
 		rotationStartNodeTransform ifNotNil: [
-			selectedEntry key transform: rotationStartNodeTransform copy ] ].
+			selectedRenderedShape node transform: rotationStartNodeTransform copy ] ].
 
 	rotationModeActive := false.
 	rotationStartMousePosition := nil.
@@ -343,7 +284,7 @@ MyContextMenuPresenter >> cancelTranslationMode [
 
 	grabModeActive ifFalse: [ ^ self ].
 
-	selectedEntry ifNotNil: [ grabStartNodePosition ifNotNil: [ selectedEntry key position: grabStartNodePosition ] ].
+	selectedRenderedShape ifNotNil: [ grabStartNodePosition ifNotNil: [ selectedRenderedShape node position: grabStartNodePosition ] ].
 
 	grabModeActive := false.
 	grabStartMousePosition := nil.
@@ -361,38 +302,43 @@ MyContextMenuPresenter >> clearSelection [
 	"Restores the previously selected node's visuals and clears the selection state."
 
 	self restoreSelectedVisual.
-	selectedEntry := nil.
+	selectedRenderedShape := nil.
 	wodenPresenter adapter widget changed
 ]
 
 { #category : 'geometry rotation' }
 MyContextMenuPresenter >> confirmRotationMode [
-	"Accepts the current rendered-node rotation and bakes it into the CAD shape."
+    "Accepts the current rendered-node rotation and bakes it into the CAD shape."
 
-	| entryToBake axis degrees center |
-	rotationModeActive ifFalse: [ ^ self ].
+    | axis degrees center change |
+    rotationModeActive ifFalse: [ ^ self ].
 
-	entryToBake := selectedEntry.
-	axis := rotationAxisLock.
-	degrees := rotationCurrentDegrees.
-	center := rotationStartCenter.
+    axis := rotationAxisLock.
+    degrees := rotationCurrentDegrees.
+    center := rotationStartCenter.
 
-	(entryToBake notNil and: [ degrees ~= 0 ]) ifTrue: [
-			selectedEntry := self
-				                 bakeRenderedRotationAndRebuildFor: entryToBake
-				                 axis: axis
-				                 degrees: degrees
-				                 center: center ].
+    (selectedRenderedShape notNil and: [ degrees ~= 0 ]) ifTrue: [
+        self restoreSelectedVisual.
 
-	rotationModeActive := false.
-	rotationStartMousePosition := nil.
-	rotationStartNodeTransform := nil.
-	rotationStartCenter := nil.
-	rotationAxisLock := nil.
-	rotationTypedDegreesString := ''.
-	rotationCurrentDegrees := 0.
+        change := selectedRenderedShape
+            bakeRotationDegrees: degrees
+            axis: axis
+            center: center.
 
-	wodenPresenter adapter widget changed
+        self applyRenderNodeChange: change.
+
+        selectedOriginalRenderables := nil.
+        self applySelectedVisualTo: selectedRenderedShape node ].
+
+    rotationModeActive := false.
+    rotationStartMousePosition := nil.
+    rotationStartNodeTransform := nil.
+    rotationStartCenter := nil.
+    rotationAxisLock := nil.
+    rotationTypedDegreesString := ''.
+    rotationCurrentDegrees := 0.
+
+    wodenPresenter adapter widget changed
 ]
 
 { #category : 'geometry translation' }
@@ -434,44 +380,40 @@ MyContextMenuPresenter >> contextMenuDragThreshold [
 
 { #category : 'boolean operations' }
 MyContextMenuPresenter >> cutSelectedWithLastAdded [
-	"Cut the selected shape with the last inserted shape, after baking visible translations into CAD space."
+    "Cut the selected shape with the last inserted shape, after baking visible translations into CAD space."
 
-	| targetEntry toolEntry targetShape toolShape resultShape resultMesh resultNode |
-	selectedEntry ifNil: [ ^ self ].
-	meshNodes size < 2 ifTrue: [ ^ self ].
+    | target tool targetChange toolChange resultRenderedShape |
+    selectedRenderedShape ifNil: [ ^ self ].
+    renderedShapes size < 2 ifTrue: [ ^ self ].
 
-	targetEntry := selectedEntry.
-	toolEntry := meshNodes last.
-	targetEntry == toolEntry ifTrue: [ ^ self ].
+    target := selectedRenderedShape.
+    tool := renderedShapes last.
+    target == tool ifTrue: [ ^ self ].
 
-	self restoreSelectedVisual.
+    self restoreSelectedVisual.
 
-	targetEntry := self bakeRenderedTranslationAndRebuildFor: targetEntry.
-	toolEntry := self bakeRenderedTranslationAndRebuildFor: toolEntry.
+    targetChange := target bakeTranslation.
+    self applyRenderNodeChange: targetChange.
 
-	targetShape := targetEntry value.
-	toolShape := toolEntry value.
+    toolChange := tool bakeTranslation.
+    self applyRenderNodeChange: toolChange.
 
-	(targetShape isNull or: [ toolShape isNull ]) ifTrue: [ ^ self ].
+    (target shape isNull or: [ tool shape isNull ]) ifTrue: [ ^ self ].
 
-	resultShape := targetShape cutWith: toolShape.
-	(resultShape isNil or: [ resultShape isNull ]) ifTrue: [ ^ self ].
+    resultRenderedShape := target cutWith: tool.
+    (resultRenderedShape isNil or: [ resultRenderedShape shape isNull ]) ifTrue: [ ^ self ].
 
-	resultShape tessellateDeflection: 0.01.
-	resultMesh := MyShapeWodenAdapter new asWDMesh: resultShape.
-	resultNode := resultMesh asSceneNode.
+    scene remove: target node.
+    renderedShapes remove: target ifAbsent: [ ].
+    target free.
 
-	scene remove: targetEntry key.
-	meshNodes remove: targetEntry ifAbsent: [ ].
-	targetShape free.
+    scene add: resultRenderedShape node.
+    renderedShapes addLast: resultRenderedShape.
 
-	scene add: resultNode.
-	meshNodes addLast: resultNode -> resultShape.
+    selectedRenderedShape := nil.
+    selectedOriginalRenderables := nil.
 
-	selectedEntry := nil.
-	selectedOriginalRenderables := nil.
-
-	wodenPresenter adapter widget changed
+    wodenPresenter adapter widget changed
 ]
 
 { #category : 'layout' }
@@ -487,18 +429,18 @@ MyContextMenuPresenter >> defaultLayout [
 MyContextMenuPresenter >> deleteLastAdded [
 	"Removes the most recently added node from the scene and frees its C++ shape."
 
-	| entry |
-	meshNodes ifEmpty: [ ^ self ].
+	| renderedShape |
+	renderedShapes ifEmpty: [ ^ self ].
 
-	entry := meshNodes removeLast.
+	renderedShape := renderedShapes removeLast.
 
-	selectedEntry == entry ifTrue: [
+	selectedRenderedShape == renderedShape ifTrue: [
 			self restoreSelectedVisual.
-			selectedEntry := nil.
+			selectedRenderedShape := nil.
 			selectedOriginalRenderables := nil ].
 
-	scene remove: entry key.
-	entry value free.
+	scene remove: renderedShape node.
+	renderedShape free.
 
 	wodenPresenter adapter widget changed
 ]
@@ -507,19 +449,15 @@ MyContextMenuPresenter >> deleteLastAdded [
 MyContextMenuPresenter >> deleteSelected [
 	"Removes the currently selected node from the scene and frees its C++ shape."
 
-	| node shape |
-	selectedEntry ifNil: [ ^ self ].
-
-	node := selectedEntry key.
-	shape := selectedEntry value.
+	selectedRenderedShape ifNil: [ ^ self ].
 
 	self restoreSelectedVisual.
 
-	meshNodes remove: selectedEntry ifAbsent: [ ].
-	scene remove: node.
-	shape free.
+	renderedShapes remove: selectedRenderedShape ifAbsent: [ ].
+	scene remove: selectedRenderedShape node.
+	selectedRenderedShape free.
 
-	selectedEntry := nil.
+	selectedRenderedShape := nil.
 	selectedOriginalRenderables := nil.
 
 	wodenPresenter adapter widget changed
@@ -697,8 +635,8 @@ MyContextMenuPresenter >> initializePresenters [
 
 	super initializePresenters.
 
-	meshNodes := OrderedCollection new.
-	selectedEntry := nil.
+	renderedShapes := OrderedCollection new.
+	selectedRenderedShape := nil.
 	selectedOriginalRenderables := nil.
 	grabModeActive := false.
 	grabStartMousePosition := nil.
@@ -827,13 +765,13 @@ MyContextMenuPresenter >> rayPickEntriesAt: aPoint [
 	ray := self rayForScreenPosition: aPoint.
 	hits := OrderedCollection new.
 
-	meshNodes do: [ :entry |
+	renderedShapes do: [ :renderedShape |
 			| node box distance |
-			node := entry key.
+			node := renderedShape node.
 			box := node localBoundingBox transformedWith: node globalTransform.
 			distance := box intersectionWithRay: ray.
 
-			distance ifNotNil: [ hits add: distance -> entry ] ].
+			distance ifNotNil: [ hits add: distance -> renderedShape ] ].
 
 	^ (hits asSortedCollection: [ :a :b | a key < b key ]) collect: [ :each | each value ]
 ]
@@ -862,10 +800,10 @@ MyContextMenuPresenter >> removeLastRotationTypedCharacter [
 MyContextMenuPresenter >> restoreSelectedVisual [
 	"Puts the originally saved renderables back on the selected node."
 
-	selectedEntry ifNil: [ ^ self ].
+	selectedRenderedShape ifNil: [ ^ self ].
 	selectedOriginalRenderables ifNil: [ ^ self ].
 
-	selectedEntry key renderables: selectedOriginalRenderables.
+	selectedRenderedShape node renderables: selectedOriginalRenderables.
 	selectedOriginalRenderables := nil
 ]
 
@@ -921,13 +859,13 @@ MyContextMenuPresenter >> selectShapeAt: aPoint [
 			self clearSelection.
 			^ self ].
 
-	pickedIndex := selectedEntry ifNil: [ 0 ] ifNotNil: [ pickedEntries indexOf: selectedEntry ifAbsent: [ 0 ] ].
+	pickedIndex := selectedRenderedShape ifNil: [ 0 ] ifNotNil: [ pickedEntries indexOf: selectedRenderedShape ifAbsent: [ 0 ] ].
 
 	pickedEntry := pickedEntries at: pickedIndex \\ pickedEntries size + 1.
 
 	self restoreSelectedVisual.
-	selectedEntry := pickedEntry.
-	self applySelectedVisualTo: selectedEntry key.
+	selectedRenderedShape := pickedEntry.
+	self applySelectedVisualTo: selectedRenderedShape node.
 
 	wodenPresenter adapter widget changed
 ]
@@ -936,7 +874,7 @@ MyContextMenuPresenter >> selectShapeAt: aPoint [
 MyContextMenuPresenter >> selectedNode [
 	"Returns the scene node of the currently selected entry, or nil if nothing is selected."
 
-	^ selectedEntry ifNil: [ nil ] ifNotNil: [ selectedEntry key ]
+	^ selectedRenderedShape ifNil: [ nil ] ifNotNil: [ selectedRenderedShape node ]
 ]
 
 { #category : 'geometry rotation' }
@@ -944,9 +882,9 @@ MyContextMenuPresenter >> selectedNodeRotationCenter [
 	"Returns the visible world-space center of the selected rendered node."
 
 	| node box |
-	selectedEntry ifNil: [ ^ Vector3 x: 0 y: 0 z: 0 ].
+	selectedRenderedShape ifNil: [ ^ Vector3 x: 0 y: 0 z: 0 ].
 
-	node := selectedEntry key.
+	node := selectedRenderedShape node.
 	box := node localBoundingBox transformedWith: node globalTransform.
 
 	^ box center
@@ -956,7 +894,7 @@ MyContextMenuPresenter >> selectedNodeRotationCenter [
 MyContextMenuPresenter >> selectedShape [
 	"Returns the MyShape of the currently selected entry, or nil if nothing is selected."
 
-	^ selectedEntry ifNil: [ nil ] ifNotNil: [ selectedEntry value ]
+	^ selectedRenderedShape ifNil: [ nil ] ifNotNil: [ selectedRenderedShape shape ]
 ]
 
 { #category : 'geometry selection' }
@@ -1042,7 +980,7 @@ MyContextMenuPresenter >> updateRotationPreviewAt: aPoint [
 	"Updates selected rendered-node rotation from mouse movement."
 
 	| delta degrees |
-	selectedEntry ifNil: [ ^ self ].
+	selectedRenderedShape ifNil: [ ^ self ].
 
 	rotationStartMousePosition ifNil: [ rotationStartMousePosition := aPoint ].
 	rotationTypedDegreesString isEmpty ifFalse: [ ^ self ].
@@ -1058,14 +996,14 @@ MyContextMenuPresenter >> updateTranslationPreviewAt: aPoint [
 	"Moves the selected rendered node by dragging across a camera-facing world plane."
 
 	| node currentWorldPoint translation newPosition |
-	selectedEntry ifNil: [ ^ self ].
+	selectedRenderedShape ifNil: [ ^ self ].
 
 	currentWorldPoint := self dragPlanePointAtScreenPosition: aPoint.
 	currentWorldPoint ifNil: [ ^ self ].
 
 	grabStartWorldPoint ifNil: [ grabStartWorldPoint := currentWorldPoint ].
 
-	node := selectedEntry key.
+	node := selectedRenderedShape node.
 	translation := currentWorldPoint - grabStartWorldPoint.
 	translation := self constrainedTranslation: translation.
 
