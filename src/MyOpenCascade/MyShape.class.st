@@ -82,6 +82,23 @@ MyShape >> cutWith: anotherShape [
 	^ result
 ]
 
+{ #category : 'boolean operation' }
+MyShape >> cutWithSeparatedSolids: anotherShape [
+	"Performs a Boolean cut and answers one MyShape per OCCT solid in the result."
+
+	| result solids |
+	result := self cutWith: anotherShape.
+	result ifNil: [ ^ #(  ) ].
+
+	solids := result separatedSolids.
+	solids size > 1 ifTrue: [
+			result free.
+			^ solids ].
+
+	solids do: [ :each | each free ].
+	^ Array with: result
+]
+
 { #category : 'private' }
 MyShape >> ensureNativeHandle [
 	"Recreates the native OCCT shape from the BREP snapshot after an image restart."
@@ -215,6 +232,26 @@ MyShape >> scaleBy: aVector [
 		sx: aVector x
 		sy: aVector y
 		sz: aVector z
+]
+
+{ #category : 'topology' }
+MyShape >> separatedSolids [
+	"Answer new MyShape handles for each OCCT solid contained in this shape."
+
+	| count solids solid |
+	self ensureNativeHandle.
+
+	count := CxxOcctLibrary cxxSolidCount: self.
+	count <= 0 ifTrue: [ ^ #(  ) ].
+
+	solids := OrderedCollection new.
+	0 to: count - 1 do: [ :index |
+			solid := CxxOcctLibrary cxxSolidAt: self index: index.
+			(solid notNil and: [ solid isNull not ]) ifTrue: [
+					solid captureBRepData.
+					solids add: solid ] ].
+
+	^ solids asArray
 ]
 
 { #category : 'converting' }

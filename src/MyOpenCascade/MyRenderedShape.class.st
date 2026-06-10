@@ -73,6 +73,13 @@ MyRenderedShape >> cutWith: anotherRenderedShape [
 	^ self class shape: resultShape deflection: deflection
 ]
 
+{ #category : 'boolean operations' }
+MyRenderedShape >> cutWithSeparatedSolids: anotherRenderedShape [
+	"Answer one rendered shape per OCCT solid produced by the cut."
+
+	^ (shape cutWithSeparatedSolids: anotherRenderedShape shape) collect: [ :each | self class shape: each deflection: deflection ]
+]
+
 { #category : 'accessing' }
 MyRenderedShape >> deflection [
 

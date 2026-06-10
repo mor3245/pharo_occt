@@ -230,6 +230,20 @@ CxxOcctLibrary class >> cxxShapeDelete: shapeHandle [
 	^ self ffiCall: #( void cxxShapeDelete ( MyShape* shapeHandle ) )
 ]
 
+{ #category : 'topology' }
+CxxOcctLibrary class >> cxxSolidAt: shape index: index [
+	"Returns a new native shape handle for the zero-based solid at index."
+
+	^ self ffiCall: #( MyShape* cxxSolidAt ( MyShape* shape, int index ) )
+]
+
+{ #category : 'topology' }
+CxxOcctLibrary class >> cxxSolidCount: shape [
+	"Returns the number of OCCT TopAbs_SOLID subshapes in shape."
+
+	^ self ffiCall: #( int cxxSolidCount ( MyShape* shape ) )
+]
+
 { #category : 'ffi-calls' }
 CxxOcctLibrary class >> cxxTessellate: shapeHandle deflection: deflection [
 	"Runs the BRep mesh algorithm on shapeHandle at the given chord deflection tolerance."

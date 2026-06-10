@@ -202,8 +202,12 @@ MyContextMenuPresenter >> buildContextMenu [
 							  action: [ self deleteSelected ] ];
 				  addItem: [ :item |
 						  item
-							  name: 'Cut Selected With Last Added';
-							  action: [ self cutSelectedWithLastAdded ] ];
+							  name: 'Cut Selected With Other Bodies';
+							  action: [ self cutSelectedWithOtherBodies ] ];
+				  addItem: [ :item |
+						  item
+							  name: 'Cut Other Bodies With Selected';
+							  action: [ self cutOtherBodiesWithSelected ] ];
 				  addItem: [ :item |
 						  item
 							  name: 'Inspect Selected';
@@ -379,41 +383,127 @@ MyContextMenuPresenter >> contextMenuDragThreshold [
 ]
 
 { #category : 'boolean operations' }
+MyContextMenuPresenter >> cutOtherBodiesWithSelected [
+	"Use the selected body as the cutter and cut every other body in the scene."
+
+	| tool targets replacements |
+	selectedRenderedShape ifNil: [ ^ self ].
+	renderedShapes size < 2 ifTrue: [ ^ self ].
+
+	self restoreSelectedVisual.
+
+	tool := selectedRenderedShape.
+	targets := renderedShapes reject: [ :each | each == tool ].
+
+	self applyRenderNodeChange: tool bakeTranslation.
+	targets do: [ :each | self applyRenderNodeChange: each bakeTranslation ].
+
+	replacements := OrderedCollection new.
+	targets do: [ :target |
+			| resultRenderedShapes |
+			(target shape isNull or: [ tool shape isNull ]) ifFalse: [
+					resultRenderedShapes := target cutWithSeparatedSolids: tool.
+					resultRenderedShapes := resultRenderedShapes reject: [ :each | each isNil or: [ each shape isNull ] ].
+					resultRenderedShapes ifNotEmpty: [ replacements add: target -> resultRenderedShapes ] ] ].
+
+	replacements ifEmpty: [ ^ self ].
+
+	replacements do: [ :replacement | self replaceRenderedShape: replacement key withAll: replacement value ].
+
+	selectedRenderedShape := nil.
+	selectedOriginalRenderables := nil.
+
+	wodenPresenter adapter widget changed
+]
+
+{ #category : 'boolean operations' }
 MyContextMenuPresenter >> cutSelectedWithLastAdded [
-    "Cut the selected shape with the last inserted shape, after baking visible translations into CAD space."
+	"Cut the selected shape with the last inserted shape, after baking visible translations into CAD space."
 
-    | target tool targetChange toolChange resultRenderedShape |
-    selectedRenderedShape ifNil: [ ^ self ].
-    renderedShapes size < 2 ifTrue: [ ^ self ].
+	| target tool toolChange resultRenderedShapes |
+	selectedRenderedShape ifNil: [ ^ self ].
+	renderedShapes size < 2 ifTrue: [ ^ self ].
 
-    target := selectedRenderedShape.
-    tool := renderedShapes last.
-    target == tool ifTrue: [ ^ self ].
+	target := selectedRenderedShape.
+	tool := renderedShapes last.
 
-    self restoreSelectedVisual.
+	toolChange := tool bakeTranslation.
+	self applyRenderNodeChange: toolChange.
 
-    targetChange := target bakeTranslation.
-    self applyRenderNodeChange: targetChange.
+	(target shape isNull or: [ tool shape isNull ]) ifTrue: [ ^ self ].
 
-    toolChange := tool bakeTranslation.
-    self applyRenderNodeChange: toolChange.
+	resultRenderedShapes := target cutWithSeparatedSolids: tool.
+	resultRenderedShapes := resultRenderedShapes reject: [ :each | each isNil or: [ each shape isNull ] ].
+	resultRenderedShapes ifEmpty: [ ^ self ].
 
-    (target shape isNull or: [ tool shape isNull ]) ifTrue: [ ^ self ].
+	scene remove: target node.
+	renderedShapes remove: target ifAbsent: [ ].
+	target free.
 
-    resultRenderedShape := target cutWith: tool.
-    (resultRenderedShape isNil or: [ resultRenderedShape shape isNull ]) ifTrue: [ ^ self ].
+	resultRenderedShapes do: [ :resultRenderedShape |
+			scene add: resultRenderedShape node.
+			renderedShapes addLast: resultRenderedShape ].
 
-    scene remove: target node.
-    renderedShapes remove: target ifAbsent: [ ].
-    target free.
+	selectedRenderedShape := nil.
+	selectedOriginalRenderables := nil.
 
-    scene add: resultRenderedShape node.
-    renderedShapes addLast: resultRenderedShape.
+	wodenPresenter adapter widget changed
+]
 
-    selectedRenderedShape := nil.
-    selectedOriginalRenderables := nil.
+{ #category : 'boolean operations' }
+MyContextMenuPresenter >> cutSelectedWithOtherBodies [
+	"Cut the selected body with all other bodies in the scene."
 
-    wodenPresenter adapter widget changed
+	| target tools resultRenderedShapes |
+	selectedRenderedShape ifNil: [ ^ self ].
+	renderedShapes size < 2 ifTrue: [ ^ self ].
+
+	self restoreSelectedVisual.
+
+	target := selectedRenderedShape.
+	tools := renderedShapes reject: [ :each | each == target ].
+
+	self applyRenderNodeChange: target bakeTranslation.
+	tools do: [ :each | self applyRenderNodeChange: each bakeTranslation ].
+
+	resultRenderedShapes := self cutTarget: target withTools: tools.
+	resultRenderedShapes ifEmpty: [ ^ self ].
+
+	self replaceRenderedShape: target withAll: resultRenderedShapes.
+
+	selectedRenderedShape := nil.
+	selectedOriginalRenderables := nil.
+
+	wodenPresenter adapter widget changed
+]
+
+{ #category : 'boolean operations' }
+MyContextMenuPresenter >> cutTarget: targetRenderedShape withTools: toolRenderedShapes [
+	"Answers rendered shapes produced by cutting targetRenderedShape by each tool in order."
+
+	| currentShapes changed |
+	currentShapes := OrderedCollection with: targetRenderedShape.
+	changed := false.
+
+	toolRenderedShapes do: [ :tool |
+			| nextShapes |
+			nextShapes := OrderedCollection new.
+			currentShapes do: [ :target |
+					| resultRenderedShapes |
+					(target shape isNull or: [ tool shape isNull ])
+						ifTrue: [ nextShapes add: target ]
+						ifFalse: [
+								resultRenderedShapes := target cutWithSeparatedSolids: tool.
+								resultRenderedShapes := resultRenderedShapes reject: [ :each | each isNil or: [ each shape isNull ] ].
+								resultRenderedShapes ifEmpty: [ nextShapes add: target ] ifNotEmpty: [
+										changed := true.
+										target == targetRenderedShape ifFalse: [ target free ].
+										nextShapes addAll: resultRenderedShapes ] ] ].
+			currentShapes := nextShapes ].
+
+	changed ifFalse: [ ^ #(  ) ].
+
+	^ currentShapes asArray
 ]
 
 { #category : 'layout' }
@@ -794,6 +884,19 @@ MyContextMenuPresenter >> removeLastRotationTypedCharacter [
 		           do: [ ^ self ].
 
 	self applyRotationDegrees: degrees
+]
+
+{ #category : 'boolean operations' }
+MyContextMenuPresenter >> replaceRenderedShape: oldRenderedShape withAll: newRenderedShapes [
+	"Replace one scene body with zero or more rendered bodies."
+
+	scene remove: oldRenderedShape node.
+	renderedShapes remove: oldRenderedShape ifAbsent: [ ].
+	oldRenderedShape free.
+
+	newRenderedShapes do: [ :newRenderedShape |
+			scene add: newRenderedShape node.
+			renderedShapes addLast: newRenderedShape ]
 ]
 
 { #category : 'geometry selection' }
