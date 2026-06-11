@@ -90,26 +90,41 @@ MyContextMenuTranslationMode >> dragPlanePointAtScreenPosition: aPoint [
 ]
 
 { #category : 'keyboard' }
+MyContextMenuTranslationMode >> handleAxisKey: key [
+	"Handles X/Y/Z axis lock keys."
+
+	(#( 'x' 'y' 'z' ) includes: key) ifFalse: [ ^ false ].
+	axisLock := key asSymbol.
+	^ true
+]
+
+{ #category : 'keyboard' }
+MyContextMenuTranslationMode >> handleCancellationKey: key [
+	"Handles translation cancellation keys."
+
+	key = 'escape' ifFalse: [ ^ false ].
+	self cancel.
+	^ true
+]
+
+{ #category : 'keyboard' }
+MyContextMenuTranslationMode >> handleConfirmKey: key [
+	"Handles translation confirmation keys."
+
+	(#( 'enter' 'return' ) includes: key) ifFalse: [ ^ false ].
+	self confirm.
+	^ true
+]
+
+{ #category : 'keyboard' }
 MyContextMenuTranslationMode >> handleKey: key [
 	"Handles a normalized key string. Answers whether the key was consumed."
 
 	self isActive ifFalse: [ ^ false ].
 
-	key = 'x' ifTrue: [
-			axisLock := #x.
-			^ true ].
-	key = 'y' ifTrue: [
-			axisLock := #y.
-			^ true ].
-	key = 'z' ifTrue: [
-			axisLock := #z.
-			^ true ].
-	(key = 'enter' or: [ key = 'return' ]) ifTrue: [
-			self confirm.
-			^ true ].
-	key = 'escape' ifTrue: [
-			self cancel.
-			^ true ].
+	(self handleKey: key) ifTrue: [ ^ true ].
+	(self handleConfirmKey: key) ifTrue: [ ^ true ].
+	(self handleCancellationKey: key) ifTrue: [ ^ true ].
 
 	^ false
 ]
@@ -124,7 +139,7 @@ MyContextMenuTranslationMode >> initialize [
 { #category : 'testing' }
 MyContextMenuTranslationMode >> isActive [
 
-	^ active = true
+	^ active
 ]
 
 { #category : 'initialization' }

@@ -118,34 +118,66 @@ MyContextMenuRotationMode >> confirm [
 ]
 
 { #category : 'keyboard' }
+MyContextMenuRotationMode >> handleAxisKey: key [
+	"Handles X/Y/Z axis lock keys."
+
+	(#( 'x' 'y' 'z' ) includes: key) ifFalse: [ ^ false ].
+
+	self setAxisLock: key asSymbol.
+	^ true
+]
+
+{ #category : 'keyboard' }
+MyContextMenuRotationMode >> handleCancellationKey: key [
+	"Handles rotation cancellation keys."
+
+	key = 'escape' ifFalse: [ ^ false ].
+
+	self cancel.
+	^ true
+]
+
+{ #category : 'keyboard' }
+MyContextMenuRotationMode >> handleCompletionKey: key [
+
+	(#( 'enter' 'return' ) includes: key) ifFalse: [ ^ false ].
+	self confirm.
+	^ true
+]
+
+{ #category : 'keyboard' }
+MyContextMenuRotationMode >> handleDeletionKey: key [
+	"Handles deletion of typed rotation degrees."
+
+	(key = 'backspace' or: [ key = (Character value: 8) asString ]) ifFalse: [ ^ false ].
+
+	self removeLastTypedCharacter.
+	^ true
+]
+
+{ #category : 'keyboard' }
 MyContextMenuRotationMode >> handleKey: key [
 	"Handles a normalized key string. Answers whether the key was consumed."
 
 	self isActive ifFalse: [ ^ false ].
 
-	key = 'x' ifTrue: [
-			self setAxisLock: #x.
-			^ true ].
-	key = 'y' ifTrue: [
-			self setAxisLock: #y.
-			^ true ].
-	key = 'z' ifTrue: [
-			self setAxisLock: #z.
-			^ true ].
-	(#( 'enter' 'return' ) includes: key) ifTrue: [
-			self confirm.
-			^ true ].
-	key = 'escape' ifTrue: [
-			self cancel.
-			^ true ].
-	(key = 'backspace' or: [ key = (Character value: 8) asString ]) ifTrue: [
-			self removeLastTypedCharacter.
-			^ true ].
-	(self isNumericKey: key) ifTrue: [
-			self appendTypedCharacter: key.
-			^ true ].
+	(self handleAxisKey: key) ifTrue: [ ^ true ].
+	(self handleCompletionKey: key) ifTrue: [ ^ true ].
+	(self handleCancellationKey: key) ifTrue: [ ^ true ].
+	(self handleDeletionKey: key) ifTrue: [ ^ true ].
+	(self handleNumericKey: key) ifTrue: [ ^ true ].
 
 	^ false
+]
+
+{ #category : 'keyboard' }
+MyContextMenuRotationMode >> handleNumericKey: key [
+	"Handles numeric rotation degree input."
+
+	(self isNumericKey: key) ifFalse: [ ^ false ].
+
+	self appendTypedCharacter: key.
+	^ true
 ]
 
 { #category : 'initialization' }
@@ -158,7 +190,7 @@ MyContextMenuRotationMode >> initialize [
 { #category : 'testing' }
 MyContextMenuRotationMode >> isActive [
 
-	^ active = true
+	^ active
 ]
 
 { #category : 'keyboard' }
