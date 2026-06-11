@@ -5,6 +5,7 @@ Class {
 		'presenter',
 		'active',
 		'startNodePosition',
+		'startScreenPosition',
 		'axisLock',
 		'dragPlanePoint',
 		'dragPlaneNormal',
@@ -27,11 +28,39 @@ MyContextMenuTranslationMode >> activateFor: aPresenter [
 	active := true.
 	axisLock := nil.
 	startNodePosition := selectedRenderedShape node position.
+	startScreenPosition := nil.
 	dragPlanePoint := startNodePosition.
 	dragPlaneNormal := presenter cameraForwardDirection.
 	startWorldPoint := nil.
 
 	presenter focusWodenWidget
+]
+
+{ #category : 'geometry' }
+MyContextMenuTranslationMode >> axisDirection [
+	"Returns the global direction for the current axis lock."
+
+	axisLock = #x ifTrue: [ ^ Vector3 x: 1 y: 0 z: 0 ].
+	axisLock = #y ifTrue: [ ^ Vector3 x: 0 y: 1 z: 0 ].
+	axisLock = #z ifTrue: [ ^ Vector3 x: 0 y: 0 z: 1 ].
+
+	^ nil
+]
+
+{ #category : 'geometry' }
+MyContextMenuTranslationMode >> axisTranslationAtScreenPosition: aPoint [
+	"Returns the world-space translation for the locked axis from screen movement."
+
+	| axis delta amount |
+	axis := self axisDirection.
+	axis ifNil: [ ^ Vector3 x: 0 y: 0 z: 0 ].
+
+	startScreenPosition ifNil: [ startScreenPosition := aPoint ].
+
+	delta := aPoint - startScreenPosition.
+	amount := self translationAmountForScreenDelta: delta.
+
+	^ axis * amount
 ]
 
 { #category : 'activation' }
@@ -56,21 +85,6 @@ MyContextMenuTranslationMode >> confirm [
 ]
 
 { #category : 'geometry' }
-MyContextMenuTranslationMode >> constrainedTranslation: aVector [
-	"Constrains a drag translation to the selected global axis."
-
-	| axis amount |
-	axisLock ifNil: [ ^ aVector ].
-
-	axisLock = #x ifTrue: [ axis := Vector3 x: 1 y: 0 z: 0 ].
-	axisLock = #y ifTrue: [ axis := Vector3 x: 0 y: 1 z: 0 ].
-	axisLock = #z ifTrue: [ axis := Vector3 x: 0 y: 0 z: 1 ].
-
-	amount := aVector dot: axis.
-	^ axis * amount
-]
-
-{ #category : 'geometry' }
 MyContextMenuTranslationMode >> dragPlanePointAtScreenPosition: aPoint [
 	"Returns the point where the screen ray intersects the current drag plane."
 
@@ -89,12 +103,28 @@ MyContextMenuTranslationMode >> dragPlanePointAtScreenPosition: aPoint [
 	^ ray pointAtDistance: distance
 ]
 
+{ #category : 'geometry' }
+MyContextMenuTranslationMode >> freeTranslationAtScreenPosition: aPoint [
+	"Returns the free-drag translation on the camera-facing drag plane."
+
+	| currentWorldPoint |
+	currentWorldPoint := self dragPlanePointAtScreenPosition: aPoint.
+	currentWorldPoint ifNil: [ ^ Vector3 x: 0 y: 0 z: 0 ].
+
+	startWorldPoint ifNil: [ startWorldPoint := currentWorldPoint ].
+
+	^ currentWorldPoint - startWorldPoint
+]
+
 { #category : 'keyboard' }
 MyContextMenuTranslationMode >> handleAxisKey: key [
 	"Handles X/Y/Z axis lock keys."
 
 	(#( 'x' 'y' 'z' ) includes: key) ifFalse: [ ^ false ].
+	
 	axisLock := key asSymbol.
+	startWorldPoint := nil.
+	startScreenPosition := nil.
 	^ true
 ]
 
@@ -103,12 +133,13 @@ MyContextMenuTranslationMode >> handleCancellationKey: key [
 	"Handles translation cancellation keys."
 
 	key = 'escape' ifFalse: [ ^ false ].
+	
 	self cancel.
 	^ true
 ]
 
 { #category : 'keyboard' }
-MyContextMenuTranslationMode >> handleConfirmKey: key [
+MyContextMenuTranslationMode >> handleCompletionKey: key [
 	"Handles translation confirmation keys."
 
 	(#( 'enter' 'return' ) includes: key) ifFalse: [ ^ false ].
@@ -122,8 +153,8 @@ MyContextMenuTranslationMode >> handleKey: key [
 
 	self isActive ifFalse: [ ^ false ].
 
-	(self handleKey: key) ifTrue: [ ^ true ].
-	(self handleConfirmKey: key) ifTrue: [ ^ true ].
+	(self handleAxisKey: key) ifTrue: [ ^ true ].
+	(self handleCompletionKey: key) ifTrue: [ ^ true ].
 	(self handleCancellationKey: key) ifTrue: [ ^ true ].
 
 	^ false
@@ -148,28 +179,44 @@ MyContextMenuTranslationMode >> reset [
 
 	active := false.
 	startNodePosition := nil.
+	startScreenPosition := nil.
 	axisLock := nil.
 	dragPlanePoint := nil.
 	dragPlaneNormal := nil.
 	startWorldPoint := nil
 ]
 
+{ #category : 'geometry' }
+MyContextMenuTranslationMode >> translationAmountForScreenDelta: aPoint [
+	"Returns the signed world distance for the locked axis from screen movement."
+
+	| scale |
+	scale := self translationUnitsPerPixel.
+
+	axisLock = #x ifTrue: [ ^ aPoint x * scale ].
+
+	^ aPoint y negated * scale
+]
+
+{ #category : 'geometry' }
+MyContextMenuTranslationMode >> translationUnitsPerPixel [
+	"World units moved per screen pixel during axis-locked translation."
+
+	^ 0.01
+]
+
 { #category : 'mouse' }
 MyContextMenuTranslationMode >> updateAt: aPoint [
-	"Moves the selected rendered node by dragging across a camera-facing world plane."
+	"Moves the selected rendered node by dragging freely or along the locked global axis."
 
-	| selectedRenderedShape node currentWorldPoint translation newPosition |
+	| selectedRenderedShape node translation newPosition |
 	selectedRenderedShape := presenter selectedRenderedShape.
 	selectedRenderedShape ifNil: [ ^ self ].
 
-	currentWorldPoint := self dragPlanePointAtScreenPosition: aPoint.
-	currentWorldPoint ifNil: [ ^ self ].
-
-	startWorldPoint ifNil: [ startWorldPoint := currentWorldPoint ].
-
 	node := selectedRenderedShape node.
-	translation := currentWorldPoint - startWorldPoint.
-	translation := self constrainedTranslation: translation.
+	translation := axisLock
+		               ifNil: [ self freeTranslationAtScreenPosition: aPoint ]
+		               ifNotNil: [ self axisTranslationAtScreenPosition: aPoint ].
 
 	newPosition := startNodePosition + translation.
 
