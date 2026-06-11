@@ -77,7 +77,7 @@ MyShape >> cutWith: anotherShape [
 	self ensureNativeHandle.
 	anotherShape ensureNativeHandle.
 	result := CxxOcctLibrary cxxCut: self with: anotherShape.
-	result isNil ifTrue: [ ^ nil ].
+	result ifNil: [ ^ nil ].
 	result captureBRepData.
 	^ result
 ]
@@ -110,8 +110,8 @@ MyShape >> ensureNativeHandle [
 	restored := CxxOcctLibrary cxxImportBRep: brepData length: brepData size.
 	(restored isNil or: [ restored hasNativeHandle not ]) ifTrue: [ ^ self ].
 
-	handle := restored handle.
-	restored handle: nil
+	handle := restored getHandle.
+	restored setHandle: nil
 ]
 
 { #category : 'finalization' }
@@ -131,20 +131,6 @@ MyShape >> free [
 	handle isNull ifTrue: [ ^ self ].
 	CxxOcctLibrary cxxShapeDelete: self.
 	handle beNull
-]
-
-{ #category : 'accessing' }
-MyShape >> handle [
-	"Returns the raw ExternalAddress pointing to the C++ Shape object."
-
-	^ handle
-]
-
-{ #category : 'accessing' }
-MyShape >> handle: anObject [
-	"Sets the raw ExternalAddress for this shape; used during construction."
-
-	handle := anObject
 ]
 
 { #category : 'private' }
