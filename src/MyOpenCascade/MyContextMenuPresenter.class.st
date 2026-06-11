@@ -91,27 +91,31 @@ MyContextMenuPresenter >> applySelectedVisualTo: aNode [
 ]
 
 { #category : 'user interface' }
+MyContextMenuPresenter >> buildBooleanMenuGroup: aGroup [
+	"Adds boolean operation actions to a menu group."
+
+	self addMenuItemNamed: 'Cut Selected With Other Bodies' action: [ self cutSelectedWithOtherBodies ] to: aGroup.
+	self addMenuItemNamed: 'Cut Other Bodies With Selected' action: [ self cutOtherBodiesWithSelected ] to: aGroup
+]
+
+{ #category : 'user interface' }
 MyContextMenuPresenter >> buildContextMenu [
 	"Constructs the right-click menu for scene and selected-shape actions."
 
 	^ self newMenu
-		  addGroup: [ :group |
-				  self addMenuItemNamed: 'Add Box' action: [ self addBox ] to: group.
-				  self addMenuItemNamed: 'Add Cylinder' action: [ self addCylinder ] to: group ];
-		  addGroup: [ :group |
-				  self addMenuItemNamed: 'Translate Selected' action: [ self activateTranslationMode ] to: group.
-				  self addMenuItemNamed: 'Rotate Selected' action: [ self activateRotationMode ] to: group.
-				  self addMenuItemNamed: 'Delete Selected' action: [ self deleteSelected ] to: group.
-				  self addMenuItemNamed: 'Delete Last Inserted' action: [ self deleteLastAdded ] to: group ];
-		  addGroup: [ :group |
-				  self addMenuItemNamed: 'Cut Selected With Other Bodies' action: [ self cutSelectedWithOtherBodies ] to: group.
-				  self addMenuItemNamed: 'Cut Other Bodies With Selected' action: [ self cutOtherBodiesWithSelected ] to: group ];
-		  addGroup: [ :group |
-				  self addMenuItemNamed: 'Fit All' action: [ self fitAll ] to: group.
-				  self addMenuItemNamed: 'Fit Selected' action: [ self fitSelected ] to: group.
-				  self addMenuItemNamed: 'Use Selected as Pivot' action: [ self useSelectedAsPivot ] to: group.
-				  self addMenuItemNamed: 'Inspect Selected' action: [ self inspectSelectedShape ] to: group ];
+		  addGroup: [ :group | self buildCreationMenuGroup: group ];
+		  addGroup: [ :group | self buildSelectionMenuGroup: group ];
+		  addGroup: [ :group | self buildBooleanMenuGroup: group ];
+		  addGroup: [ :group | self buildViewMenuGroup: group ];
 		  yourself
+]
+
+{ #category : 'user interface' }
+MyContextMenuPresenter >> buildCreationMenuGroup: aGroup [
+	"Adds shape creation actions to a menu group."
+
+	self addMenuItemNamed: 'Add Box' action: [ self addBox ] to: aGroup.
+	self addMenuItemNamed: 'Add Cylinder' action: [ self addCylinder ] to: aGroup
 ]
 
 { #category : 'rendered geometry management' }
@@ -128,6 +132,26 @@ MyContextMenuPresenter >> buildScene [
 	lightNode position: (Vector3 x: -1.5 y: 1.5 z: 1.0). "scene add: mesh."
 	scene add: lightNode.
 	^ scene
+]
+
+{ #category : 'user interface' }
+MyContextMenuPresenter >> buildSelectionMenuGroup: aGroup [
+	"Adds selected-shape editing actions to a menu group."
+
+	self addMenuItemNamed: 'Translate Selected' action: [ self activateTranslationMode ] to: aGroup.
+	self addMenuItemNamed: 'Rotate Selected' action: [ self activateRotationMode ] to: aGroup.
+	self addMenuItemNamed: 'Delete Selected' action: [ self deleteSelected ] to: aGroup.
+	self addMenuItemNamed: 'Delete Last Inserted' action: [ self deleteLastAdded ] to: aGroup
+]
+
+{ #category : 'user interface' }
+MyContextMenuPresenter >> buildViewMenuGroup: aGroup [
+	"Adds camera and inspection actions to a menu group."
+
+	self addMenuItemNamed: 'Fit All' action: [ self fitAll ] to: aGroup.
+	self addMenuItemNamed: 'Fit Selected' action: [ self fitSelected ] to: aGroup.
+	self addMenuItemNamed: 'Use Selected as Pivot' action: [ self useSelectedAsPivot ] to: aGroup.
+	self addMenuItemNamed: 'Inspect Selected' action: [ self inspectSelectedShape ] to: aGroup
 ]
 
 { #category : 'user interface' }
