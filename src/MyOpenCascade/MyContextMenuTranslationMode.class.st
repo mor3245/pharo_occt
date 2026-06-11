@@ -78,7 +78,18 @@ MyContextMenuTranslationMode >> cancel [
 
 { #category : 'activation' }
 MyContextMenuTranslationMode >> confirm [
-	"Accepts the current rendered-node translation."
+	"Accepts the current rendered-node translation and bakes it into the CAD shape."
+
+	| selectedRenderedShape change |
+	self isActive ifFalse: [ ^ self ].
+
+	selectedRenderedShape := presenter selectedRenderedShape.
+	selectedRenderedShape ifNotNil: [
+			presenter restoreSelectedVisual.
+
+			change := selectedRenderedShape bakeTranslation.
+			presenter applyRenderNodeChange: change.
+			presenter applySelectedVisualTo: selectedRenderedShape node ].
 
 	self reset.
 	presenter refreshScene
