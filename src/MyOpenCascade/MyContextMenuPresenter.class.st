@@ -140,13 +140,7 @@ MyContextMenuPresenter >> cameraControlMorph [
 MyContextMenuPresenter >> cameraForwardDirection [
 	"Returns the camera forward direction in world space."
 
-	| transform localForward |
-	transform := cameraNode transform.
-	localForward := Vector3 x: 0 y: 0 z: -1.
-
-	(transform respondsTo: #transformVector3:) ifTrue: [ ^ (transform transformVector3: localForward) normalized ].
-
-	^ (transform transformVector: localForward) normalized
+	^ (self transformCameraDirection: (Vector3 x: 0 y: 0 z: -1)) normalized
 ]
 
 { #category : 'geometry rotation' }
@@ -252,7 +246,7 @@ MyContextMenuPresenter >> cutSelectedWithLastAdded [
 			scene add: resultRenderedShape node.
 			renderedShapes addLast: resultRenderedShape ].
 
-	self forget.
+	selection forget.
 
 	self refreshScene
 ]
@@ -373,15 +367,13 @@ MyContextMenuPresenter >> fitSelected [
 
 { #category : 'input event handling' }
 MyContextMenuPresenter >> focusWodenWidget [
-	"Best-effort keyboard focus so X/Y/Z/Enter work after choosing the menu item."
+	"Requests keyboard focus so X/Y/Z/Enter work after choosing the menu item."
 
 	| widget |
 	widget := self wodenWidget.
 	widget ifNil: [ ^ self ].
 
-	(widget respondsTo: #takeKeyboardFocus) ifTrue: [ widget takeKeyboardFocus ].
-
-	(widget respondsTo: #activeHand) ifTrue: [ widget activeHand ifNotNil: [ :hand | hand newKeyboardFocus: widget ] ]
+	widget takeKeyboardFocus
 ]
 
 { #category : 'input event handling' }
@@ -512,17 +504,19 @@ MyContextMenuPresenter >> inspectSelectedShape [
 MyContextMenuPresenter >> keyStringFromEvent: anEvent [
 	"Normalizes common Morphic key event variants."
 
-	(anEvent respondsTo: #keyCharacter) ifTrue: [ anEvent keyCharacter ifNotNil: [ :character | ^ character asString asLowercase ] ].
+	^ self normalizedKeyCharacter: anEvent keyCharacter
+]
 
-	(anEvent respondsTo: #key) ifTrue: [
-			anEvent key ifNotNil: [ :key |
-					(key respondsTo: #name)
-						ifTrue: [ ^ key name asString asLowercase ]
-						ifFalse: [ ^ key asString asLowercase ] ] ].
+{ #category : 'input event handling' }
+MyContextMenuPresenter >> normalizedKeyCharacter: aCharacter [
+	"Answers the key name used by the transform modes."
 
-	(anEvent respondsTo: #character) ifTrue: [ anEvent character ifNotNil: [ :character | ^ character asString asLowercase ] ].
+	aCharacter ifNil: [ ^ '' ].
+	aCharacter = (Character value: 13) ifTrue: [ ^ 'return' ].
+	aCharacter = (Character value: 27) ifTrue: [ ^ 'escape' ].
+	aCharacter = (Character value: 8) ifTrue: [ ^ 'backspace' ].
 
-	^ ''
+	^ aCharacter asString asLowercase
 ]
 
 { #category : 'geometry selection' }
@@ -673,6 +667,13 @@ MyContextMenuPresenter >> showContextMenuAt: aPoint [
 	| menu |
 	menu := self buildContextMenu.
 	menu openWithSpecAt: aPoint
+]
+
+{ #category : 'geometry translation' }
+MyContextMenuPresenter >> transformCameraDirection: aVector [
+	"Transforms a direction vector using the camera transform."
+
+	^ cameraNode transform transformVector3: aVector
 ]
 
 { #category : 'user interface' }

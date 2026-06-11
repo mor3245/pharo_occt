@@ -132,7 +132,7 @@ MyContextMenuRotationMode >> handleKey: key [
 	key = 'z' ifTrue: [
 			self setAxisLock: #z.
 			^ true ].
-	(key = 'enter' or: [ key = 'return' ]) ifTrue: [
+	(#( 'enter' 'return' ) includes: key) ifTrue: [
 			self confirm.
 			^ true ].
 	key = 'escape' ifTrue: [
