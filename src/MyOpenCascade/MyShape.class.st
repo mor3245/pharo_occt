@@ -38,7 +38,19 @@ Class {
 	#name : 'MyShape',
 	#superclass : 'FFIOpaqueObject',
 	#instVars : [
-		'brepData'
+		'brepData',
+		'solidCount',
+		'shellCount',
+		'faceCount',
+		'wireCount',
+		'edgeCount',
+		'topologicalVertexCount',
+		'solids',
+		'shells',
+		'faces',
+		'wires',
+		'edges',
+		'topologicalVertices'
 	],
 	#category : 'MyOpenCascade-Base',
 	#package : 'MyOpenCascade',
@@ -50,6 +62,12 @@ MyShape >> brepData [
 	"Answers the Smalltalk-owned OCCT BREP snapshot used to recreate the native handle."
 
 	^ brepData
+]
+
+{ #category : 'persistence' }
+MyShape >> brepData: aByteArray [
+
+	brepData := aByteArray
 ]
 
 { #category : 'persistence' }
@@ -67,6 +85,24 @@ MyShape >> captureBRepData [
 	written = size ifFalse: [ ^ self ].
 
 	brepData := buffer
+]
+
+{ #category : 'inspection' }
+MyShape >> clearTopologyInspectionData [
+	"Clears cached topology arrays and counts used by the raw inspector."
+
+	solidCount := nil.
+	shellCount := nil.
+	faceCount := nil.
+	wireCount := nil.
+	edgeCount := nil.
+	topologicalVertexCount := nil.
+	solids := nil.
+	shells := nil.
+	faces := nil.
+	wires := nil.
+	edges := nil.
+	topologicalVertices := nil
 ]
 
 { #category : 'boolean operation' }
@@ -99,6 +135,20 @@ MyShape >> cutWithSeparatedSolids: anotherShape [
 	^ Array with: result
 ]
 
+{ #category : 'topology constants' }
+MyShape >> edgeType [
+
+	^ 6
+]
+
+{ #category : 'topology' }
+MyShape >> edges [
+	"Answers the unique edges contained in this shape."
+
+	edges ifNil: [ edges := self subshapesOfType: self edgeType as: MyEdge ].
+	^ edges
+]
+
 { #category : 'private' }
 MyShape >> ensureNativeHandle [
 	"Recreates the native OCCT shape from the BREP snapshot after an image restart."
@@ -112,6 +162,20 @@ MyShape >> ensureNativeHandle [
 
 	handle := restored getHandle.
 	restored setHandle: nil
+]
+
+{ #category : 'topology constants' }
+MyShape >> faceType [
+
+	^ 4
+]
+
+{ #category : 'topology' }
+MyShape >> faces [
+	"Answers the unique faces contained in this shape."
+
+	faces ifNil: [ faces := self subshapesOfType: self faceType as: MyFace ].
+	^ faces
 ]
 
 { #category : 'finalization' }
@@ -165,6 +229,51 @@ MyShape >> normals [
 	address := CxxOcctLibrary cxxGetNormals: self.
 	address isNull ifTrue: [ ^ Float64Array new: 0 ].
 	^ MyMakeShape float64ArrayFromExternalAddress: address count: self normalBufferLength
+]
+
+{ #category : 'inspection' }
+MyShape >> refreshTopologyChildrenForInspection [
+	"Populates cached topology child arrays for the raw inspector."
+
+	solids := self subshapesOfType: self solidType as: MySolid.
+	shells := self subshapesOfType: self shellType as: MyShell.
+	faces := self subshapesOfType: self faceType as: MyFace.
+	wires := self subshapesOfType: self wireType as: MyWire.
+	edges := self subshapesOfType: self edgeType as: MyEdge.
+	topologicalVertices := self subshapesOfType: self vertexType as: MyVertex
+]
+
+{ #category : 'inspection' }
+MyShape >> refreshTopologyCountsForInspection [
+	"Populates cached topology counts for the raw inspector."
+
+	self ensureNativeHandle.
+	solidCount := CxxOcctLibrary cxxSubshapeCount: self type: self solidType.
+	shellCount := CxxOcctLibrary cxxSubshapeCount: self type: self shellType.
+	faceCount := CxxOcctLibrary cxxSubshapeCount: self type: self faceType.
+	wireCount := CxxOcctLibrary cxxSubshapeCount: self type: self wireType.
+	edgeCount := CxxOcctLibrary cxxSubshapeCount: self type: self edgeType.
+	topologicalVertexCount := CxxOcctLibrary cxxSubshapeCount: self type: self vertexType
+]
+
+{ #category : 'inspection' }
+MyShape >> refreshTopologyForInspection [
+	"Populates topology counts and child arrays for the raw inspector."
+
+	^ self refreshTopologyForInspectionDepth: 6
+]
+
+{ #category : 'inspection' }
+MyShape >> refreshTopologyForInspectionDepth: depth [
+	"Populates this shape and a bounded number of descendants for raw inspection."
+
+	self clearTopologyInspectionData.
+	self refreshTopologyCountsForInspection.
+	depth <= 0 ifTrue: [ ^ self ].
+
+	self refreshTopologyChildrenForInspection.
+	self topologyChildrenForInspection do: [ :each | each refreshTopologyForInspectionDepth: depth - 1 ].
+	^ self
 ]
 
 { #category : 'transforming' }
@@ -240,12 +349,130 @@ MyShape >> separatedSolids [
 	^ solids asArray
 ]
 
+{ #category : 'topology constants' }
+MyShape >> shellType [
+
+	^ 3
+]
+
+{ #category : 'topology' }
+MyShape >> shells [
+	"Answers the unique shells contained in this shape."
+
+	shells ifNil: [ shells := self subshapesOfType: self shellType as: MyShell ].
+	^ shells
+]
+
+{ #category : 'topology constants' }
+MyShape >> solidType [
+
+	^ 2
+]
+
+{ #category : 'topology' }
+MyShape >> solids [
+	"Answers the unique solids contained in this shape."
+
+	solids ifNil: [ solids := self subshapesOfType: self solidType as: MySolid ].
+	^ solids
+]
+
+{ #category : 'topology' }
+MyShape >> subshapesOfType: typeNumber as: shapeClass [
+	"Answers owned typed MyShape instances for the requested OCCT subshape kind."
+
+	| count subshapes subshape |
+	self ensureNativeHandle.
+
+	count := CxxOcctLibrary cxxSubshapeCount: self type: typeNumber.
+	count <= 0 ifTrue: [ ^ #(  ) ].
+
+	subshapes := OrderedCollection new.
+	0 to: count - 1 do: [ :index |
+			subshape := CxxOcctLibrary cxxSubshapeAt: self type: typeNumber index: index.
+			(subshape notNil and: [ subshape isNull not ]) ifTrue: [
+					subshape captureBRepData.
+					subshapes add: (self transferShape: subshape to: shapeClass) ] ].
+
+	^ subshapes asArray
+]
+
 { #category : 'converting' }
 MyShape >> tessellateDeflection: deflection [
 	"Instructs the C++ engine to generate a mesh for this shape at the given chord deflection."
 
 	self ensureNativeHandle.
 	CxxOcctLibrary cxxTessellate: self deflection: deflection
+]
+
+{ #category : 'topology' }
+MyShape >> topologicalEdges [
+	"Answers the unique edges contained in this shape."
+
+	^ self edges
+]
+
+{ #category : 'topology' }
+MyShape >> topologicalFaces [
+	"Answers the unique faces contained in this shape."
+
+	^ self faces
+]
+
+{ #category : 'topology' }
+MyShape >> topologicalShells [
+	"Answers the unique shells contained in this shape."
+
+	^ self shells
+]
+
+{ #category : 'topology' }
+MyShape >> topologicalSolids [
+	"Answers the unique solids contained in this shape."
+
+	^ self solids
+]
+
+{ #category : 'topology' }
+MyShape >> topologicalVertices [
+	"Answers the unique vertices contained in this shape."
+
+	topologicalVertices ifNil: [ topologicalVertices := self subshapesOfType: self vertexType as: MyVertex ].
+	^ topologicalVertices
+]
+
+{ #category : 'topology' }
+MyShape >> topologicalWires [
+	"Answers the unique wires contained in this shape."
+
+	^ self wires
+]
+
+{ #category : 'inspection' }
+MyShape >> topologyChildrenForInspection [
+	"Answers cached topology child nodes to refresh recursively for the raw inspector."
+
+	| children |
+	children := OrderedCollection new.
+	solids ifNotNil: [ children addAll: solids ].
+	shells ifNotNil: [ children addAll: shells ].
+	faces ifNotNil: [ children addAll: faces ].
+	wires ifNotNil: [ children addAll: wires ].
+	edges ifNotNil: [ children addAll: edges ].
+	topologicalVertices ifNotNil: [ children addAll: topologicalVertices ].
+	^ children asArray
+]
+
+{ #category : 'private' }
+MyShape >> transferShape: aShape to: shapeClass [
+	"Transfers a native handle from a generic MyShape into a typed MyShape subclass."
+
+	| typedShape |
+	typedShape := shapeClass new.
+	typedShape setHandle: aShape getHandle.
+	typedShape brepData: aShape brepData.
+	aShape setHandle: nil.
+	^ typedShape
 ]
 
 { #category : 'transforming' }
@@ -304,6 +531,12 @@ MyShape >> vertexCount [
 	^ CxxOcctLibrary cxxVertexCount: self
 ]
 
+{ #category : 'topology constants' }
+MyShape >> vertexType [
+
+	^ 7
+]
+
 { #category : 'accessing' }
 MyShape >> vertices [
 	"Returns a Float64Array of vertex positions, or an empty array if not yet tessellated."
@@ -313,4 +546,18 @@ MyShape >> vertices [
 	address := CxxOcctLibrary cxxGetVertices: self.
 	address isNull ifTrue: [ ^ Float64Array new: 0 ].
 	^ MyMakeShape float64ArrayFromExternalAddress: address count: self vertexBufferLength
+]
+
+{ #category : 'topology constants' }
+MyShape >> wireType [
+
+	^ 5
+]
+
+{ #category : 'topology' }
+MyShape >> wires [
+	"Answers the unique wires contained in this shape."
+
+	wires ifNil: [ wires := self subshapesOfType: self wireType as: MyWire ].
+	^ wires
 ]

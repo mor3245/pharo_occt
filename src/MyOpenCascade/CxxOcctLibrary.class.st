@@ -244,6 +244,21 @@ CxxOcctLibrary class >> cxxSolidCount: shape [
 	^ self ffiCall: #( int cxxSolidCount ( MyShape* shape ) )
 ]
 
+{ #category : 'topology' }
+CxxOcctLibrary class >> cxxSubshapeAt: shape type: shapeType index: index [
+	"Returns a new native shape handle for the zero-based subshape at index."
+
+	^ self ffiCall: #( MyShape* cxxSubshapeAt ( MyShape* shape, int shapeType, int index ) )
+
+]
+
+{ #category : 'topology' }
+CxxOcctLibrary class >> cxxSubshapeCount: shape type: shapeType [
+	"Returns the number of OCCT subshapes with the given TopAbs_ShapeEnum value."
+
+	^ self ffiCall: #( int cxxSubshapeCount ( MyShape* shape, int shapeType ) )
+]
+
 { #category : 'ffi-calls' }
 CxxOcctLibrary class >> cxxTessellate: shapeHandle deflection: deflection [
 	"Runs the BRep mesh algorithm on shapeHandle at the given chord deflection tolerance."

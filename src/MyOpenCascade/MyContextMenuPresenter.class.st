@@ -436,7 +436,7 @@ MyContextMenuPresenter >> handleMouseDown: anEvent [
 					self confirmTranslationMode.
 					^ self ] ].
 
-	anEvent yellowButtonPressed ifTrue: [
+	(self shouldTrackContextMenuFrom: anEvent) ifTrue: [
 			contextMenuDownPosition := anEvent position.
 			contextMenuWasDragged := false ].
 
@@ -521,7 +521,9 @@ MyContextMenuPresenter >> initializeWindow: aWindowPresenter [
 MyContextMenuPresenter >> inspectSelectedShape [
 	"Opens a Pharo inspector on the currently selected rendered shape, if any."
 
-	self selectedRenderedShape ifNotNil: [ :renderedShape | renderedShape inspect ]
+	self selectedRenderedShape ifNotNil: [ :renderedShape |
+			renderedShape prepareForInspection.
+			renderedShape inspect ]
 ]
 
 { #category : 'input event handling' }
@@ -682,6 +684,13 @@ MyContextMenuPresenter >> setupContextMenu [
 		on: #keyStroke send: #handleKeyStroke: to: self "If your image does not understand #keyStroke, try this instead:
 
 	on: #keyDown send: #handleKeyStroke: to: self"
+]
+
+{ #category : 'event handling' }
+MyContextMenuPresenter >> shouldTrackContextMenuFrom: anEvent [
+	"Answers whether this right-button press should open a context menu when released."
+
+	^ anEvent yellowButtonPressed and: [ anEvent shiftPressed not and: [ anEvent controlKeyPressed not ] ]
 ]
 
 { #category : 'user interface' }

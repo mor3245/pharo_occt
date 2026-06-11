@@ -113,6 +113,14 @@ MyRenderedShape >> node: anObject [
 	node := anObject
 ]
 
+{ #category : 'inspection' }
+MyRenderedShape >> prepareForInspection [
+	"Refreshes cached shape topology so the raw inspector can expand useful fields."
+
+	shape ifNotNil: [ shape refreshTopologyForInspection ].
+	^ self
+]
+
 { #category : 'rendering' }
 MyRenderedShape >> rebuildNode [
 
