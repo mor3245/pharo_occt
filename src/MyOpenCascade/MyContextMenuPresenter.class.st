@@ -503,9 +503,9 @@ MyContextMenuPresenter >> initializeWindow: aWindowPresenter [
 
 { #category : 'rendered geometry management' }
 MyContextMenuPresenter >> inspectSelectedShape [
-	"Opens a Pharo inspector on the currently selected C++ shape, if any."
+	"Opens a Pharo inspector on the currently selected rendered shape, if any."
 
-	self selectedShape ifNotNil: [ :shape | shape inspect ]
+	self selectedRenderedShape ifNotNil: [ :renderedShape | renderedShape inspect ]
 ]
 
 { #category : 'input event handling' }
@@ -646,7 +646,7 @@ MyContextMenuPresenter >> selectedRenderedShape [
 MyContextMenuPresenter >> selectedShape [
 	"Returns the MyShape of the currently selected entry, or nil if nothing is selected."
 
-	^ selection selectedRenderedShape
+	^ selection selectedShape
 ]
 
 { #category : 'input event handling' }
