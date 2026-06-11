@@ -8,25 +8,12 @@ Class {
 		'wodenPresenter',
 		'scene',
 		'cameraNode',
-		'selectedOriginalRenderables',
 		'contextMenuDownPosition',
 		'contextMenuWasDragged',
-		'grabModeActive',
-		'grabStartMousePosition',
-		'grabStartNodePosition',
-		'grabAxisLock',
-		'grabDragPlanePoint',
-		'grabDragPlaneNormal',
-		'grabStartWorldPoint',
-		'rotationModeActive',
-		'rotationStartMousePosition',
-		'rotationStartNodeTransform',
-		'rotationAxisLock',
-		'rotationTypedDegreesString',
-		'rotationCurrentDegrees',
-		'rotationStartCenter',
-		'renderedShapes',
-		'selectedRenderedShape'
+		'selection',
+		'translationMode',
+		'rotationMode',
+		'renderedShapes'
 	],
 	#category : 'MyOpenCascade-Woden',
 	#package : 'MyOpenCascade',
@@ -35,43 +22,18 @@ Class {
 
 { #category : 'geometry rotation' }
 MyContextMenuPresenter >> activateRotationMode [
-	"Starts interactive rotation for the selected rendered node, around its visible center."
+	"Starts interactive rotation for the selected rendered node."
 
-	| change |
-	selectedRenderedShape ifNil: [ ^ self ].
-
-	grabModeActive ifTrue: [ self confirmTranslationMode ].
-
-
-	change := selectedRenderedShape bakeTranslation.
-	self applyRenderNodeChange: change.
-
-	rotationModeActive := true.
-	rotationStartMousePosition := nil.
-	rotationStartNodeTransform := selectedRenderedShape node transform copy.
-	rotationStartCenter := self selectedNodeRotationCenter.
-	rotationAxisLock := #z.
-	rotationTypedDegreesString := ''.
-	rotationCurrentDegrees := 0.
-
-	self focusWodenWidget
+	translationMode isActive ifTrue: [ translationMode confirm ].
+	rotationMode activateFor: self
 ]
 
 { #category : 'geometry translation' }
 MyContextMenuPresenter >> activateTranslationMode [
 	"Starts interactive translation for the selected rendered node."
 
-	selectedRenderedShape ifNil: [ ^ self ].
-
-	grabModeActive := true.
-	grabAxisLock := nil.
-	grabStartMousePosition := nil.
-	grabStartNodePosition := selectedRenderedShape node position.
-	grabDragPlanePoint := grabStartNodePosition.
-	grabDragPlaneNormal := self cameraForwardDirection.
-	grabStartWorldPoint := nil.
-
-	self focusWodenWidget
+	rotationMode isActive ifTrue: [ rotationMode confirm ].
+	translationMode activateFor: self
 ]
 
 { #category : 'rendered geometry management' }
@@ -110,22 +72,6 @@ MyContextMenuPresenter >> addMenuItemNamed: aString action: aBlock to: aGroup [
 				action: aBlock ]
 ]
 
-{ #category : 'geometry rotation' }
-MyContextMenuPresenter >> appendRotationTypedCharacter: key [
-	"Accumulates typed numeric degrees and applies them immediately."
-
-	| degrees |
-	(self isRotationNumericKey: key) ifFalse: [ ^ self ].
-
-	rotationTypedDegreesString := rotationTypedDegreesString , key.
-
-	degrees := [ rotationTypedDegreesString asNumber ]
-		on: Error
-		do: [ ^ self ].
-
-	self applyRotationDegrees: degrees
-]
-
 { #category : 'rendered geometry management' }
 MyContextMenuPresenter >> applyRenderNodeChange: aChange [
 
@@ -137,41 +83,11 @@ MyContextMenuPresenter >> applyRenderNodeChange: aChange [
 	self refreshScene
 ]
 
-{ #category : 'geometry rotation' }
-MyContextMenuPresenter >> applyRotationDegrees: degrees [
-	"Applies the given rotation angle around the selected object's visible center."
-
-	| node startPosition startOffset rotatedOffset newPosition |
-	selectedRenderedShape ifNil: [ ^ self ].
-	rotationStartNodeTransform ifNil: [ ^ self ].
-	rotationStartCenter ifNil: [ ^ self ].
-
-	node := selectedRenderedShape node.
-
-	node transform: rotationStartNodeTransform copy.
-
-	startPosition := node position.
-	startOffset := startPosition - rotationStartCenter.
-	rotatedOffset := self rotateVector: startOffset degrees: degrees axis: rotationAxisLock.
-	newPosition := rotationStartCenter + rotatedOffset.
-
-	node position: newPosition.
-
-	rotationAxisLock = #x ifTrue: [ node rotateDegreesOnX: degrees ].
-	rotationAxisLock = #y ifTrue: [ node rotateDegreesOnY: degrees ].
-	rotationAxisLock = #z ifTrue: [ node rotateDegreesOnZ: degrees ].
-
-	rotationCurrentDegrees := degrees.
-	self refreshScene
-]
-
 { #category : 'geometry selection' }
 MyContextMenuPresenter >> applySelectedVisualTo: aNode [
-	"Replaces the node's renderables with yellow unlit copies to indicate selection, saving originals for later restore."
+	"Highlights a selected scene node."
 
-	selectedOriginalRenderables := aNode renderables.
-
-	aNode renderables: (selectedOriginalRenderables collect: [ :each | each copyWithMaterial: self selectionMaterial ])
+	selection applyVisualTo: aNode
 ]
 
 { #category : 'user interface' }
@@ -237,90 +153,38 @@ MyContextMenuPresenter >> cameraForwardDirection [
 MyContextMenuPresenter >> cancelRotationMode [
 	"Restores the selected node transform to its state before rotation mode started."
 
-	rotationModeActive ifFalse: [ ^ self ].
-
-	selectedRenderedShape ifNotNil: [
-		rotationStartNodeTransform ifNotNil: [
-			selectedRenderedShape node transform: rotationStartNodeTransform copy ] ].
-
-	self resetRotationMode.
-
-	self refreshScene
+	rotationMode cancel
 ]
 
 { #category : 'geometry translation' }
 MyContextMenuPresenter >> cancelTranslationMode [
 	"Restores the selected node to its position before grab mode started."
 
-	grabModeActive ifFalse: [ ^ self ].
-
-	selectedRenderedShape ifNotNil: [ grabStartNodePosition ifNotNil: [ selectedRenderedShape node position: grabStartNodePosition ] ].
-
-	self resetTranslationMode.
-
-	self refreshScene
+	translationMode cancel
 ]
 
 { #category : 'geometry selection' }
 MyContextMenuPresenter >> clearSelection [
 	"Restores the previously selected node's visuals and clears the selection state."
 
-	self restoreSelectedVisual.
-	selectedRenderedShape := nil.
-	self refreshScene
+	selection clear
 ]
 
 { #category : 'geometry rotation' }
 MyContextMenuPresenter >> confirmRotationMode [
 	"Accepts the current rendered-node rotation and bakes it into the CAD shape."
 
-	| axis degrees center change |
-	rotationModeActive ifFalse: [ ^ self ].
-
-	axis := rotationAxisLock.
-	degrees := rotationCurrentDegrees.
-	center := rotationStartCenter.
-
-	(selectedRenderedShape notNil and: [ degrees ~= 0 ]) ifTrue: [
-			self restoreSelectedVisual.
-
-			change := selectedRenderedShape bakeRotationDegrees: degrees axis: axis center: center.
-
-			self applyRenderNodeChange: change.
-
-			selectedOriginalRenderables := nil.
-			self applySelectedVisualTo: selectedRenderedShape node ].
-
-	self resetRotationMode.
-
-	self refreshScene
+	rotationMode confirm
 ]
 
 { #category : 'geometry translation' }
 MyContextMenuPresenter >> confirmTranslationMode [
 	"Accepts the current rendered-node translation."
 
-	self resetTranslationMode.
-
-	self refreshScene
+	translationMode confirm
 ]
 
-{ #category : 'geometry translation' }
-MyContextMenuPresenter >> constrainedTranslation: aVector [
-	"Constrains a drag translation to the selected global axis."
-
-	| axis amount |
-	grabAxisLock ifNil: [ ^ aVector ].
-
-	grabAxisLock = #x ifTrue: [ axis := Vector3 x: 1 y: 0 z: 0 ].
-	grabAxisLock = #y ifTrue: [ axis := Vector3 x: 0 y: 1 z: 0 ].
-	grabAxisLock = #z ifTrue: [ axis := Vector3 x: 0 y: 0 z: 1 ].
-
-	amount := aVector dot: axis.
-	^ axis * amount
-]
-
-{ #category : 'events-processing' }
+{ #category : 'event handling' }
 MyContextMenuPresenter >> contextMenuDragThreshold [
 	"Returns the pixel radius beyond which a right-button drag suppresses the context menu."
 
@@ -332,12 +196,12 @@ MyContextMenuPresenter >> cutOtherBodiesWithSelected [
 	"Use the selected body as the cutter and cut every other body in the scene."
 
 	| tool targets replacements |
-	selectedRenderedShape ifNil: [ ^ self ].
+	self selectedRenderedShape ifNil: [ ^ self ].
 	renderedShapes size < 2 ifTrue: [ ^ self ].
 
 	self restoreSelectedVisual.
 
-	tool := selectedRenderedShape.
+	tool := self selectedRenderedShape.
 	targets := renderedShapes reject: [ :each | each == tool ].
 
 	self applyRenderNodeChange: tool bakeTranslation.
@@ -355,8 +219,7 @@ MyContextMenuPresenter >> cutOtherBodiesWithSelected [
 
 	replacements do: [ :replacement | self replaceRenderedShape: replacement key withAll: replacement value ].
 
-	selectedRenderedShape := nil.
-	selectedOriginalRenderables := nil.
+	selection forget.
 
 	self refreshScene
 ]
@@ -366,10 +229,10 @@ MyContextMenuPresenter >> cutSelectedWithLastAdded [
 	"Cut the selected shape with the last inserted shape, after baking visible translations into CAD space."
 
 	| target tool toolChange resultRenderedShapes |
-	selectedRenderedShape ifNil: [ ^ self ].
+	self selectedRenderedShape ifNil: [ ^ self ].
 	renderedShapes size < 2 ifTrue: [ ^ self ].
 
-	target := selectedRenderedShape.
+	target := self selectedRenderedShape.
 	tool := renderedShapes last.
 
 	toolChange := tool bakeTranslation.
@@ -389,8 +252,7 @@ MyContextMenuPresenter >> cutSelectedWithLastAdded [
 			scene add: resultRenderedShape node.
 			renderedShapes addLast: resultRenderedShape ].
 
-	selectedRenderedShape := nil.
-	selectedOriginalRenderables := nil.
+	self forget.
 
 	self refreshScene
 ]
@@ -400,12 +262,12 @@ MyContextMenuPresenter >> cutSelectedWithOtherBodies [
 	"Cut the selected body with all other bodies in the scene."
 
 	| target tools resultRenderedShapes |
-	selectedRenderedShape ifNil: [ ^ self ].
+	self selectedRenderedShape ifNil: [ ^ self ].
 	renderedShapes size < 2 ifTrue: [ ^ self ].
 
 	self restoreSelectedVisual.
 
-	target := selectedRenderedShape.
+	target := self selectedRenderedShape.
 	tools := renderedShapes reject: [ :each | each == target ].
 
 	self applyRenderNodeChange: target bakeTranslation.
@@ -416,8 +278,7 @@ MyContextMenuPresenter >> cutSelectedWithOtherBodies [
 
 	self replaceRenderedShape: target withAll: resultRenderedShapes.
 
-	selectedRenderedShape := nil.
-	selectedOriginalRenderables := nil.
+	selection forget.
 
 	self refreshScene
 ]
@@ -469,10 +330,9 @@ MyContextMenuPresenter >> deleteLastAdded [
 
 	renderedShape := renderedShapes removeLast.
 
-	selectedRenderedShape == renderedShape ifTrue: [
+	self selectedRenderedShape == renderedShape ifTrue: [
 			self restoreSelectedVisual.
-			selectedRenderedShape := nil.
-			selectedOriginalRenderables := nil ].
+			selection forget ].
 
 	scene remove: renderedShape node.
 	renderedShape free.
@@ -484,38 +344,19 @@ MyContextMenuPresenter >> deleteLastAdded [
 MyContextMenuPresenter >> deleteSelected [
 	"Removes the currently selected node from the scene and frees its C++ shape."
 
-	selectedRenderedShape ifNil: [ ^ self ].
+	| renderedShape |
+	renderedShape := self selectedRenderedShape.
+	renderedShape ifNil: [ ^ self ].
 
 	self restoreSelectedVisual.
 
-	renderedShapes remove: selectedRenderedShape ifAbsent: [ ].
-	scene remove: selectedRenderedShape node.
-	selectedRenderedShape free.
+	renderedShapes remove: renderedShape ifAbsent: [ ].
+	scene remove: renderedShape node.
+	renderedShape free.
 
-	selectedRenderedShape := nil.
-	selectedOriginalRenderables := nil.
+	selection forget.
 
 	self refreshScene
-]
-
-{ #category : 'geometry translation' }
-MyContextMenuPresenter >> dragPlanePointAtScreenPosition: aPoint [
-	"Returns the point where the screen ray intersects the current grab plane.
-	This avoids requiring a PlaneF64 class."
-
-	| ray denominator distance |
-	grabDragPlanePoint ifNil: [ ^ nil ].
-	grabDragPlaneNormal ifNil: [ ^ nil ].
-
-	ray := self rayForScreenPosition: aPoint.
-
-	denominator := ray direction dot: grabDragPlaneNormal.
-	denominator abs < 1.0e-6 ifTrue: [ ^ nil ].
-
-	distance := (grabDragPlanePoint - ray origin dot: grabDragPlaneNormal) / denominator.
-	distance < 0 ifTrue: [ ^ nil ].
-
-	^ ray pointAtDistance: distance
 ]
 
 { #category : 'user interface' }
@@ -548,57 +389,13 @@ MyContextMenuPresenter >> handleKeyStroke: anEvent [
 
 	| key |
 	key := self keyStringFromEvent: anEvent.
-	rotationModeActive ifTrue: [
-			key = 'x' ifTrue: [
-					self setRotationAxisLock: #x.
-					anEvent wasHandled: true.
-					^ self ].
-			key = 'y' ifTrue: [
-					self setRotationAxisLock: #y.
-					anEvent wasHandled: true.
-					^ self ].
-			key = 'z' ifTrue: [
-					self setRotationAxisLock: #z.
-					anEvent wasHandled: true.
-					^ self ].
-			(key = 'enter' or: [ key = 'return' ]) ifTrue: [
-					anEvent wasHandled: true.
-					self confirmRotationMode.
-					^ self ].
-			key = 'escape' ifTrue: [
-					anEvent wasHandled: true.
-					self cancelRotationMode.
-					^ self ].
-			(key = 'backspace' or: [ key = (Character value: 8) asString ]) ifTrue: [
-					anEvent wasHandled: true.
-					self removeLastRotationTypedCharacter.
-					^ self ].
-			(self isRotationNumericKey: key) ifTrue: [
-					anEvent wasHandled: true.
-					self appendRotationTypedCharacter: key.
-					^ self ].
+
+	(rotationMode handleKey: key) ifTrue: [
+			anEvent wasHandled: true.
 			^ self ].
-	grabModeActive ifTrue: [
-			key = 'x' ifTrue: [
-					grabAxisLock := #x.
-					anEvent wasHandled: true.
-					^ self ].
-			key = 'y' ifTrue: [
-					grabAxisLock := #y.
-					anEvent wasHandled: true.
-					^ self ].
-			key = 'z' ifTrue: [
-					grabAxisLock := #z.
-					anEvent wasHandled: true.
-					^ self ].
-			(key = 'enter' or: [ key = 'return' ]) ifTrue: [
-					anEvent wasHandled: true.
-					self confirmTranslationMode.
-					^ self ].
-			key = 'escape' ifTrue: [
-					anEvent wasHandled: true.
-					self cancelTranslationMode.
-					^ self ].
+
+	(translationMode handleKey: key) ifTrue: [
+			anEvent wasHandled: true.
 			^ self ].
 
 	key = 'r' ifFalse: [ ^ self ].
@@ -611,13 +408,13 @@ MyContextMenuPresenter >> handleKeyStroke: anEvent [
 MyContextMenuPresenter >> handleMouseDown: anEvent [
 	"Handles selection, translation confirmation, and rotation confirmation."
 
-	rotationModeActive ifTrue: [
+	rotationMode isActive ifTrue: [
 			anEvent redButtonPressed ifTrue: [
 					anEvent wasHandled: true.
 					self confirmRotationMode.
 					^ self ] ].
 
-	grabModeActive ifTrue: [
+	translationMode isActive ifTrue: [
 			anEvent redButtonPressed ifTrue: [
 					anEvent wasHandled: true.
 					self confirmTranslationMode.
@@ -630,17 +427,17 @@ MyContextMenuPresenter >> handleMouseDown: anEvent [
 	anEvent redButtonPressed ifTrue: [ self selectShapeAt: anEvent position ]
 ]
 
-{ #category : 'events-processing' }
+{ #category : 'event handling' }
 MyContextMenuPresenter >> handleMouseMove: anEvent [
 	"Updates active transform preview, or marks right-button drags for context-menu suppression."
 
-	rotationModeActive ifTrue: [
-			self updateRotationPreviewAt: anEvent position.
+	rotationMode isActive ifTrue: [
+			rotationMode updateAt: anEvent position.
 			anEvent wasHandled: true.
 			^ self ].
 
-	grabModeActive ifTrue: [
-			self updateTranslationPreviewAt: anEvent position.
+	translationMode isActive ifTrue: [
+			translationMode updateAt: anEvent position.
 			anEvent wasHandled: true.
 			^ self ].
 
@@ -650,7 +447,7 @@ MyContextMenuPresenter >> handleMouseMove: anEvent [
 	(anEvent position - contextMenuDownPosition) r > self contextMenuDragThreshold ifTrue: [ contextMenuWasDragged := true ]
 ]
 
-{ #category : 'events-processing' }
+{ #category : 'event handling' }
 MyContextMenuPresenter >> handleMouseUp: anEvent [
 	"Shows the context menu on a right-button click that was not a drag; resets drag tracking."
 
@@ -671,10 +468,9 @@ MyContextMenuPresenter >> initializePresenters [
 	super initializePresenters.
 
 	renderedShapes := OrderedCollection new.
-	selectedRenderedShape := nil.
-	selectedOriginalRenderables := nil.
-	self resetTranslationMode.
-	self resetRotationMode.
+	selection := MyContextMenuSelection on: self.
+	translationMode := MyContextMenuTranslationMode new.
+	rotationMode := MyContextMenuRotationMode new.
 	scene := self buildScene.
 
 	cameraNode := WDCamera new asSceneNode.
@@ -710,19 +506,6 @@ MyContextMenuPresenter >> inspectSelectedShape [
 	"Opens a Pharo inspector on the currently selected C++ shape, if any."
 
 	self selectedShape ifNotNil: [ :shape | shape inspect ]
-]
-
-{ #category : 'geometry rotation' }
-MyContextMenuPresenter >> isRotationNumericKey: key [
-	"Answers whether key can be part of a typed degree number."
-
-	key size = 1 ifFalse: [ ^ false ].
-
-	key first isDigit ifTrue: [ ^ true ].
-	key = '-' ifTrue: [ ^ rotationTypedDegreesString isEmpty ].
-	key = '.' ifTrue: [ ^ (rotationTypedDegreesString includes: $.) not ].
-
-	^ false
 ]
 
 { #category : 'input event handling' }
@@ -779,7 +562,7 @@ MyContextMenuPresenter >> rayForScreenPosition: aPoint [
 	^ ray transformedWith: cameraNode transform "Convert ray position to woden/scene coordinates."
 ]
 
-{ #category : 'accessing' }
+{ #category : 'geometry selection' }
 MyContextMenuPresenter >> rayPickEntriesAt: aPoint [
 	"Ray-casts against all mesh node bounding boxes and returns hit entries sorted by distance."
 
@@ -805,26 +588,6 @@ MyContextMenuPresenter >> refreshScene [
 	self wodenWidget ifNotNil: [ :widget | widget changed ]
 ]
 
-{ #category : 'geometry rotation' }
-MyContextMenuPresenter >> removeLastRotationTypedCharacter [
-	"Deletes the last typed degree character and reapplies the value."
-
-	| degrees |
-	rotationTypedDegreesString isEmpty ifTrue: [ ^ self ].
-
-	rotationTypedDegreesString := rotationTypedDegreesString copyFrom: 1 to: rotationTypedDegreesString size - 1.
-
-	rotationTypedDegreesString isEmpty ifTrue: [
-			self applyRotationDegrees: 0.
-			^ self ].
-
-	degrees := [ rotationTypedDegreesString asNumber ]
-		           on: Error
-		           do: [ ^ self ].
-
-	self applyRotationDegrees: degrees
-]
-
 { #category : 'boolean operations' }
 MyContextMenuPresenter >> replaceRenderedShape: oldRenderedShape withAll: newRenderedShapes [
 	"Replace one scene body with zero or more rendered bodies."
@@ -838,75 +601,11 @@ MyContextMenuPresenter >> replaceRenderedShape: oldRenderedShape withAll: newRen
 			renderedShapes addLast: newRenderedShape ]
 ]
 
-{ #category : 'geometry rotation' }
-MyContextMenuPresenter >> resetRotationMode [
-	"Clears transient rotation-mode state."
-
-	rotationModeActive := false.
-	rotationStartMousePosition := nil.
-	rotationStartNodeTransform := nil.
-	rotationStartCenter := nil.
-	rotationAxisLock := nil.
-	rotationTypedDegreesString := ''.
-	rotationCurrentDegrees := 0
-]
-
-{ #category : 'initialization' }
-MyContextMenuPresenter >> resetTranslationMode [
-	"Clears transient translation-mode state."
-
-	grabModeActive := false.
-	grabStartMousePosition := nil.
-	grabStartNodePosition := nil.
-	grabAxisLock := nil.
-	grabDragPlanePoint := nil.
-	grabDragPlaneNormal := nil.
-	grabStartWorldPoint := nil
-]
-
 { #category : 'geometry selection' }
 MyContextMenuPresenter >> restoreSelectedVisual [
 	"Puts the originally saved renderables back on the selected node."
 
-	selectedRenderedShape ifNil: [ ^ self ].
-	selectedOriginalRenderables ifNil: [ ^ self ].
-
-	selectedRenderedShape node renderables: selectedOriginalRenderables.
-	selectedOriginalRenderables := nil
-]
-
-{ #category : 'geometry rotation' }
-MyContextMenuPresenter >> rotateVector: aVector degrees: degrees axis: axisSymbol [
-	"Rotates aVector around a global axis."
-
-	| radians c s x y z |
-	radians := degrees * Float pi / 180.0.
-	c := radians cos.
-	s := radians sin.
-
-	x := aVector x.
-	y := aVector y.
-	z := aVector z.
-
-	axisSymbol = #x ifTrue: [
-		^ Vector3
-			x: x
-			y: (y * c) - (z * s)
-			z: (y * s) + (z * c) ].
-
-	axisSymbol = #y ifTrue: [
-		^ Vector3
-			x: (x * c) + (z * s)
-			y: y
-			z: (z * c) - (x * s) ].
-
-	axisSymbol = #z ifTrue: [
-		^ Vector3
-			x: (x * c) - (y * s)
-			y: (x * s) + (y * c)
-			z: z ].
-
-	^ aVector
+	selection restoreVisual
 ]
 
 { #category : 'geometry rotation' }
@@ -916,70 +615,38 @@ MyContextMenuPresenter >> rotationDegreesPerPixel [
 	^ 0.5
 ]
 
-{ #category : 'accessing' }
+{ #category : 'geometry selection' }
 MyContextMenuPresenter >> selectShapeAt: aPoint [
 	"Picks the shape under the cursor; cycles to the next hit if the same node was already selected."
 
-	| pickedEntries pickedIndex pickedEntry |
-	pickedEntries := self rayPickEntriesAt: aPoint.
-
-	pickedEntries ifEmpty: [
-			self clearSelection.
-			^ self ].
-
-	pickedIndex := selectedRenderedShape ifNil: [ 0 ] ifNotNil: [ pickedEntries indexOf: selectedRenderedShape ifAbsent: [ 0 ] ].
-
-	pickedEntry := pickedEntries at: pickedIndex \\ pickedEntries size + 1.
-
-	self restoreSelectedVisual.
-	selectedRenderedShape := pickedEntry.
-	self applySelectedVisualTo: selectedRenderedShape node.
-
-	self refreshScene
+	selection selectFrom: (self rayPickEntriesAt: aPoint)
 ]
 
-{ #category : 'accessing' }
+{ #category : 'geometry selection' }
 MyContextMenuPresenter >> selectedNode [
 	"Returns the scene node of the currently selected entry, or nil if nothing is selected."
 
-	^ selectedRenderedShape ifNil: [ nil ] ifNotNil: [ selectedRenderedShape node ]
+	^ selection selectedNode
 ]
 
 { #category : 'geometry rotation' }
 MyContextMenuPresenter >> selectedNodeRotationCenter [
 	"Returns the visible world-space center of the selected rendered node."
 
-	| node box |
-	selectedRenderedShape ifNil: [ ^ Vector3 x: 0 y: 0 z: 0 ].
-
-	node := selectedRenderedShape node.
-	box := node localBoundingBox transformedWith: node globalTransform.
-
-	^ box center
-]
-
-{ #category : 'accessing' }
-MyContextMenuPresenter >> selectedShape [
-	"Returns the MyShape of the currently selected entry, or nil if nothing is selected."
-
-	^ selectedRenderedShape ifNil: [ nil ] ifNotNil: [ selectedRenderedShape shape ]
+	^ selection selectedRotationCenter
 ]
 
 { #category : 'geometry selection' }
-MyContextMenuPresenter >> selectionMaterial [
-	"Returns a yellow unlit material used to highlight the selected object."
+MyContextMenuPresenter >> selectedRenderedShape [
 
-	^ WDUnlitMaterial new
-		  colorFactor: Color yellow;
-		  yourself
+	^ selection selectedRenderedShape
 ]
 
-{ #category : 'geometry rotation' }
-MyContextMenuPresenter >> setRotationAxisLock: aSymbol [
-	"Sets the global rotation axis and reapplies the current angle."
+{ #category : 'geometry selection' }
+MyContextMenuPresenter >> selectedShape [
+	"Returns the MyShape of the currently selected entry, or nil if nothing is selected."
 
-	rotationAxisLock := aSymbol.
-	self applyRotationDegrees: rotationCurrentDegrees
+	^ selection selectedRenderedShape
 ]
 
 { #category : 'input event handling' }
@@ -999,77 +666,13 @@ MyContextMenuPresenter >> setupContextMenu [
 	on: #keyDown send: #handleKeyStroke: to: self"
 ]
 
-{ #category : 'accessing' }
+{ #category : 'user interface' }
 MyContextMenuPresenter >> showContextMenuAt: aPoint [
 	"Builds and displays the context menu at the given screen position."
 
 	| menu |
 	menu := self buildContextMenu.
 	menu openWithSpecAt: aPoint
-]
-
-{ #category : 'geometry translation' }
-MyContextMenuPresenter >> translationUnitsPerPixel [
-	"World units moved per screen pixel during grab mode."
-
-	^ 0.01
-]
-
-{ #category : 'geometry translation' }
-MyContextMenuPresenter >> translationVectorForMouseDelta: aPoint [
-	"Converts screen-space mouse delta into a simple global translation.
-	Free mode moves in global X/Y. Axis locks constrain to global X, Y, or Z."
-
-	| scale x y z |
-	scale := self translationUnitsPerPixel.
-
-	x := aPoint x * scale.
-	y := aPoint y negated * scale.
-	z := aPoint y negated * scale.
-
-	grabAxisLock = #x ifTrue: [ ^ Vector3 x: x y: 0 z: 0 ].
-	grabAxisLock = #y ifTrue: [ ^ Vector3 x: 0 y: y z: 0 ].
-	grabAxisLock = #z ifTrue: [ ^ Vector3 x: 0 y: 0 z: z ].
-
-	^ Vector3 x: x y: y z: 0
-]
-
-{ #category : 'geometry rotation' }
-MyContextMenuPresenter >> updateRotationPreviewAt: aPoint [
-	"Updates selected rendered-node rotation from mouse movement."
-
-	| delta degrees |
-	selectedRenderedShape ifNil: [ ^ self ].
-
-	rotationStartMousePosition ifNil: [ rotationStartMousePosition := aPoint ].
-	rotationTypedDegreesString isEmpty ifFalse: [ ^ self ].
-
-	delta := aPoint - rotationStartMousePosition.
-	degrees := delta x * self rotationDegreesPerPixel.
-
-	self applyRotationDegrees: degrees
-]
-
-{ #category : 'geometry translation' }
-MyContextMenuPresenter >> updateTranslationPreviewAt: aPoint [
-	"Moves the selected rendered node by dragging across a camera-facing world plane."
-
-	| node currentWorldPoint translation newPosition |
-	selectedRenderedShape ifNil: [ ^ self ].
-
-	currentWorldPoint := self dragPlanePointAtScreenPosition: aPoint.
-	currentWorldPoint ifNil: [ ^ self ].
-
-	grabStartWorldPoint ifNil: [ grabStartWorldPoint := currentWorldPoint ].
-
-	node := selectedRenderedShape node.
-	translation := currentWorldPoint - grabStartWorldPoint.
-	translation := self constrainedTranslation: translation.
-
-	newPosition := grabStartNodePosition + translation.
-
-	node position: newPosition.
-	self refreshScene
 ]
 
 { #category : 'user interface' }
