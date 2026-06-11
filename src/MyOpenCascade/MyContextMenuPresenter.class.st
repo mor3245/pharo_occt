@@ -1,11 +1,5 @@
 "
-I am a Spec2 presenter that provides an interactive 3D viewport with a context menu for managing geometric objects.
-
-I integrate the Woden 3D engine with the Pharo Spec framework, allowing users to dynamically add and remove 3D boxes within a scene via a ctrl-right-click menu. I act as the controller that coordinates between the user interface, the Woden scene graph, and the OpenCascade-based 'MyBoxMaker' logic.
-
-Note to self: Clicking on overlapping shapes cycles to the other shape
-
-
+I coordinate the Spec UI, Woden scene graph, and rendered CAD shape wrappers. Clicking overlapping shapes cycles through the shapes under the cursor.
 "
 Class {
 	#name : 'MyContextMenuPresenter',
@@ -90,7 +84,7 @@ MyContextMenuPresenter >> addBox [
 	scene add: renderedShape node.
 	renderedShapes addLast: renderedShape.
 
-	wodenPresenter adapter widget changed
+	self refreshScene
 ]
 
 { #category : 'rendered geometry management' }
@@ -103,7 +97,17 @@ MyContextMenuPresenter >> addCylinder [
 	scene add: renderedShape node.
 	renderedShapes addLast: renderedShape.
 
-	wodenPresenter adapter widget changed
+	self refreshScene
+]
+
+{ #category : 'user interface' }
+MyContextMenuPresenter >> addMenuItemNamed: aString action: aBlock to: aGroup [
+	"Adds a simple action item to a Spec menu group."
+
+	aGroup addItem: [ :item |
+			item
+				name: aString;
+				action: aBlock ]
 ]
 
 { #category : 'geometry rotation' }
@@ -130,7 +134,7 @@ MyContextMenuPresenter >> applyRenderNodeChange: aChange [
 	scene remove: aChange oldNode.
 	scene add: aChange newNode.
 
-	wodenPresenter adapter widget changed
+	self refreshScene
 ]
 
 { #category : 'geometry rotation' }
@@ -158,7 +162,7 @@ MyContextMenuPresenter >> applyRotationDegrees: degrees [
 	rotationAxisLock = #z ifTrue: [ node rotateDegreesOnZ: degrees ].
 
 	rotationCurrentDegrees := degrees.
-	wodenPresenter adapter widget changed
+	self refreshScene
 ]
 
 { #category : 'geometry selection' }
@@ -172,58 +176,26 @@ MyContextMenuPresenter >> applySelectedVisualTo: aNode [
 
 { #category : 'user interface' }
 MyContextMenuPresenter >> buildContextMenu [
-	"Constructs and returns the right-click SpMenuPresenter with Add Box, Add Cylinder, Delete, and Inspect items."
+	"Constructs the right-click menu for scene and selected-shape actions."
 
-	^ SpMenuPresenter new addGroup: [ :group |
-			  group
-				  addItem: [ :item |
-						  item
-							  name: 'Add Box';
-							  action: [ self addBox ] ];
-				  addItem: [ :item |
-						  item
-							  name: 'Delete last inserted';
-							  action: [ self deleteLastAdded ] ];
-				  addItem: [ :item |
-						  item
-							  name: 'Translate Selected';
-							  action: [ self activateTranslationMode ] ];
-				  addItem: [ :item |
-						  item
-							  name: 'Rotate Selected';
-							  action: [ self activateRotationMode ] ];
-				  addItem: [ :item |
-						  item
-							  name: 'Add Cylinder';
-							  action: [ self addCylinder ] ];
-				  addItem: [ :item |
-						  item
-							  name: 'Delete Selected';
-							  action: [ self deleteSelected ] ];
-				  addItem: [ :item |
-						  item
-							  name: 'Cut Selected With Other Bodies';
-							  action: [ self cutSelectedWithOtherBodies ] ];
-				  addItem: [ :item |
-						  item
-							  name: 'Cut Other Bodies With Selected';
-							  action: [ self cutOtherBodiesWithSelected ] ];
-				  addItem: [ :item |
-						  item
-							  name: 'Inspect Selected';
-							  action: [ self inspectSelectedShape ] ];
-				  addItem: [ :item |
-						  item
-							  name: 'Fit All';
-							  action: [ self fitAll ] ];
-				  addItem: [ :item |
-						  item
-							  name: 'Fit Selected';
-							  action: [ self fitSelected ] ];
-				  addItem: [ :item |
-						  item
-							  name: 'Use Selected as Pivot';
-							  action: [ self useSelectedAsPivot ] ] ] yourself
+	^ self newMenu
+		  addGroup: [ :group |
+				  self addMenuItemNamed: 'Add Box' action: [ self addBox ] to: group.
+				  self addMenuItemNamed: 'Add Cylinder' action: [ self addCylinder ] to: group ];
+		  addGroup: [ :group |
+				  self addMenuItemNamed: 'Translate Selected' action: [ self activateTranslationMode ] to: group.
+				  self addMenuItemNamed: 'Rotate Selected' action: [ self activateRotationMode ] to: group.
+				  self addMenuItemNamed: 'Delete Selected' action: [ self deleteSelected ] to: group.
+				  self addMenuItemNamed: 'Delete Last Inserted' action: [ self deleteLastAdded ] to: group ];
+		  addGroup: [ :group |
+				  self addMenuItemNamed: 'Cut Selected With Other Bodies' action: [ self cutSelectedWithOtherBodies ] to: group.
+				  self addMenuItemNamed: 'Cut Other Bodies With Selected' action: [ self cutOtherBodiesWithSelected ] to: group ];
+		  addGroup: [ :group |
+				  self addMenuItemNamed: 'Fit All' action: [ self fitAll ] to: group.
+				  self addMenuItemNamed: 'Fit Selected' action: [ self fitSelected ] to: group.
+				  self addMenuItemNamed: 'Use Selected as Pivot' action: [ self useSelectedAsPivot ] to: group.
+				  self addMenuItemNamed: 'Inspect Selected' action: [ self inspectSelectedShape ] to: group ];
+		  yourself
 ]
 
 { #category : 'rendered geometry management' }
@@ -242,10 +214,10 @@ MyContextMenuPresenter >> buildScene [
 	^ scene
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'user interface' }
 MyContextMenuPresenter >> cameraControlMorph [
 
-	^ wodenPresenter adapter widget
+	^ self wodenWidget
 ]
 
 { #category : 'geometry translation' }
@@ -271,15 +243,9 @@ MyContextMenuPresenter >> cancelRotationMode [
 		rotationStartNodeTransform ifNotNil: [
 			selectedRenderedShape node transform: rotationStartNodeTransform copy ] ].
 
-	rotationModeActive := false.
-	rotationStartMousePosition := nil.
-	rotationStartNodeTransform := nil.
-	rotationAxisLock := nil.
-	rotationTypedDegreesString := ''.
-	rotationCurrentDegrees := 0.
-	rotationStartCenter := nil.
+	self resetRotationMode.
 
-	wodenPresenter adapter widget changed
+	self refreshScene
 ]
 
 { #category : 'geometry translation' }
@@ -290,15 +256,9 @@ MyContextMenuPresenter >> cancelTranslationMode [
 
 	selectedRenderedShape ifNotNil: [ grabStartNodePosition ifNotNil: [ selectedRenderedShape node position: grabStartNodePosition ] ].
 
-	grabModeActive := false.
-	grabStartMousePosition := nil.
-	grabStartNodePosition := nil.
-	grabAxisLock := nil.
-	grabDragPlanePoint := nil.
-	grabDragPlaneNormal := nil.
-	grabStartWorldPoint := nil.
+	self resetTranslationMode.
 
-	wodenPresenter adapter widget changed
+	self refreshScene
 ]
 
 { #category : 'geometry selection' }
@@ -307,57 +267,42 @@ MyContextMenuPresenter >> clearSelection [
 
 	self restoreSelectedVisual.
 	selectedRenderedShape := nil.
-	wodenPresenter adapter widget changed
+	self refreshScene
 ]
 
 { #category : 'geometry rotation' }
 MyContextMenuPresenter >> confirmRotationMode [
-    "Accepts the current rendered-node rotation and bakes it into the CAD shape."
+	"Accepts the current rendered-node rotation and bakes it into the CAD shape."
 
-    | axis degrees center change |
-    rotationModeActive ifFalse: [ ^ self ].
+	| axis degrees center change |
+	rotationModeActive ifFalse: [ ^ self ].
 
-    axis := rotationAxisLock.
-    degrees := rotationCurrentDegrees.
-    center := rotationStartCenter.
+	axis := rotationAxisLock.
+	degrees := rotationCurrentDegrees.
+	center := rotationStartCenter.
 
-    (selectedRenderedShape notNil and: [ degrees ~= 0 ]) ifTrue: [
-        self restoreSelectedVisual.
+	(selectedRenderedShape notNil and: [ degrees ~= 0 ]) ifTrue: [
+			self restoreSelectedVisual.
 
-        change := selectedRenderedShape
-            bakeRotationDegrees: degrees
-            axis: axis
-            center: center.
+			change := selectedRenderedShape bakeRotationDegrees: degrees axis: axis center: center.
 
-        self applyRenderNodeChange: change.
+			self applyRenderNodeChange: change.
 
-        selectedOriginalRenderables := nil.
-        self applySelectedVisualTo: selectedRenderedShape node ].
+			selectedOriginalRenderables := nil.
+			self applySelectedVisualTo: selectedRenderedShape node ].
 
-    rotationModeActive := false.
-    rotationStartMousePosition := nil.
-    rotationStartNodeTransform := nil.
-    rotationStartCenter := nil.
-    rotationAxisLock := nil.
-    rotationTypedDegreesString := ''.
-    rotationCurrentDegrees := 0.
+	self resetRotationMode.
 
-    wodenPresenter adapter widget changed
+	self refreshScene
 ]
 
 { #category : 'geometry translation' }
 MyContextMenuPresenter >> confirmTranslationMode [
 	"Accepts the current rendered-node translation."
 
-	grabModeActive := false.
-	grabStartMousePosition := nil.
-	grabStartNodePosition := nil.
-	grabAxisLock := nil.
-	grabDragPlanePoint := nil.
-	grabDragPlaneNormal := nil.
-	grabStartWorldPoint := nil.
+	self resetTranslationMode.
 
-	wodenPresenter adapter widget changed
+	self refreshScene
 ]
 
 { #category : 'geometry translation' }
@@ -413,7 +358,7 @@ MyContextMenuPresenter >> cutOtherBodiesWithSelected [
 	selectedRenderedShape := nil.
 	selectedOriginalRenderables := nil.
 
-	wodenPresenter adapter widget changed
+	self refreshScene
 ]
 
 { #category : 'boolean operations' }
@@ -447,7 +392,7 @@ MyContextMenuPresenter >> cutSelectedWithLastAdded [
 	selectedRenderedShape := nil.
 	selectedOriginalRenderables := nil.
 
-	wodenPresenter adapter widget changed
+	self refreshScene
 ]
 
 { #category : 'boolean operations' }
@@ -474,7 +419,7 @@ MyContextMenuPresenter >> cutSelectedWithOtherBodies [
 	selectedRenderedShape := nil.
 	selectedOriginalRenderables := nil.
 
-	wodenPresenter adapter widget changed
+	self refreshScene
 ]
 
 { #category : 'boolean operations' }
@@ -532,7 +477,7 @@ MyContextMenuPresenter >> deleteLastAdded [
 	scene remove: renderedShape node.
 	renderedShape free.
 
-	wodenPresenter adapter widget changed
+	self refreshScene
 ]
 
 { #category : 'rendered geometry management' }
@@ -550,7 +495,7 @@ MyContextMenuPresenter >> deleteSelected [
 	selectedRenderedShape := nil.
 	selectedOriginalRenderables := nil.
 
-	wodenPresenter adapter widget changed
+	self refreshScene
 ]
 
 { #category : 'geometry translation' }
@@ -573,13 +518,13 @@ MyContextMenuPresenter >> dragPlanePointAtScreenPosition: aPoint [
 	^ ray pointAtDistance: distance
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'user interface' }
 MyContextMenuPresenter >> fitAll [
 
 	self cameraControlMorph fitScene
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'user interface' }
 MyContextMenuPresenter >> fitSelected [
 
 	self selectedNode ifNotNil: [ :node | self cameraControlMorph fitNode: node ]
@@ -590,7 +535,7 @@ MyContextMenuPresenter >> focusWodenWidget [
 	"Best-effort keyboard focus so X/Y/Z/Enter work after choosing the menu item."
 
 	| widget |
-	widget := wodenPresenter adapter widget.
+	widget := self wodenWidget.
 	widget ifNil: [ ^ self ].
 
 	(widget respondsTo: #takeKeyboardFocus) ifTrue: [ widget takeKeyboardFocus ].
@@ -728,21 +673,8 @@ MyContextMenuPresenter >> initializePresenters [
 	renderedShapes := OrderedCollection new.
 	selectedRenderedShape := nil.
 	selectedOriginalRenderables := nil.
-	grabModeActive := false.
-	grabStartMousePosition := nil.
-	grabStartNodePosition := nil.
-	grabAxisLock := nil.
-	grabDragPlanePoint := nil.
-	grabDragPlaneNormal := nil.
-	grabStartWorldPoint := nil.
-	grabStartWorldPoint := nil.
-	rotationModeActive := false.
-	rotationStartMousePosition := nil.
-	rotationStartNodeTransform := nil.
-	rotationAxisLock := nil.
-	rotationTypedDegreesString := ''.
-	rotationCurrentDegrees := 0.
-	rotationStartCenter := nil.
+	self resetTranslationMode.
+	self resetRotationMode.
 	scene := self buildScene.
 
 	cameraNode := WDCamera new asSceneNode.
@@ -815,7 +747,7 @@ MyContextMenuPresenter >> normalizedScreenPosition: aPoint [
 	"Converts a raw screen point to a [0,1]×[0,1] viewport coordinate with Y flipped for OpenGL convention."
 
 	| widget localPoint widgetExtent |
-	widget := wodenPresenter adapter widget.
+	widget := self wodenWidget.
 	localPoint := aPoint - widget bounds origin.
 	widgetExtent := widget extent.
 
@@ -827,7 +759,7 @@ MyContextMenuPresenter >> openWithContextMenu [
 	"Opens the presenter window and ensures the context menu event hooks are installed."
 
 	self open.
-	self withWindowDo: [ :widnow | self setupContextMenu ]
+	self withWindowDo: [ :window | self setupContextMenu ]
 ]
 
 { #category : 'geometry selection' }
@@ -837,7 +769,7 @@ MyContextMenuPresenter >> rayForScreenPosition: aPoint [
 	"Builds a world-space picking ray from a screen pixel position using the camera frustum."
 
 	| widget widgetExtent aspect frustum ray |
-	widget := wodenPresenter adapter widget.
+	widget := self wodenWidget.
 	widgetExtent := widget extent.
 	aspect := widgetExtent x asFloat / (widgetExtent y max: 1).
 
@@ -864,6 +796,13 @@ MyContextMenuPresenter >> rayPickEntriesAt: aPoint [
 			distance ifNotNil: [ hits add: distance -> renderedShape ] ].
 
 	^ (hits asSortedCollection: [ :a :b | a key < b key ]) collect: [ :each | each value ]
+]
+
+{ #category : 'user interface' }
+MyContextMenuPresenter >> refreshScene [
+	"Requests a redraw of the embedded Woden widget."
+
+	self wodenWidget ifNotNil: [ :widget | widget changed ]
 ]
 
 { #category : 'geometry rotation' }
@@ -897,6 +836,32 @@ MyContextMenuPresenter >> replaceRenderedShape: oldRenderedShape withAll: newRen
 	newRenderedShapes do: [ :newRenderedShape |
 			scene add: newRenderedShape node.
 			renderedShapes addLast: newRenderedShape ]
+]
+
+{ #category : 'geometry rotation' }
+MyContextMenuPresenter >> resetRotationMode [
+	"Clears transient rotation-mode state."
+
+	rotationModeActive := false.
+	rotationStartMousePosition := nil.
+	rotationStartNodeTransform := nil.
+	rotationStartCenter := nil.
+	rotationAxisLock := nil.
+	rotationTypedDegreesString := ''.
+	rotationCurrentDegrees := 0
+]
+
+{ #category : 'initialization' }
+MyContextMenuPresenter >> resetTranslationMode [
+	"Clears transient translation-mode state."
+
+	grabModeActive := false.
+	grabStartMousePosition := nil.
+	grabStartNodePosition := nil.
+	grabAxisLock := nil.
+	grabDragPlanePoint := nil.
+	grabDragPlaneNormal := nil.
+	grabStartWorldPoint := nil
 ]
 
 { #category : 'geometry selection' }
@@ -970,7 +935,7 @@ MyContextMenuPresenter >> selectShapeAt: aPoint [
 	selectedRenderedShape := pickedEntry.
 	self applySelectedVisualTo: selectedRenderedShape node.
 
-	wodenPresenter adapter widget changed
+	self refreshScene
 ]
 
 { #category : 'accessing' }
@@ -1022,7 +987,7 @@ MyContextMenuPresenter >> setupContextMenu [
 	"Registers mouseDown, mouseMove, and mouseUp handlers on the underlying Woden widget."
 
 	| widget |
-	widget := wodenPresenter adapter widget.
+	widget := self wodenWidget.
 	widget ifNil: [ ^ self ].
 
 	widget
@@ -1036,20 +1001,11 @@ MyContextMenuPresenter >> setupContextMenu [
 
 { #category : 'accessing' }
 MyContextMenuPresenter >> showContextMenuAt: aPoint [
-	 "Builds and displays the context menu at the given screen position."
-	
+	"Builds and displays the context menu at the given screen position."
+
 	| menu |
 	menu := self buildContextMenu.
 	menu openWithSpecAt: aPoint
-]
-
-{ #category : 'geometry translation' }
-MyContextMenuPresenter >> translateSelectedBy: aVector [
-	"Moves the selected scene node by aVector and requests a redraw."
-
-	self selectedNode ifNotNil: [ :node |
-			node translateBy: aVector.
-			wodenPresenter adapter widget changed ]
 ]
 
 { #category : 'geometry translation' }
@@ -1113,11 +1069,21 @@ MyContextMenuPresenter >> updateTranslationPreviewAt: aPoint [
 	newPosition := grabStartNodePosition + translation.
 
 	node position: newPosition.
-	wodenPresenter adapter widget changed
+	self refreshScene
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'user interface' }
 MyContextMenuPresenter >> useSelectedAsPivot [
 
 	self selectedNode ifNotNil: [ :node | self cameraControlMorph useNodePivot: node ]
+]
+
+{ #category : 'user interface' }
+MyContextMenuPresenter >> wodenWidget [
+	"Returns the embedded Woden widget, if it has been built."
+
+	wodenPresenter ifNil: [ ^ nil ].
+	wodenPresenter adapter ifNil: [ ^ nil ].
+
+	^ wodenPresenter adapter widget
 ]
