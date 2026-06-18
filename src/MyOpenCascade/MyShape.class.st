@@ -38,6 +38,8 @@ Class {
 	#name : 'MyShape',
 	#superclass : 'FFIOpaqueObject',
 	#instVars : [
+		'name',
+		'storageId',
 		'storagePath',
 		'solidCount',
 		'shellCount',
@@ -69,14 +71,21 @@ MyShape class >> loadFromFile: aFileReference [
 	(shape isNil or: [ shape hasNativeHandle not ]) ifTrue: [
 		self error: 'Could not read the OCCT shape file' ].
 	shape storagePath: file fullName.
+	shape inferIdentityFromStoragePath.
 	^ shape
 ]
 
-{ #category : 'persistence' }
-MyShape class >> newStoragePath [
-	"Answers a unique default path for one disk-backed OCCT shape."
+{ #category : 'as yet unclassified' }
+MyShape class >> safeFileComponentFor: aString [
+	"Answers a readable Windows-safe filename component."
 
-	^ (self storageDirectory / (UUID new asString , '.brep')) fullName
+	| safe |
+	safe := aString collect: [ :character |
+			        ((character isAlphaNumeric and: [ character asciiValue < 128 ]) or: [ ' -_' includes: character ])
+				        ifTrue: [ character ]
+				        ifFalse: [ $- ] ].
+	[ safe includesSubstring: '--' ] whileTrue: [ safe := safe copyReplaceAll: '--' with: '-' ].
+	^ safe ifEmpty: [ 'Shape' ]
 ]
 
 { #category : 'persistence' }
@@ -116,6 +125,7 @@ MyShape >> cutWith: anotherShape [
 	anotherShape ensureNativeHandle.
 	result := CxxOcctLibrary cxxCut: self with: anotherShape.
 	result ifNil: [ ^ nil ].
+	result setName: self name.
 	result persistToDisk.
 	^ result
 ]
@@ -147,6 +157,14 @@ MyShape >> deleteStorageFile [
 	storagePath := nil
 ]
 
+{ #category : 'private' }
+MyShape >> derivedBodyNameAt: oneBasedIndex [
+	"Keeps the first body name stable and numbers additional split bodies without nesting suffixes."
+
+	oneBasedIndex = 1 ifTrue: [ ^ self normalizedBodyName ].
+	^ self rootBodyName , ' - Body ' , (self startingBodyNumber + oneBasedIndex - 1) asString
+]
+
 { #category : 'topology constants' }
 MyShape >> edgeType [
 
@@ -159,6 +177,15 @@ MyShape >> edges [
 
 	edges ifNil: [ edges := self subshapesOfType: self edgeType as: MyEdge ].
 	^ edges
+]
+
+{ #category : 'private' }
+MyShape >> ensureIdentity [
+	"Ensures this shape has a display name and stable disk identity."
+
+	(name isNil or: [ storageId isNil ]) ifTrue: [ self inferIdentityFromStoragePath ].
+	name ifNil: [ name := 'Shape' ].
+	storageId ifNil: [ storageId := UUID new asString ]
 ]
 
 { #category : 'private' }
@@ -180,7 +207,8 @@ MyShape >> ensureNativeHandle [
 { #category : 'persistence' }
 MyShape >> ensureStoragePath [
 
-	storagePath ifNil: [ storagePath := self class newStoragePath ]
+	self ensureIdentity.
+	storagePath ifNil: [ storagePath := (self class storageDirectory / self storageFileName) fullName ]
 ]
 
 { #category : 'topology constants' }
@@ -226,6 +254,24 @@ MyShape >> hasTopologyInspectionData [
 	^ solidCount notNil
 ]
 
+{ #category : 'private' }
+MyShape >> inferIdentityFromStoragePath [
+	"Infers name and stable identity from a correlated BREP filename."
+
+	| base separatorIndex |
+	storagePath ifNil: [ ^ self ].
+	base := self storageFileReference basenameWithoutExtension.
+	separatorIndex := base findString: '--'.
+
+	separatorIndex > 0
+		ifTrue: [
+				name ifNil: [ name := base copyFrom: 1 to: separatorIndex - 1 ].
+				storageId ifNil: [ storageId := base copyFrom: separatorIndex + 2 to: base size ] ]
+		ifFalse: [
+				name ifNil: [ name := base ].
+				storageId ifNil: [ storageId := UUID new asString ] ]
+]
+
 { #category : 'testing' }
 MyShape >> isNull [
 	"Answers whether this shape has no valid native handle."
@@ -235,11 +281,32 @@ MyShape >> isNull [
 ]
 
 { #category : 'accessing' }
+MyShape >> name [
+
+	self ensureIdentity.
+	^ name
+]
+
+{ #category : 'accessing' }
+MyShape >> name: aString [
+
+	^ self renameTo: aString
+]
+
+{ #category : 'accessing' }
 MyShape >> normalBufferLength [
 	"Returns the number of doubles in the normal buffer (vertexCount * 3)."
 
 	self ensureNativeHandle.
 	^ CxxOcctLibrary cxxGetNormalBufferLength: self
+]
+
+{ #category : 'private' }
+MyShape >> normalizedBodyName [
+	"Answers the target name with at most one generated Body suffix."
+
+	(self name includesSubstring: ' - Body ') ifFalse: [ ^ self name ].
+	^ self rootBodyName , ' - Body ' , self startingBodyNumber asString
 ]
 
 { #category : 'accessing' }
@@ -325,6 +392,50 @@ MyShape >> releaseNativeHandle [
 	handle beNull
 ]
 
+{ #category : 'persistence' }
+MyShape >> renameTo: aString [
+	"Renames the shape and its BREP file while preserving its stable identity."
+
+	| normalizedName oldName oldPath oldFile newPath |
+	normalizedName := aString trimBoth.
+	normalizedName isEmpty ifTrue: [ self error: 'Shape name cannot be empty' ].
+
+	self ensureIdentity.
+	name = normalizedName ifTrue: [ ^ self ].
+	self ensureNativeHandle.
+	self hasNativeHandle ifFalse: [ self error: 'Cannot rename a shape without geometry' ].
+
+	oldName := name.
+	oldPath := storagePath.
+	oldFile := self storageFileReference.
+	name := normalizedName.
+
+	oldFile
+		ifNil: [ newPath := (self class storageDirectory / self storageFileName) fullName ]
+		ifNotNil: [ newPath := (oldFile parent / self storageFileName) fullName ].
+	storagePath := newPath.
+
+	[ self persistToDisk ]
+		on: Error
+		do: [ :error |
+				name := oldName.
+				storagePath := oldPath.
+				error pass ].
+
+	(oldFile notNil and: [ oldFile fullName ~= newPath and: [ oldFile exists ] ]) ifTrue: [ oldFile delete ].
+	^ self
+]
+
+{ #category : 'private' }
+MyShape >> rootBodyName [
+	"Answers the original body name before any generated Body suffix."
+
+	| markerIndex |
+	markerIndex := self name findString: ' - Body '.
+	markerIndex = 0 ifTrue: [ ^ self name ].
+	^ self name copyFrom: 1 to: markerIndex - 1
+]
+
 { #category : 'transforming' }
 MyShape >> rotateDegrees: degrees aroundAxis: axisSymbol center: centerPoint [
 	"Applies CAD-level rotation around one global axis and a world-space center point."
@@ -370,9 +481,12 @@ MyShape >> rotateDegreesOnX: xDegrees y: yDegrees z: zDegrees around: centerPoin
 
 { #category : 'persistence' }
 MyShape >> saveToFile: aFileReference [
-	"Changes the backing file and writes the current OCCT shape to it."
+	"Saves in the requested directory using a correlated name and stable identity."
 
-	storagePath := aFileReference asFileReference fullName.
+	| requestedFile |
+	requestedFile := aFileReference asFileReference.
+	self setName: requestedFile basenameWithoutExtension.
+	storagePath := (requestedFile parent / self storageFileName) fullName.
 	^ self persistToDisk
 ]
 
@@ -403,10 +517,20 @@ MyShape >> separatedSolids [
 	0 to: count - 1 do: [ :index |
 			solid := CxxOcctLibrary cxxSolidAt: self index: index.
 			(solid notNil and: [ solid isNull not ]) ifTrue: [
+					solid setName: (self derivedBodyNameAt: index + 1).
 					solid persistToDisk.
 					solidsTemp add: solid ] ].
 
 	^ solidsTemp asArray
+]
+
+{ #category : 'private' }
+MyShape >> setName: aString [
+
+	| normalizedName |
+	normalizedName := aString trimBoth.
+	normalizedName isEmpty ifTrue: [ self error: 'Shape name cannot be empty' ].
+	name := normalizedName
 ]
 
 { #category : 'topology constants' }
@@ -437,11 +561,47 @@ MyShape >> solids [
 	^ solids
 ]
 
+{ #category : 'private' }
+MyShape >> startingBodyNumber [
+	"Answers the existing generated body number, defaulting to one for an unsplit target."
+
+	| markerIndex suffix tokens |
+	markerIndex := self name findString: ' - Body '.
+	markerIndex = 0 ifTrue: [ ^ 1 ].
+
+	suffix := self name copyFrom: markerIndex + ' - Body ' size to: self name size.
+	tokens := suffix substrings.
+	tokens ifEmpty: [ ^ 1 ].
+	^ [ tokens first asInteger ]
+		  on: Error
+		  do: [ 1 ]
+]
+
+{ #category : 'persistence' }
+MyShape >> storageFileName [
+
+	self ensureIdentity.
+	^ (self class safeFileComponentFor: name) , '--' , storageId , '.brep'
+]
+
 { #category : 'persistence' }
 MyShape >> storageFileReference [
 
 	storagePath ifNil: [ ^ nil ].
 	^ storagePath asFileReference
+]
+
+{ #category : 'persistence' }
+MyShape >> storageId [
+
+	self ensureIdentity.
+	^ storageId
+]
+
+{ #category : 'persistence' }
+MyShape >> storageId: aString [
+
+	storageId := aString
 ]
 
 { #category : 'persistence' }

@@ -41,7 +41,13 @@ MyContextMenuPresenter >> addBox [
 	"Creates a 1×1×1 tessellated box, adds it to the Woden scene, and records the node-shape pair."
 
 	| renderedShape |
-	renderedShape := MyRenderedShape shape: (MyBoxMaker makeBoxDx: 1 dy: 1 dz: 1) deflection: 0.01.
+	renderedShape := MyRenderedShape
+		shape: (MyBoxMaker
+			makeBoxDx: 1
+			dy: 1
+			dz: 1
+			named: (self nextAvailableNameFor: 'Box'))
+		deflection: 0.01.
 
 	scene add: renderedShape node.
 	renderedShapes addLast: renderedShape.
@@ -54,7 +60,9 @@ MyContextMenuPresenter >> addCylinder [
 	"Creates a tessellated cylinder, adds it to the Woden scene, and records the node-shape pair."
 
 	| renderedShape |
-	renderedShape := MyRenderedShape shape: (MyCylinderMaker makeCylinderRadius: 1 height: 1) deflection: 0.01.
+	renderedShape := MyRenderedShape
+		                 shape: (MyCylinderMaker makeCylinderRadius: 1 height: 1 named: (self nextAvailableNameFor: 'Cylinder'))
+		                 deflection: 0.01.
 
 	scene add: renderedShape node.
 	renderedShapes addLast: renderedShape.
@@ -140,6 +148,7 @@ MyContextMenuPresenter >> buildSelectionMenuGroup: aGroup [
 
 	self addMenuItemNamed: 'Translate Selected' action: [ self activateTranslationMode ] to: aGroup.
 	self addMenuItemNamed: 'Rotate Selected' action: [ self activateRotationMode ] to: aGroup.
+		self addMenuItemNamed: 'Rename Selected' action: [ self renameSelectedShape ] to: aGroup.
 	self addMenuItemNamed: 'Delete Selected' action: [ self deleteSelected ] to: aGroup.
 	self addMenuItemNamed: 'Delete Last Inserted' action: [ self deleteLastAdded ] to: aGroup
 ]
@@ -533,6 +542,18 @@ MyContextMenuPresenter >> keyStringFromEvent: anEvent [
 	^ self normalizedKeyCharacter: anEvent keyCharacter
 ]
 
+{ #category : 'rendered geometry management' }
+MyContextMenuPresenter >> nextAvailableNameFor: baseName [
+	"Answers the first unused numbered display name for this scene."
+
+	| index candidate |
+	index := 1.
+	[
+		candidate := baseName , ' ' , index asString.
+		renderedShapes noneSatisfy: [ :renderedShape | renderedShape name = candidate ] ] whileFalse: [ index := index + 1 ].
+	^ candidate
+]
+
 { #category : 'input event handling' }
 MyContextMenuPresenter >> normalizedKeyCharacter: aCharacter [
 	"Answers the key name used by the transform modes."
@@ -606,6 +627,21 @@ MyContextMenuPresenter >> refreshScene [
 	"Requests a redraw of the embedded Woden widget."
 
 	self wodenWidget ifNotNil: [ :widget | widget changed ]
+]
+
+{ #category : 'rendered geometry management' }
+MyContextMenuPresenter >> renameSelectedShape [
+	"Prompts for a selected shape's name and renames its correlated BREP file."
+
+	| renderedShape newName |
+	renderedShape := self selectedRenderedShape.
+	renderedShape ifNil: [ ^ self ].
+
+	newName := UIManager default request: 'Shape name' initialAnswer: renderedShape name.
+	(newName isNil or: [ newName trimBoth isEmpty ]) ifTrue: [ ^ self ].
+
+	renderedShape renameTo: newName.
+	self refreshScene
 ]
 
 { #category : 'boolean operations' }

@@ -11,6 +11,108 @@ MyBoxMakerMemoryTest >> cxxHasNoMemoryDifference [
 ]
 
 { #category : 'tests' }
+MyBoxMakerMemoryTest >> testCutResultPreservesTargetName [
+
+	| target tool result |
+	target := MyBoxMaker makeBoxDx: 1 dy: 1 dz: 1 named: 'Base Plate'.
+	tool := MyCylinderMaker makeCylinderRadius: 0.25 height: 1 named: 'Drill Tool'.
+
+	[
+		result := target cutWith: tool.
+		self deny: result isNil.
+		self assert: result name equals: 'Base Plate'.
+		self deny: (result name includesSubstring: tool name) ]
+		ensure: [
+			result ifNotNil: [ result free ].
+			tool free.
+			target free ]
+]
+
+{ #category : 'tests' }
+MyBoxMakerMemoryTest >> testDerivedBodyNamesDoNotNest [
+
+	| shape |
+	shape := MyShape new.
+	shape setName: 'Box 1 - Body 1 - Body 2'.
+
+	self assert: shape rootBodyName equals: 'Box 1'.
+	self assert: (shape derivedBodyNameAt: 1) equals: 'Box 1 - Body 1'.
+	self assert: (shape derivedBodyNameAt: 2) equals: 'Box 1 - Body 2'
+]
+
+{ #category : 'tests' }
+MyBoxMakerMemoryTest >> testDerivedBodyNamesIncrementExistingBodyNumber [
+
+	| shape |
+	shape := MyShape new.
+	shape setName: 'Box 1 - Body 2'.
+
+	self assert: (shape derivedBodyNameAt: 1) equals: 'Box 1 - Body 2'.
+	self assert: (shape derivedBodyNameAt: 2) equals: 'Box 1 - Body 3'
+]
+
+{ #category : 'tests' }
+MyBoxMakerMemoryTest >> testLoadFromFileRestoresNameAndIdentity [
+
+	| original loaded file storageId |
+	original := MyBoxMaker
+		            makeBoxDx: 1
+		            dy: 1
+		            dz: 1
+		            named: 'Drive Housing'.
+	file := original storageFileReference.
+	storageId := original storageId.
+	original releaseNativeHandle.
+
+	[
+		loaded := MyShape loadFromFile: file.
+		self assert: loaded name equals: 'Drive Housing'.
+		self assert: loaded storageId equals: storageId ] ensure: [
+			loaded ifNotNil: [ loaded free ].
+			original storagePath: nil ]
+]
+
+{ #category : 'tests' }
+MyBoxMakerMemoryTest >> testNamedShapeHasCorrelatedFileName [
+
+	| shape fileName |
+	shape := MyBoxMaker makeBoxDx: 1 dy: 1 dz: 1 named: 'Mounting Bracket'.
+
+	[
+		fileName := shape storageFileReference basename.
+		self assert: shape name equals: 'Mounting Bracket'.
+		self assert: (fileName beginsWith: 'Mounting Bracket--').
+		self assert: (fileName includesSubstring: shape storageId).
+		self assert: (fileName endsWith: '.brep') ]
+		ensure: [ shape free ]
+
+
+]
+
+{ #category : 'tests' }
+MyBoxMakerMemoryTest >> testRenamePreservesIdentityAndMovesBRepFile [
+
+	| shape oldFile oldStorageId newFile |
+	shape := MyBoxMaker
+		         makeBoxDx: 1
+		         dy: 1
+		         dz: 1
+		         named: 'Box 1'.
+	oldFile := shape storageFileReference.
+	oldStorageId := shape storageId.
+
+	[
+		shape renameTo: 'Front Mount'.
+		newFile := shape storageFileReference.
+
+		self assert: shape name equals: 'Front Mount'.
+		self assert: shape storageId equals: oldStorageId.
+		self assert: newFile exists.
+		self deny: oldFile exists.
+		self assert: (newFile basename beginsWith: 'Front Mount--') ] ensure: [ shape free ]
+]
+
+{ #category : 'tests' }
 MyBoxMakerMemoryTest >> testShapeRehydratesNativeHandleFromDisk [
 	"MyBoxMakerMemoryTest new testShapeRehydratesNativeHandleFromDisk"
 

@@ -16,9 +16,17 @@ Class {
 MyBoxMaker class >> makeBoxDx: dx dy: dy dz: dz [
 	"Creates a box shape via the direct C++ factory call. Raises an error if the result is null."
 
+	^ self makeBoxDx: dx dy: dy dz: dz named: 'Box'
+]
+
+{ #category : 'factory' }
+MyBoxMaker class >> makeBoxDx: dx dy: dy dz: dz named: aString [
+	"Creates and persists a named box shape."
+
 	| shape |
 	shape := CxxOcctLibrary cxxCreateBoxDx: dx dy: dy dz: dz.
 	shape isNull ifTrue: [ self error: 'cxxCreateBox failed' ].
+	shape setName: aString.
 	shape persistToDisk.
 	^ shape
 ]

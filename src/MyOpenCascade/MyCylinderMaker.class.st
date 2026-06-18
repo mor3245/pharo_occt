@@ -17,9 +17,17 @@ Class {
 MyCylinderMaker class >> makeCylinderRadius: radius height: height [
 	"Creates a cylinder shape via the direct C++ factory call. Raises an error if the result is null."
 
+	^ self makeCylinderRadius: radius height: height named: 'Cylinder'
+]
+
+{ #category : 'as yet unclassified' }
+MyCylinderMaker class >> makeCylinderRadius: radius height: height named: aString [
+	"Creates and persists a named cylinder shape."
+
 	| shape |
 	shape := CxxOcctLibrary cxxCreateCylinderRadius: radius height: height.
 	shape isNull ifTrue: [ self error: 'cxxCreateCylinder failed' ].
+	shape setName: aString.
 	shape persistToDisk.
 	^ shape
 ]

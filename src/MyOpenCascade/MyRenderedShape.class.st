@@ -102,6 +102,12 @@ MyRenderedShape >> free [
 ]
 
 { #category : 'accessing' }
+MyRenderedShape >> name [
+
+	^ shape name
+]
+
+{ #category : 'accessing' }
 MyRenderedShape >> node [
 
 	^ node
@@ -129,6 +135,12 @@ MyRenderedShape >> rebuildNode [
 	shape tessellateDeflection: deflection.
 	node := (MyShapeWodenAdapter new asWDMesh: shape) asSceneNode.
 	^ node
+]
+
+{ #category : 'accessing' }
+MyRenderedShape >> renameTo: aString [
+
+	shape renameTo: aString
 ]
 
 { #category : 'accessing' }
