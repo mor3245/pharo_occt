@@ -76,20 +76,6 @@ CxxOcctLibrary class >> cxxDumpMemoryDifference [
     ^ self ffiCall: #(void cxxDumpMemoryDifference())
 ]
 
-{ #category : 'persistence' }
-CxxOcctLibrary class >> cxxExportBRep: shape buffer: buffer length: bufferLength [
-	"Serializes shape into buffer as OCCT BREP bytes. Answers the number of bytes written."
-
-	^ self ffiCall: #( int cxxExportBRep ( MyShape* shape, void* buffer, int bufferLength ) )
-]
-
-{ #category : 'persistence' }
-CxxOcctLibrary class >> cxxExportBRepSize: shape [
-	"Returns the number of bytes required to serialize shape as OCCT BREP data."
-
-	^ self ffiCall: #( int cxxExportBRepSize ( MyShape* shape ) )
-]
-
 { #category : 'unused' }
 CxxOcctLibrary class >> cxxGetAllNormals: shapeHandle buffer: bufferPtr [
 	"Fills bufferPtr with vertexCount*3 doubles representing per-vertex normals."
@@ -195,6 +181,14 @@ CxxOcctLibrary class >> cxxMemoryCheckpoint [
     ^ self ffiCall: #(void cxxMemoryCheckpoint())
 ]
 
+{ #category : 'persistence' }
+CxxOcctLibrary class >> cxxReadBRepFile: filePath [
+	"Recreates a native shape from an OCCT BREP file."
+
+	^ self ffiCall: #( MyShape* cxxReadBRepFile ( String filePath ) )
+
+]
+
 { #category : 'as yet unclassified' }
 CxxOcctLibrary class >> cxxRotateShape: shape xDegrees: xDegrees yDegrees: yDegrees zDegrees: zDegrees [
 	"Applies Euler rotations in degrees to the underlying OpenCascade shape."
@@ -293,6 +287,13 @@ CxxOcctLibrary class >> cxxVertexCount: shapeHandle [
 	"Returns the number of vertices in the tessellated mesh."
 
 	^ self ffiCall: #( int cxxVertexCount ( MyShape* shapeHandle ) )
+]
+
+{ #category : 'persistence' }
+CxxOcctLibrary class >> cxxWriteBRepFile: shape path: filePath [
+	"Writes shape directly to an OCCT BREP file. Answers 1 on success."
+
+	^ self ffiCall: #( int cxxWriteBRepFile ( MyShape* shape, String filePath ) )
 ]
 
 { #category : 'accessing' }

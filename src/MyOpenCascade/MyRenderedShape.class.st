@@ -115,9 +115,11 @@ MyRenderedShape >> node: anObject [
 
 { #category : 'inspection' }
 MyRenderedShape >> prepareForInspection [
-	"Refreshes cached shape topology so the raw inspector can expand useful fields."
+		"Refreshes cached shape topology so the raw inspector can expand useful fields."
 
-	shape ifNotNil: [ shape refreshTopologyForInspection ].
+	shape ifNotNil: [
+		shape hasTopologyInspectionData ifFalse: [
+			shape refreshTopologyForInspection ] ].
 	^ self
 ]
 

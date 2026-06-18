@@ -38,7 +38,7 @@ Class {
 	#name : 'MyShape',
 	#superclass : 'FFIOpaqueObject',
 	#instVars : [
-		'brepData',
+		'storagePath',
 		'solidCount',
 		'shellCount',
 		'faceCount',
@@ -58,33 +58,35 @@ Class {
 }
 
 { #category : 'persistence' }
-MyShape >> brepData [
-	"Answers the Smalltalk-owned OCCT BREP snapshot used to recreate the native handle."
+MyShape class >> loadFromFile: aFileReference [
+	"Loads an independently stored OCCT BREP file into a new MyShape."
 
-	^ brepData
+	| file shape |
+	file := aFileReference asFileReference.
+	file exists ifFalse: [ self error: 'The OCCT shape file does not exist' ].
+
+	shape := CxxOcctLibrary cxxReadBRepFile: file fullName.
+	(shape isNil or: [ shape hasNativeHandle not ]) ifTrue: [
+		self error: 'Could not read the OCCT shape file' ].
+	shape storagePath: file fullName.
+	^ shape
 ]
 
 { #category : 'persistence' }
-MyShape >> brepData: aByteArray [
+MyShape class >> newStoragePath [
+	"Answers a unique default path for one disk-backed OCCT shape."
 
-	brepData := aByteArray
+	^ (self storageDirectory / (UUID new asString , '.brep')) fullName
 ]
 
 { #category : 'persistence' }
-MyShape >> captureBRepData [
-	"Refreshes the Smalltalk-owned BREP snapshot from the current native shape."
+MyShape class >> storageDirectory [
+	"Answers the directory containing persistent OCCT shape files."
 
-	| size buffer written |
-	self hasNativeHandle ifFalse: [ ^ self ].
-
-	size := CxxOcctLibrary cxxExportBRepSize: self.
-	size <= 0 ifTrue: [ ^ self ].
-
-	buffer := ByteArray new: size.
-	written := CxxOcctLibrary cxxExportBRep: self buffer: buffer length: size.
-	written = size ifFalse: [ ^ self ].
-
-	brepData := buffer
+	| directory |
+	directory := FileLocator imageDirectory / 'occt-shapes'.
+	directory ensureCreateDirectory.
+	^ directory
 ]
 
 { #category : 'inspection' }
@@ -114,7 +116,7 @@ MyShape >> cutWith: anotherShape [
 	anotherShape ensureNativeHandle.
 	result := CxxOcctLibrary cxxCut: self with: anotherShape.
 	result ifNil: [ ^ nil ].
-	result captureBRepData.
+	result persistToDisk.
 	^ result
 ]
 
@@ -135,6 +137,16 @@ MyShape >> cutWithSeparatedSolids: anotherShape [
 	^ Array with: result
 ]
 
+{ #category : 'persistence' }
+MyShape >> deleteStorageFile [
+	"Deletes this shape's persistent BREP file, if present."
+
+	| file |
+	file := self storageFileReference.
+	file ifNotNil: [ file exists ifTrue: [ file delete ] ].
+	storagePath := nil
+]
+
 { #category : 'topology constants' }
 MyShape >> edgeType [
 
@@ -151,17 +163,24 @@ MyShape >> edges [
 
 { #category : 'private' }
 MyShape >> ensureNativeHandle [
-	"Recreates the native OCCT shape from the BREP snapshot after an image restart."
+	"Recreates the native OCCT shape from its BREP file after an image restart."
 
-	| restored |
+	| file restored |
 	self hasNativeHandle ifTrue: [ ^ self ].
-	(brepData isNil or: [ brepData isEmpty ]) ifTrue: [ ^ self ].
+	file := self storageFileReference.
+	(file isNil or: [ file exists not ]) ifTrue: [ ^ self ].
 
-	restored := CxxOcctLibrary cxxImportBRep: brepData length: brepData size.
+	restored := CxxOcctLibrary cxxReadBRepFile: file fullName.
 	(restored isNil or: [ restored hasNativeHandle not ]) ifTrue: [ ^ self ].
 
 	handle := restored getHandle.
 	restored setHandle: nil
+]
+
+{ #category : 'persistence' }
+MyShape >> ensureStoragePath [
+
+	storagePath ifNil: [ storagePath := self class newStoragePath ]
 ]
 
 { #category : 'topology constants' }
@@ -180,21 +199,17 @@ MyShape >> faces [
 
 { #category : 'finalization' }
 MyShape >> finalize [
-	"Best-effort; prefer calling #free explicitly."
+	"Release only process-local native memory. Disk data remains independent."
 
-	"GC safety net: frees the C++ handle if #free was not called explicitly."
-
-	self free
+	self releaseNativeHandle
 ]
 
 { #category : 'finalization' }
 MyShape >> free [
-	"Releases the C++ Shape object and nulls the handle to prevent double-free."
+	"Permanently releases this shape's native memory and backing BREP file."
 
-	handle ifNil: [ ^ self ].
-	handle isNull ifTrue: [ ^ self ].
-	CxxOcctLibrary cxxShapeDelete: self.
-	handle beNull
+	self releaseNativeHandle.
+	self deleteStorageFile
 ]
 
 { #category : 'private' }
@@ -202,6 +217,13 @@ MyShape >> hasNativeHandle [
 	"Answers whether the native pointer is currently usable without rehydration."
 
 	^ handle notNil and: [ handle isNull not ]
+]
+
+{ #category : 'inspection' }
+MyShape >> hasTopologyInspectionData [
+	"Answers whether the raw-inspector topology cache has already been populated."
+
+	^ solidCount notNil
 ]
 
 { #category : 'testing' }
@@ -229,6 +251,23 @@ MyShape >> normals [
 	address := CxxOcctLibrary cxxGetNormals: self.
 	address isNull ifTrue: [ ^ Float64Array new: 0 ].
 	^ MyMakeShape float64ArrayFromExternalAddress: address count: self normalBufferLength
+]
+
+{ #category : 'persistence' }
+MyShape >> persistToDisk [
+	"Writes the current OCCT shape to its independent BREP file."
+
+	| file succeeded |
+	self hasNativeHandle ifFalse: [ self error: 'Cannot persist a shape without a native handle' ].
+	self ensureStoragePath.
+	file := self storageFileReference.
+	file parent ensureCreateDirectory.
+
+	succeeded := CxxOcctLibrary
+		cxxWriteBRepFile: self
+		path: file fullName.
+	succeeded = 1 ifFalse: [ self error: 'Could not write the OCCT shape file' ].
+	^ self
 ]
 
 { #category : 'inspection' }
@@ -276,6 +315,16 @@ MyShape >> refreshTopologyForInspectionDepth: depth [
 	^ self
 ]
 
+{ #category : 'finalization' }
+MyShape >> releaseNativeHandle [
+	"Releases only the process-local C++ shape, retaining its disk representation."
+
+	handle ifNil: [ ^ self ].
+	handle isNull ifTrue: [ ^ self ].
+	CxxOcctLibrary cxxShapeDelete: self.
+	handle beNull
+]
+
 { #category : 'transforming' }
 MyShape >> rotateDegrees: degrees aroundAxis: axisSymbol center: centerPoint [
 	"Applies CAD-level rotation around one global axis and a world-space center point."
@@ -315,7 +364,16 @@ MyShape >> rotateDegreesOnX: xDegrees y: yDegrees z: zDegrees around: centerPoin
 		centerX: centerPoint x
 		centerY: centerPoint y
 		centerZ: centerPoint z.
-	self captureBRepData
+	self clearTopologyInspectionData.
+	self persistToDisk
+]
+
+{ #category : 'persistence' }
+MyShape >> saveToFile: aFileReference [
+	"Changes the backing file and writes the current OCCT shape to it."
+
+	storagePath := aFileReference asFileReference fullName.
+	^ self persistToDisk
 ]
 
 { #category : 'transforming' }
@@ -326,27 +384,29 @@ MyShape >> scaleBy: aVector [
 		cxxScaleShape: self
 		sx: aVector x
 		sy: aVector y
-		sz: aVector z
+		sz: aVector z.
+	self clearTopologyInspectionData.
+	self persistToDisk
 ]
 
 { #category : 'topology' }
 MyShape >> separatedSolids [
 	"Answer new MyShape handles for each OCCT solid contained in this shape."
 
-	| count solids solid |
+	| count solidsTemp solid |
 	self ensureNativeHandle.
 
 	count := CxxOcctLibrary cxxSolidCount: self.
 	count <= 0 ifTrue: [ ^ #(  ) ].
 
-	solids := OrderedCollection new.
+	solidsTemp := OrderedCollection new.
 	0 to: count - 1 do: [ :index |
 			solid := CxxOcctLibrary cxxSolidAt: self index: index.
 			(solid notNil and: [ solid isNull not ]) ifTrue: [
-					solid captureBRepData.
-					solids add: solid ] ].
+					solid persistToDisk.
+					solidsTemp add: solid ] ].
 
-	^ solids asArray
+	^ solidsTemp asArray
 ]
 
 { #category : 'topology constants' }
@@ -377,6 +437,25 @@ MyShape >> solids [
 	^ solids
 ]
 
+{ #category : 'persistence' }
+MyShape >> storageFileReference [
+
+	storagePath ifNil: [ ^ nil ].
+	^ storagePath asFileReference
+]
+
+{ #category : 'persistence' }
+MyShape >> storagePath [
+
+	^ storagePath
+]
+
+{ #category : 'persistence' }
+MyShape >> storagePath: aString [
+
+	storagePath := aString
+]
+
 { #category : 'topology' }
 MyShape >> subshapesOfType: typeNumber as: shapeClass [
 	"Answers owned typed MyShape instances for the requested OCCT subshape kind."
@@ -391,7 +470,6 @@ MyShape >> subshapesOfType: typeNumber as: shapeClass [
 	0 to: count - 1 do: [ :index |
 			subshape := CxxOcctLibrary cxxSubshapeAt: self type: typeNumber index: index.
 			(subshape notNil and: [ subshape isNull not ]) ifTrue: [
-					subshape captureBRepData.
 					subshapes add: (self transferShape: subshape to: shapeClass) ] ].
 
 	^ subshapes asArray
@@ -470,8 +548,8 @@ MyShape >> transferShape: aShape to: shapeClass [
 	| typedShape |
 	typedShape := shapeClass new.
 	typedShape setHandle: aShape getHandle.
-	typedShape brepData: aShape brepData.
-	aShape setHandle: nil.
+	typedShape storagePath: aShape storagePath.
+	aShape storagePath: nil.
 	^ typedShape
 ]
 
@@ -485,7 +563,8 @@ MyShape >> translateBy: aVector [
 		x: aVector x
 		y: aVector y
 		z: aVector z.
-	self captureBRepData
+	self clearTopologyInspectionData.
+	self persistToDisk
 ]
 
 { #category : 'accessing' }
