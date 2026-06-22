@@ -19,7 +19,7 @@ Class {
 	#package : 'MyOpenCascade-Spec'
 }
 
-{ #category : 'geometry rotation' }
+{ #category : 'transform modes - rotation' }
 MyCADViewportPresenter >> activateRotationMode [
 	"Starts interactive rotation for the selected rendered node."
 
@@ -27,7 +27,7 @@ MyCADViewportPresenter >> activateRotationMode [
 	rotationMode activateFor: self
 ]
 
-{ #category : 'geometry translation' }
+{ #category : 'transform modes - translation' }
 MyCADViewportPresenter >> activateTranslationMode [
 	"Starts interactive translation for the selected rendered node."
 
@@ -35,7 +35,7 @@ MyCADViewportPresenter >> activateTranslationMode [
 	translationMode activateFor: self
 ]
 
-{ #category : 'rendered geometry management' }
+{ #category : 'actions - creation' }
 MyCADViewportPresenter >> addBox [
 	"Creates a 1×1×1 tessellated box, adds it to the Woden scene, and records the node-shape pair."
 
@@ -54,7 +54,7 @@ MyCADViewportPresenter >> addBox [
 	self refreshScene
 ]
 
-{ #category : 'rendered geometry management' }
+{ #category : 'actions - creation' }
 MyCADViewportPresenter >> addCylinder [
 	"Creates a tessellated cylinder, adds it to the Woden scene, and records the node-shape pair."
 
@@ -69,7 +69,7 @@ MyCADViewportPresenter >> addCylinder [
 	self refreshScene
 ]
 
-{ #category : 'user interface' }
+{ #category : 'context menu - building' }
 MyCADViewportPresenter >> addMenuItemNamed: aString action: aBlock to: aGroup [
 	"Adds a simple action item to a Spec menu group."
 
@@ -79,7 +79,7 @@ MyCADViewportPresenter >> addMenuItemNamed: aString action: aBlock to: aGroup [
 				action: aBlock ]
 ]
 
-{ #category : 'rendered geometry management' }
+{ #category : 'scene - updating' }
 MyCADViewportPresenter >> applyRenderNodeChange: aChange [
 
 	aChange isUnchanged ifTrue: [ ^ self ].
@@ -90,14 +90,14 @@ MyCADViewportPresenter >> applyRenderNodeChange: aChange [
 	self refreshScene
 ]
 
-{ #category : 'geometry selection' }
+{ #category : 'selection - highlighting' }
 MyCADViewportPresenter >> applySelectedVisualTo: aNode [
 	"Highlights a selected scene node."
 
 	selection applyVisualTo: aNode
 ]
 
-{ #category : 'user interface' }
+{ #category : 'context menu - building' }
 MyCADViewportPresenter >> buildBooleanMenuGroup: aGroup [
 	"Adds boolean operation actions to a menu group."
 
@@ -105,7 +105,7 @@ MyCADViewportPresenter >> buildBooleanMenuGroup: aGroup [
 	self addMenuItemNamed: 'Cut Other Bodies With Selected' action: [ self cutOtherBodiesWithSelected ] to: aGroup
 ]
 
-{ #category : 'user interface' }
+{ #category : 'context menu - building' }
 MyCADViewportPresenter >> buildContextMenu [
 	"Constructs the right-click menu for scene and selected-shape actions."
 
@@ -117,7 +117,7 @@ MyCADViewportPresenter >> buildContextMenu [
 		  yourself
 ]
 
-{ #category : 'user interface' }
+{ #category : 'context menu - building' }
 MyCADViewportPresenter >> buildCreationMenuGroup: aGroup [
 	"Adds shape creation actions to a menu group."
 
@@ -125,7 +125,7 @@ MyCADViewportPresenter >> buildCreationMenuGroup: aGroup [
 	self addMenuItemNamed: 'Add Cylinder' action: [ self addCylinder ] to: aGroup
 ]
 
-{ #category : 'rendered geometry management' }
+{ #category : 'scene building' }
 MyCADViewportPresenter >> buildScene [
 	"Initialises a fresh WDScene containing only a point light; mesh nodes are added later on demand."
 
@@ -141,7 +141,7 @@ MyCADViewportPresenter >> buildScene [
 	^ scene
 ]
 
-{ #category : 'user interface' }
+{ #category : 'context menu - building' }
 MyCADViewportPresenter >> buildSelectionMenuGroup: aGroup [
 	"Adds selected-shape editing actions to a menu group."
 
@@ -152,7 +152,7 @@ MyCADViewportPresenter >> buildSelectionMenuGroup: aGroup [
 	self addMenuItemNamed: 'Delete Last Inserted' action: [ self deleteLastAdded ] to: aGroup
 ]
 
-{ #category : 'user interface' }
+{ #category : 'context menu - building' }
 MyCADViewportPresenter >> buildViewMenuGroup: aGroup [
 	"Adds camera and inspection actions to a menu group."
 
@@ -162,62 +162,62 @@ MyCADViewportPresenter >> buildViewMenuGroup: aGroup [
 	self addMenuItemNamed: 'Inspect Selected' action: [ self inspectSelectedShape ] to: aGroup
 ]
 
-{ #category : 'user interface' }
+{ #category : 'camera - accessing' }
 MyCADViewportPresenter >> cameraControlMorph [
 
 	^ self wodenWidget
 ]
 
-{ #category : 'geometry translation' }
+{ #category : 'camera - transforming' }
 MyCADViewportPresenter >> cameraForwardDirection [
 	"Returns the camera forward direction in world space."
 
 	^ (self transformCameraDirection: (Vector3 x: 0 y: 0 z: -1)) normalized
 ]
 
-{ #category : 'geometry rotation' }
+{ #category : 'transform modes - rotation' }
 MyCADViewportPresenter >> cancelRotationMode [
 	"Restores the selected node transform to its state before rotation mode started."
 
 	rotationMode cancel
 ]
 
-{ #category : 'geometry translation' }
+{ #category : 'transform modes - translation' }
 MyCADViewportPresenter >> cancelTranslationMode [
 	"Restores the selected node to its position before grab mode started."
 
 	translationMode cancel
 ]
 
-{ #category : 'geometry selection' }
+{ #category : 'selection - managing' }
 MyCADViewportPresenter >> clearSelection [
 	"Restores the previously selected node's visuals and clears the selection state."
 
 	selection clear
 ]
 
-{ #category : 'geometry rotation' }
+{ #category : 'transform modes - rotation' }
 MyCADViewportPresenter >> confirmRotationMode [
 	"Accepts the current rendered-node rotation and bakes it into the CAD shape."
 
 	rotationMode confirm
 ]
 
-{ #category : 'geometry translation' }
+{ #category : 'transform modes - translation' }
 MyCADViewportPresenter >> confirmTranslationMode [
 	"Accepts the current rendered-node translation."
 
 	translationMode confirm
 ]
 
-{ #category : 'event handling' }
+{ #category : 'context menu - configuration' }
 MyCADViewportPresenter >> contextMenuDragThreshold [
 	"Returns the pixel radius beyond which a right-button drag suppresses the context menu."
 
 	^ 4
 ]
 
-{ #category : 'boolean operations' }
+{ #category : 'actions - boolean operations' }
 MyCADViewportPresenter >> cutOtherBodiesWithSelected [
 	"Use the selected body as the cutter and cut every other body in the scene."
 
@@ -250,7 +250,7 @@ MyCADViewportPresenter >> cutOtherBodiesWithSelected [
 	self refreshScene
 ]
 
-{ #category : 'boolean operations' }
+{ #category : 'actions - boolean operations' }
 MyCADViewportPresenter >> cutSelectedWithLastAdded [
 	"Cut the selected shape with the last inserted shape, after baking visible translations into CAD space."
 
@@ -283,7 +283,7 @@ MyCADViewportPresenter >> cutSelectedWithLastAdded [
 	self refreshScene
 ]
 
-{ #category : 'boolean operations' }
+{ #category : 'actions - boolean operations' }
 MyCADViewportPresenter >> cutSelectedWithOtherBodies [
 	"Cut the selected body with all other bodies in the scene."
 
@@ -309,7 +309,7 @@ MyCADViewportPresenter >> cutSelectedWithOtherBodies [
 	self refreshScene
 ]
 
-{ #category : 'boolean operations' }
+{ #category : 'actions - boolean operations' }
 MyCADViewportPresenter >> cutTarget: targetRenderedShape withTools: toolRenderedShapes [
 	"Answers rendered shapes produced by cutting targetRenderedShape by each tool in order."
 
@@ -347,7 +347,7 @@ MyCADViewportPresenter >> defaultLayout [
 		  yourself
 ]
 
-{ #category : 'rendered geometry management' }
+{ #category : 'actions - deletion' }
 MyCADViewportPresenter >> deleteLastAdded [
 	"Removes the most recently added node from the scene and frees its C++ shape."
 
@@ -366,7 +366,7 @@ MyCADViewportPresenter >> deleteLastAdded [
 	self refreshScene
 ]
 
-{ #category : 'rendered geometry management' }
+{ #category : 'actions - deletion' }
 MyCADViewportPresenter >> deleteSelected [
 	"Removes the currently selected node from the scene and frees its C++ shape."
 
@@ -385,19 +385,19 @@ MyCADViewportPresenter >> deleteSelected [
 	self refreshScene
 ]
 
-{ #category : 'user interface' }
+{ #category : 'camera - actions' }
 MyCADViewportPresenter >> fitAll [
 
 	self cameraControlMorph fitScene
 ]
 
-{ #category : 'user interface' }
+{ #category : 'camera - actions' }
 MyCADViewportPresenter >> fitSelected [
 
 	self selectedNode ifNotNil: [ :node | self cameraControlMorph fitNode: node ]
 ]
 
-{ #category : 'input event handling' }
+{ #category : 'events - focus' }
 MyCADViewportPresenter >> focusWodenWidget [
 	"Requests keyboard focus so X/Y/Z/Enter work after choosing the menu item."
 
@@ -408,7 +408,7 @@ MyCADViewportPresenter >> focusWodenWidget [
 	widget takeKeyboardFocus
 ]
 
-{ #category : 'input event handling' }
+{ #category : 'events - keyboard' }
 MyCADViewportPresenter >> handleKeyStroke: anEvent [
 
 	| key |
@@ -428,7 +428,7 @@ MyCADViewportPresenter >> handleKeyStroke: anEvent [
 	^ self
 ]
 
-{ #category : 'event handling' }
+{ #category : 'events - mouse' }
 MyCADViewportPresenter >> handleMouseDown: anEvent [
 	"Handles selection, translation confirmation, and rotation confirmation."
 
@@ -451,7 +451,7 @@ MyCADViewportPresenter >> handleMouseDown: anEvent [
 	anEvent redButtonPressed ifTrue: [ self selectShapeAt: anEvent position ]
 ]
 
-{ #category : 'event handling' }
+{ #category : 'events - mouse' }
 MyCADViewportPresenter >> handleMouseMove: anEvent [
 	"Updates active transform preview, or marks right-button drags for context-menu suppression."
 
@@ -471,7 +471,7 @@ MyCADViewportPresenter >> handleMouseMove: anEvent [
 	(anEvent position - contextMenuDownPosition) r > self contextMenuDragThreshold ifTrue: [ contextMenuWasDragged := true ]
 ]
 
-{ #category : 'event handling' }
+{ #category : 'events - mouse' }
 MyCADViewportPresenter >> handleMouseUp: anEvent [
 	"Shows the context menu on a right-button click that was not a drag; resets drag tracking."
 
@@ -525,7 +525,7 @@ MyCADViewportPresenter >> initializeWindow: aWindowPresenter [
 	aWindowPresenter whenOpenedDo: [ self setupContextMenu ]
 ]
 
-{ #category : 'rendered geometry management' }
+{ #category : 'actions - inspection' }
 MyCADViewportPresenter >> inspectSelectedShape [
 	"Opens a Pharo inspector on the currently selected rendered shape, if any."
 
@@ -534,14 +534,14 @@ MyCADViewportPresenter >> inspectSelectedShape [
 			renderedShape inspect ]
 ]
 
-{ #category : 'input event handling' }
+{ #category : 'events - keyboard' }
 MyCADViewportPresenter >> keyStringFromEvent: anEvent [
 	"Normalizes common Morphic key event variants."
 
 	^ self normalizedKeyCharacter: anEvent keyCharacter
 ]
 
-{ #category : 'rendered geometry management' }
+{ #category : 'geometry - naming' }
 MyCADViewportPresenter >> nextAvailableNameFor: baseName [
 	"Answers the first unused numbered display name for this scene."
 
@@ -553,7 +553,7 @@ MyCADViewportPresenter >> nextAvailableNameFor: baseName [
 	^ candidate
 ]
 
-{ #category : 'input event handling' }
+{ #category : 'events - keyboard' }
 MyCADViewportPresenter >> normalizedKeyCharacter: aCharacter [
 	"Answers the key name used by the transform modes."
 
@@ -565,7 +565,7 @@ MyCADViewportPresenter >> normalizedKeyCharacter: aCharacter [
 	^ aCharacter asString asLowercase
 ]
 
-{ #category : 'geometry selection' }
+{ #category : 'picking - coordinates' }
 MyCADViewportPresenter >> normalizedScreenPosition: aPoint [
 	"Converts a raw screen point to a [0,1]×[0,1] viewport coordinate with Y flipped for OpenGL convention."
 
@@ -577,7 +577,7 @@ MyCADViewportPresenter >> normalizedScreenPosition: aPoint [
 	^ localPoint x / widgetExtent x asFloat @ (1.0 - (localPoint y / widgetExtent y asFloat))
 ]
 
-{ #category : 'user interface' }
+{ #category : 'opening' }
 MyCADViewportPresenter >> openWithContextMenu [
 	"Opens the presenter window and ensures the context menu event hooks are installed."
 
@@ -585,7 +585,7 @@ MyCADViewportPresenter >> openWithContextMenu [
 	self withWindowDo: [ :window | self setupContextMenu ]
 ]
 
-{ #category : 'geometry selection' }
+{ #category : 'picking - rays' }
 MyCADViewportPresenter >> rayForScreenPosition: aPoint [
 	"Screen point -> normalized viewport point -> camera-space ray -> world-space ray"
 
@@ -602,7 +602,7 @@ MyCADViewportPresenter >> rayForScreenPosition: aPoint [
 	^ ray transformedWith: cameraNode transform "Convert ray position to woden/scene coordinates."
 ]
 
-{ #category : 'geometry selection' }
+{ #category : 'picking - rays' }
 MyCADViewportPresenter >> rayPickEntriesAt: aPoint [
 	"Ray-casts against all mesh node bounding boxes and returns hit entries sorted by distance."
 
@@ -621,14 +621,14 @@ MyCADViewportPresenter >> rayPickEntriesAt: aPoint [
 	^ (hits asSortedCollection: [ :a :b | a key < b key ]) collect: [ :each | each value ]
 ]
 
-{ #category : 'user interface' }
+{ #category : 'scene - updating' }
 MyCADViewportPresenter >> refreshScene [
 	"Requests a redraw of the embedded Woden widget."
 
 	self wodenWidget ifNotNil: [ :widget | widget changed ]
 ]
 
-{ #category : 'rendered geometry management' }
+{ #category : 'actions - editing' }
 MyCADViewportPresenter >> renameSelectedShape [
 	"Prompts for a selected shape's name and renames its correlated BREP file."
 
@@ -643,7 +643,7 @@ MyCADViewportPresenter >> renameSelectedShape [
 	self refreshScene
 ]
 
-{ #category : 'boolean operations' }
+{ #category : 'scene - geometry management' }
 MyCADViewportPresenter >> replaceRenderedShape: oldRenderedShape withAll: newRenderedShapes [
 	"Replace one scene body with zero or more rendered bodies."
 
@@ -656,55 +656,55 @@ MyCADViewportPresenter >> replaceRenderedShape: oldRenderedShape withAll: newRen
 			renderedShapes addLast: newRenderedShape ]
 ]
 
-{ #category : 'geometry selection' }
+{ #category : 'selection - highlighting' }
 MyCADViewportPresenter >> restoreSelectedVisual [
 	"Puts the originally saved renderables back on the selected node."
 
 	selection restoreVisual
 ]
 
-{ #category : 'geometry rotation' }
+{ #category : 'transform modes - rotation' }
 MyCADViewportPresenter >> rotationDegreesPerPixel [
 	"Degrees rotated per horizontal mouse pixel."
 
 	^ 0.5
 ]
 
-{ #category : 'geometry selection' }
+{ #category : 'picking - selection' }
 MyCADViewportPresenter >> selectShapeAt: aPoint [
 	"Picks the shape under the cursor; cycles to the next hit if the same node was already selected."
 
 	selection selectFrom: (self rayPickEntriesAt: aPoint)
 ]
 
-{ #category : 'geometry selection' }
+{ #category : 'selection - accessing' }
 MyCADViewportPresenter >> selectedNode [
 	"Returns the scene node of the currently selected entry, or nil if nothing is selected."
 
 	^ selection selectedNode
 ]
 
-{ #category : 'geometry rotation' }
+{ #category : 'selection - accessing' }
 MyCADViewportPresenter >> selectedNodeRotationCenter [
 	"Returns the visible world-space center of the selected rendered node."
 
 	^ selection selectedRotationCenter
 ]
 
-{ #category : 'geometry selection' }
+{ #category : 'selection - accessing' }
 MyCADViewportPresenter >> selectedRenderedShape [
 
 	^ selection selectedRenderedShape
 ]
 
-{ #category : 'geometry selection' }
+{ #category : 'selection - accessing' }
 MyCADViewportPresenter >> selectedShape [
 	"Returns the MyShape of the currently selected entry, or nil if nothing is selected."
 
 	^ selection selectedShape
 ]
 
-{ #category : 'input event handling' }
+{ #category : 'events - registration' }
 MyCADViewportPresenter >> setupContextMenu [
 	"Registers mouseDown, mouseMove, and mouseUp handlers on the underlying Woden widget."
 
@@ -721,14 +721,14 @@ MyCADViewportPresenter >> setupContextMenu [
 	on: #keyDown send: #handleKeyStroke: to: self"
 ]
 
-{ #category : 'event handling' }
+{ #category : 'context menu - handling' }
 MyCADViewportPresenter >> shouldTrackContextMenuFrom: anEvent [
 	"Answers whether this right-button press should open a context menu when released."
 
 	^ anEvent yellowButtonPressed and: [ anEvent shiftPressed not and: [ anEvent controlKeyPressed not ] ]
 ]
 
-{ #category : 'user interface' }
+{ #category : 'context menu - handling' }
 MyCADViewportPresenter >> showContextMenuAt: aPoint [
 	"Builds and displays the context menu at the given screen position."
 
@@ -737,20 +737,20 @@ MyCADViewportPresenter >> showContextMenuAt: aPoint [
 	menu openWithSpecAt: aPoint
 ]
 
-{ #category : 'geometry translation' }
+{ #category : 'camera - transforming' }
 MyCADViewportPresenter >> transformCameraDirection: aVector [
 	"Transforms a direction vector using the camera transform."
 
 	^ cameraNode transform transformVector3: aVector
 ]
 
-{ #category : 'user interface' }
+{ #category : 'camera - actions' }
 MyCADViewportPresenter >> useSelectedAsPivot [
 
 	self selectedNode ifNotNil: [ :node | self cameraControlMorph useNodePivot: node ]
 ]
 
-{ #category : 'user interface' }
+{ #category : 'accessing - widgets' }
 MyCADViewportPresenter >> wodenWidget [
 	"Returns the embedded Woden widget, if it has been built."
 
