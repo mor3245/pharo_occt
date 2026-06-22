@@ -32,7 +32,7 @@ MyCADSelectionController >> clear [
 
 	self restoreVisual.
 	self forget.
-	presenter refreshScene
+	presenter selectionChanged
 ]
 
 { #category : 'selection' }
@@ -61,6 +61,20 @@ MyCADSelectionController >> restoreVisual [
 ]
 
 { #category : 'selection' }
+MyCADSelectionController >> select: aRenderedShape [
+	"Selects a specific rendered shape supplied by another presenter."
+
+	aRenderedShape ifNil: [
+			self clear.
+			^ self ].
+
+	self restoreVisual.
+	selectedRenderedShape := aRenderedShape.
+	self applyVisualTo: selectedRenderedShape node.
+	presenter selectionChanged
+]
+
+{ #category : 'selection' }
 MyCADSelectionController >> selectFrom: pickedEntries [
 	"Picks the next rendered shape from the entries under the cursor."
 
@@ -77,7 +91,7 @@ MyCADSelectionController >> selectFrom: pickedEntries [
 	selectedRenderedShape := pickedEntry.
 	self applyVisualTo: selectedRenderedShape node.
 
-	presenter refreshScene
+	presenter selectionChanged
 ]
 
 { #category : 'accessing' }

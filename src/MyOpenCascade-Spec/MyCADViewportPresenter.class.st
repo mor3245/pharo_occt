@@ -13,7 +13,9 @@ Class {
 		'selection',
 		'translationMode',
 		'rotationMode',
-		'renderedShapes'
+		'renderedShapes',
+		'geometryChangedAction',
+		'selectionChangedAction'
 	],
 	#category : 'MyOpenCascade-Spec',
 	#package : 'MyOpenCascade-Spec'
@@ -51,7 +53,7 @@ MyCADViewportPresenter >> addBox [
 	scene add: renderedShape node.
 	renderedShapes addLast: renderedShape.
 
-	self refreshScene
+	self geometryChanged 
 ]
 
 { #category : 'actions - creation' }
@@ -66,7 +68,7 @@ MyCADViewportPresenter >> addCylinder [
 	scene add: renderedShape node.
 	renderedShapes addLast: renderedShape.
 
-	self refreshScene
+	self geometryChanged
 ]
 
 { #category : 'context menu - building' }
@@ -247,7 +249,7 @@ MyCADViewportPresenter >> cutOtherBodiesWithSelected [
 
 	selection forget.
 
-	self refreshScene
+	self geometryChanged
 ]
 
 { #category : 'actions - boolean operations' }
@@ -280,7 +282,7 @@ MyCADViewportPresenter >> cutSelectedWithLastAdded [
 
 	selection forget.
 
-	self refreshScene
+	self geometryChanged
 ]
 
 { #category : 'actions - boolean operations' }
@@ -306,7 +308,7 @@ MyCADViewportPresenter >> cutSelectedWithOtherBodies [
 
 	selection forget.
 
-	self refreshScene
+	self geometryChanged
 ]
 
 { #category : 'actions - boolean operations' }
@@ -363,7 +365,7 @@ MyCADViewportPresenter >> deleteLastAdded [
 	scene remove: renderedShape node.
 	renderedShape free.
 
-	self refreshScene
+	self geometryChanged
 ]
 
 { #category : 'actions - deletion' }
@@ -382,7 +384,7 @@ MyCADViewportPresenter >> deleteSelected [
 
 	selection forget.
 
-	self refreshScene
+	self geometryChanged
 ]
 
 { #category : 'camera - actions' }
@@ -406,6 +408,15 @@ MyCADViewportPresenter >> focusWodenWidget [
 	widget ifNil: [ ^ self ].
 
 	widget takeKeyboardFocus
+]
+
+{ #category : 'announcing' }
+MyCADViewportPresenter >> geometryChanged [
+	"Redraws the viewport and informs owner presenters that the geometry list changed."
+
+	self refreshScene.
+	geometryChangedAction value
+
 ]
 
 { #category : 'events - keyboard' }
@@ -492,6 +503,8 @@ MyCADViewportPresenter >> initializePresenters [
 	super initializePresenters.
 
 	renderedShapes := OrderedCollection new.
+	geometryChangedAction := [ ].
+	selectionChangedAction := [ ].
 	selection := MyCADSelectionController on: self.
 	translationMode := MyCADTranslationMode new.
 	rotationMode := MyCADRotationMode new.
@@ -640,7 +653,13 @@ MyCADViewportPresenter >> renameSelectedShape [
 	(newName isNil or: [ newName trimBoth isEmpty ]) ifTrue: [ ^ self ].
 
 	renderedShape renameTo: newName.
-	self refreshScene
+	self geometryChanged
+]
+
+{ #category : 'geometry - accessing' }
+MyCADViewportPresenter >> renderedShapes [
+
+	^ renderedShapes asArray
 ]
 
 { #category : 'scene - geometry management' }
@@ -668,6 +687,13 @@ MyCADViewportPresenter >> rotationDegreesPerPixel [
 	"Degrees rotated per horizontal mouse pixel."
 
 	^ 0.5
+]
+
+{ #category : 'selection - managing' }
+MyCADViewportPresenter >> selectRenderedShape: aRenderedShape [
+
+	selection selectedRenderedShape == aRenderedShape ifTrue: [ ^ self ].
+	selection select: aRenderedShape
 ]
 
 { #category : 'picking - selection' }
@@ -702,6 +728,14 @@ MyCADViewportPresenter >> selectedShape [
 	"Returns the MyShape of the currently selected entry, or nil if nothing is selected."
 
 	^ selection selectedShape
+]
+
+{ #category : 'announcing' }
+MyCADViewportPresenter >> selectionChanged [
+	"Redraws the viewport and informs owner presenters that selection changed."
+
+	self refreshScene.
+	selectionChangedAction value
 ]
 
 { #category : 'events - registration' }
@@ -748,6 +782,18 @@ MyCADViewportPresenter >> transformCameraDirection: aVector [
 MyCADViewportPresenter >> useSelectedAsPivot [
 
 	self selectedNode ifNotNil: [ :node | self cameraControlMorph useNodePivot: node ]
+]
+
+{ #category : 'announcing' }
+MyCADViewportPresenter >> whenGeometryChangedDo: aBlock [
+
+	geometryChangedAction := aBlock
+]
+
+{ #category : 'announcing' }
+MyCADViewportPresenter >> whenSelectionChangedDo: aBlock [
+
+	selectionChangedAction := aBlock
 ]
 
 { #category : 'accessing - widgets' }
