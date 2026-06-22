@@ -494,7 +494,7 @@ MyCADViewportPresenter >> initializePresenters [
 	renderedShapes := OrderedCollection new.
 	selection := MyCADSelectionController on: self.
 	translationMode := MyCADTranslationMode new.
-	rotationMode := MyContextMenuRotationMode new.
+	rotationMode := MyCADRotationMode new.
 	scene := self buildScene.
 
 	cameraNode := WDCamera new asSceneNode.

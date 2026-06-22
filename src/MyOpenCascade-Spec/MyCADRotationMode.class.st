@@ -1,5 +1,5 @@
 Class {
-	#name : 'MyContextMenuRotationMode',
+	#name : 'MyCADRotationMode',
 	#superclass : 'Object',
 	#instVars : [
 		'presenter',
@@ -16,7 +16,7 @@ Class {
 }
 
 { #category : 'activation' }
-MyContextMenuRotationMode >> activateFor: aPresenter [
+MyCADRotationMode >> activateFor: aPresenter [
 	"Starts interactive rotation for the selected rendered node, around its visible center."
 
 	| change selectedRenderedShape |
@@ -39,7 +39,7 @@ MyContextMenuRotationMode >> activateFor: aPresenter [
 ]
 
 { #category : 'keyboard' }
-MyContextMenuRotationMode >> appendTypedCharacter: key [
+MyCADRotationMode >> appendTypedCharacter: key [
 	"Accumulates typed numeric degrees and applies them immediately."
 
 	| degrees |
@@ -55,7 +55,7 @@ MyContextMenuRotationMode >> appendTypedCharacter: key [
 ]
 
 { #category : 'applying' }
-MyContextMenuRotationMode >> applyDegrees: degrees [
+MyCADRotationMode >> applyDegrees: degrees [
 	"Applies the given rotation angle around the selected object's visible center."
 
 	| selectedRenderedShape node startPosition startOffset rotatedOffset newPosition |
@@ -84,7 +84,7 @@ MyContextMenuRotationMode >> applyDegrees: degrees [
 ]
 
 { #category : 'activation' }
-MyContextMenuRotationMode >> cancel [
+MyCADRotationMode >> cancel [
 	"Restores the selected node transform to its state before rotation mode started."
 
 	self isActive ifFalse: [ ^ self ].
@@ -97,7 +97,7 @@ MyContextMenuRotationMode >> cancel [
 ]
 
 { #category : 'activation' }
-MyContextMenuRotationMode >> confirm [
+MyCADRotationMode >> confirm [
 	"Accepts the current rendered-node rotation and bakes it into the CAD shape."
 
 	| selectedRenderedShape change |
@@ -117,7 +117,7 @@ MyContextMenuRotationMode >> confirm [
 ]
 
 { #category : 'keyboard' }
-MyContextMenuRotationMode >> handleAxisKey: key [
+MyCADRotationMode >> handleAxisKey: key [
 	"Handles X/Y/Z axis lock keys."
 
 	(#( 'x' 'y' 'z' ) includes: key) ifFalse: [ ^ false ].
@@ -127,7 +127,7 @@ MyContextMenuRotationMode >> handleAxisKey: key [
 ]
 
 { #category : 'keyboard' }
-MyContextMenuRotationMode >> handleCancellationKey: key [
+MyCADRotationMode >> handleCancellationKey: key [
 	"Handles rotation cancellation keys."
 
 	key = 'escape' ifFalse: [ ^ false ].
@@ -137,7 +137,7 @@ MyContextMenuRotationMode >> handleCancellationKey: key [
 ]
 
 { #category : 'keyboard' }
-MyContextMenuRotationMode >> handleCompletionKey: key [
+MyCADRotationMode >> handleCompletionKey: key [
 
 	(#( 'enter' 'return' ) includes: key) ifFalse: [ ^ false ].
 	self confirm.
@@ -145,7 +145,7 @@ MyContextMenuRotationMode >> handleCompletionKey: key [
 ]
 
 { #category : 'keyboard' }
-MyContextMenuRotationMode >> handleDeletionKey: key [
+MyCADRotationMode >> handleDeletionKey: key [
 	"Handles deletion of typed rotation degrees."
 
 	(key = 'backspace' or: [ key = (Character value: 8) asString ]) ifFalse: [ ^ false ].
@@ -155,7 +155,7 @@ MyContextMenuRotationMode >> handleDeletionKey: key [
 ]
 
 { #category : 'keyboard' }
-MyContextMenuRotationMode >> handleKey: key [
+MyCADRotationMode >> handleKey: key [
 	"Handles a normalized key string. Answers whether the key was consumed."
 
 	self isActive ifFalse: [ ^ false ].
@@ -170,7 +170,7 @@ MyContextMenuRotationMode >> handleKey: key [
 ]
 
 { #category : 'keyboard' }
-MyContextMenuRotationMode >> handleNumericKey: key [
+MyCADRotationMode >> handleNumericKey: key [
 	"Handles numeric rotation degree input."
 
 	(self isNumericKey: key) ifFalse: [ ^ false ].
@@ -180,20 +180,20 @@ MyContextMenuRotationMode >> handleNumericKey: key [
 ]
 
 { #category : 'initialization' }
-MyContextMenuRotationMode >> initialize [
+MyCADRotationMode >> initialize [
 
 	super initialize.
 	self reset
 ]
 
 { #category : 'testing' }
-MyContextMenuRotationMode >> isActive [
+MyCADRotationMode >> isActive [
 
 	^ active
 ]
 
 { #category : 'keyboard' }
-MyContextMenuRotationMode >> isNumericKey: key [
+MyCADRotationMode >> isNumericKey: key [
 	"Answers whether key can be part of a typed degree number."
 
 	key size = 1 ifFalse: [ ^ false ].
@@ -206,7 +206,7 @@ MyContextMenuRotationMode >> isNumericKey: key [
 ]
 
 { #category : 'keyboard' }
-MyContextMenuRotationMode >> removeLastTypedCharacter [
+MyCADRotationMode >> removeLastTypedCharacter [
 	"Deletes the last typed degree character and reapplies the value."
 
 	| degrees |
@@ -226,7 +226,7 @@ MyContextMenuRotationMode >> removeLastTypedCharacter [
 ]
 
 { #category : 'initialization' }
-MyContextMenuRotationMode >> reset [
+MyCADRotationMode >> reset [
 	"Clears transient rotation-mode state."
 
 	active := false.
@@ -239,7 +239,7 @@ MyContextMenuRotationMode >> reset [
 ]
 
 { #category : 'geometry' }
-MyContextMenuRotationMode >> rotateVector: aVector degrees: degrees axis: axisSymbol [
+MyCADRotationMode >> rotateVector: aVector degrees: degrees axis: axisSymbol [
 	"Rotates aVector around a global axis."
 
 	| radians c s x y z |
@@ -261,14 +261,14 @@ MyContextMenuRotationMode >> rotateVector: aVector degrees: degrees axis: axisSy
 ]
 
 { #category : 'geometry' }
-MyContextMenuRotationMode >> rotationDegreesPerPixel [
+MyCADRotationMode >> rotationDegreesPerPixel [
 	"Degrees rotated per horizontal mouse pixel."
 
 	^ 0.5
 ]
 
 { #category : 'keyboard' }
-MyContextMenuRotationMode >> setAxisLock: aSymbol [
+MyCADRotationMode >> setAxisLock: aSymbol [
 	"Sets the global rotation axis and reapplies the current angle."
 
 	axisLock := aSymbol.
@@ -276,7 +276,7 @@ MyContextMenuRotationMode >> setAxisLock: aSymbol [
 ]
 
 { #category : 'mouse' }
-MyContextMenuRotationMode >> updateAt: aPoint [
+MyCADRotationMode >> updateAt: aPoint [
 	"Updates selected rendered-node rotation from mouse movement."
 
 	| delta degrees |
