@@ -1,5 +1,5 @@
 Class {
-	#name : 'MyContextMenuTranslationMode',
+	#name : 'MyCADTranslationMode',
 	#superclass : 'Object',
 	#instVars : [
 		'presenter',
@@ -11,13 +11,12 @@ Class {
 		'dragPlaneNormal',
 		'startWorldPoint'
 	],
-	#category : 'MyOpenCascade-Woden',
-	#package : 'MyOpenCascade',
-	#tag : 'Woden'
+	#category : 'MyOpenCascade-Spec',
+	#package : 'MyOpenCascade-Spec'
 }
 
 { #category : 'activation' }
-MyContextMenuTranslationMode >> activateFor: aPresenter [
+MyCADTranslationMode >> activateFor: aPresenter [
 	"Starts interactive translation for the selected rendered node."
 
 	| selectedRenderedShape |
@@ -37,7 +36,7 @@ MyContextMenuTranslationMode >> activateFor: aPresenter [
 ]
 
 { #category : 'geometry' }
-MyContextMenuTranslationMode >> axisDirection [
+MyCADTranslationMode >> axisDirection [
 	"Returns the global direction for the current axis lock."
 
 	axisLock = #x ifTrue: [ ^ Vector3 x: 1 y: 0 z: 0 ].
@@ -48,7 +47,7 @@ MyContextMenuTranslationMode >> axisDirection [
 ]
 
 { #category : 'geometry' }
-MyContextMenuTranslationMode >> axisTranslationAtScreenPosition: aPoint [
+MyCADTranslationMode >> axisTranslationAtScreenPosition: aPoint [
 	"Returns the world-space translation for the locked axis from screen movement."
 
 	| axis delta amount |
@@ -64,7 +63,7 @@ MyContextMenuTranslationMode >> axisTranslationAtScreenPosition: aPoint [
 ]
 
 { #category : 'activation' }
-MyContextMenuTranslationMode >> cancel [
+MyCADTranslationMode >> cancel [
 	"Restores the selected node to its position before translation mode started."
 
 	self isActive ifFalse: [ ^ self ].
@@ -77,7 +76,7 @@ MyContextMenuTranslationMode >> cancel [
 ]
 
 { #category : 'activation' }
-MyContextMenuTranslationMode >> confirm [
+MyCADTranslationMode >> confirm [
 	"Accepts the current rendered-node translation and bakes it into the CAD shape."
 
 	| selectedRenderedShape change |
@@ -96,7 +95,7 @@ MyContextMenuTranslationMode >> confirm [
 ]
 
 { #category : 'geometry' }
-MyContextMenuTranslationMode >> dragPlanePointAtScreenPosition: aPoint [
+MyCADTranslationMode >> dragPlanePointAtScreenPosition: aPoint [
 	"Returns the point where the screen ray intersects the current drag plane."
 
 	| ray denominator distance |
@@ -115,7 +114,7 @@ MyContextMenuTranslationMode >> dragPlanePointAtScreenPosition: aPoint [
 ]
 
 { #category : 'geometry' }
-MyContextMenuTranslationMode >> freeTranslationAtScreenPosition: aPoint [
+MyCADTranslationMode >> freeTranslationAtScreenPosition: aPoint [
 	"Returns the free-drag translation on the camera-facing drag plane."
 
 	| currentWorldPoint |
@@ -128,7 +127,7 @@ MyContextMenuTranslationMode >> freeTranslationAtScreenPosition: aPoint [
 ]
 
 { #category : 'keyboard' }
-MyContextMenuTranslationMode >> handleAxisKey: key [
+MyCADTranslationMode >> handleAxisKey: key [
 	"Handles X/Y/Z axis lock keys."
 
 	(#( 'x' 'y' 'z' ) includes: key) ifFalse: [ ^ false ].
@@ -140,7 +139,7 @@ MyContextMenuTranslationMode >> handleAxisKey: key [
 ]
 
 { #category : 'keyboard' }
-MyContextMenuTranslationMode >> handleCancellationKey: key [
+MyCADTranslationMode >> handleCancellationKey: key [
 	"Handles translation cancellation keys."
 
 	key = 'escape' ifFalse: [ ^ false ].
@@ -150,7 +149,7 @@ MyContextMenuTranslationMode >> handleCancellationKey: key [
 ]
 
 { #category : 'keyboard' }
-MyContextMenuTranslationMode >> handleCompletionKey: key [
+MyCADTranslationMode >> handleCompletionKey: key [
 	"Handles translation confirmation keys."
 
 	(#( 'enter' 'return' ) includes: key) ifFalse: [ ^ false ].
@@ -159,7 +158,7 @@ MyContextMenuTranslationMode >> handleCompletionKey: key [
 ]
 
 { #category : 'keyboard' }
-MyContextMenuTranslationMode >> handleKey: key [
+MyCADTranslationMode >> handleKey: key [
 	"Handles a normalized key string. Answers whether the key was consumed."
 
 	self isActive ifFalse: [ ^ false ].
@@ -172,20 +171,20 @@ MyContextMenuTranslationMode >> handleKey: key [
 ]
 
 { #category : 'initialization' }
-MyContextMenuTranslationMode >> initialize [
+MyCADTranslationMode >> initialize [
 
 	super initialize.
 	self reset
 ]
 
 { #category : 'testing' }
-MyContextMenuTranslationMode >> isActive [
+MyCADTranslationMode >> isActive [
 
 	^ active
 ]
 
 { #category : 'initialization' }
-MyContextMenuTranslationMode >> reset [
+MyCADTranslationMode >> reset [
 	"Clears transient translation-mode state."
 
 	active := false.
@@ -198,7 +197,7 @@ MyContextMenuTranslationMode >> reset [
 ]
 
 { #category : 'geometry' }
-MyContextMenuTranslationMode >> translationAmountForScreenDelta: aPoint [
+MyCADTranslationMode >> translationAmountForScreenDelta: aPoint [
 	"Returns the signed world distance for the locked axis from screen movement."
 
 	| scale |
@@ -210,14 +209,14 @@ MyContextMenuTranslationMode >> translationAmountForScreenDelta: aPoint [
 ]
 
 { #category : 'geometry' }
-MyContextMenuTranslationMode >> translationUnitsPerPixel [
+MyCADTranslationMode >> translationUnitsPerPixel [
 	"World units moved per screen pixel during axis-locked translation."
 
 	^ 0.01
 ]
 
 { #category : 'mouse' }
-MyContextMenuTranslationMode >> updateAt: aPoint [
+MyCADTranslationMode >> updateAt: aPoint [
 	"Moves the selected rendered node by dragging freely or along the locked global axis."
 
 	| selectedRenderedShape node translation newPosition |

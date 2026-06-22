@@ -1,18 +1,17 @@
 Class {
-	#name : 'MyContextMenuSelection',
+	#name : 'MyCADSelectionController',
 	#superclass : 'Object',
 	#instVars : [
 		'presenter',
 		'selectedRenderedShape',
 		'selectedOriginalRenderables'
 	],
-	#category : 'MyOpenCascade-Woden',
-	#package : 'MyOpenCascade',
-	#tag : 'Woden'
+	#category : 'MyOpenCascade-Spec',
+	#package : 'MyOpenCascade-Spec'
 }
 
 { #category : 'instance creation' }
-MyContextMenuSelection class >> on: aPresenter [
+MyCADSelectionController class >> on: aPresenter [
 
 	^ self new
 		  presenter: aPresenter;
@@ -20,7 +19,7 @@ MyContextMenuSelection class >> on: aPresenter [
 ]
 
 { #category : 'selection' }
-MyContextMenuSelection >> applyVisualTo: aNode [
+MyCADSelectionController >> applyVisualTo: aNode [
 	"Replaces the node's renderables with yellow unlit copies to indicate selection."
 
 	selectedOriginalRenderables := aNode renderables.
@@ -28,7 +27,7 @@ MyContextMenuSelection >> applyVisualTo: aNode [
 ]
 
 { #category : 'selection' }
-MyContextMenuSelection >> clear [
+MyCADSelectionController >> clear [
 	"Restores selected visuals and clears selection state."
 
 	self restoreVisual.
@@ -37,7 +36,7 @@ MyContextMenuSelection >> clear [
 ]
 
 { #category : 'selection' }
-MyContextMenuSelection >> forget [
+MyCADSelectionController >> forget [
 	"Clears selection state without touching scene visuals."
 
 	selectedRenderedShape := nil.
@@ -45,13 +44,13 @@ MyContextMenuSelection >> forget [
 ]
 
 { #category : 'accessing' }
-MyContextMenuSelection >> presenter: aPresenter [
+MyCADSelectionController >> presenter: aPresenter [
 
 	presenter := aPresenter
 ]
 
 { #category : 'selection' }
-MyContextMenuSelection >> restoreVisual [
+MyCADSelectionController >> restoreVisual [
 	"Puts the originally saved renderables back on the selected node."
 
 	selectedRenderedShape ifNil: [ ^ self ].
@@ -62,7 +61,7 @@ MyContextMenuSelection >> restoreVisual [
 ]
 
 { #category : 'selection' }
-MyContextMenuSelection >> selectFrom: pickedEntries [
+MyCADSelectionController >> selectFrom: pickedEntries [
 	"Picks the next rendered shape from the entries under the cursor."
 
 	| pickedIndex pickedEntry |
@@ -82,20 +81,20 @@ MyContextMenuSelection >> selectFrom: pickedEntries [
 ]
 
 { #category : 'accessing' }
-MyContextMenuSelection >> selectedNode [
+MyCADSelectionController >> selectedNode [
 	"Returns the scene node of the currently selected entry, or nil if nothing is selected."
 
 	^ selectedRenderedShape ifNil: [ nil ] ifNotNil: [ selectedRenderedShape node ]
 ]
 
 { #category : 'accessing' }
-MyContextMenuSelection >> selectedRenderedShape [
+MyCADSelectionController >> selectedRenderedShape [
 
 	^ selectedRenderedShape
 ]
 
 { #category : 'geometry' }
-MyContextMenuSelection >> selectedRotationCenter [
+MyCADSelectionController >> selectedRotationCenter [
 	"Returns the visible world-space center of the selected rendered node."
 
 	| node box |
@@ -108,14 +107,14 @@ MyContextMenuSelection >> selectedRotationCenter [
 ]
 
 { #category : 'accessing' }
-MyContextMenuSelection >> selectedShape [
+MyCADSelectionController >> selectedShape [
 	"Returns the MyShape of the currently selected entry, or nil if nothing is selected."
 
 	^ selectedRenderedShape ifNil: [ nil ] ifNotNil: [ selectedRenderedShape shape ]
 ]
 
 { #category : 'accessing' }
-MyContextMenuSelection >> selectionMaterial [
+MyCADSelectionController >> selectionMaterial [
 	"Returns a yellow unlit material used to highlight the selected object."
 
 	^ WDUnlitMaterial new

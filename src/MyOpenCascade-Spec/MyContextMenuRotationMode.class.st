@@ -11,9 +11,8 @@ Class {
 		'currentDegrees',
 		'startCenter'
 	],
-	#category : 'MyOpenCascade-Woden',
-	#package : 'MyOpenCascade',
-	#tag : 'Woden'
+	#category : 'MyOpenCascade-Spec',
+	#package : 'MyOpenCascade-Spec'
 }
 
 { #category : 'activation' }

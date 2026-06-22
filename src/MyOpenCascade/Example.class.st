@@ -46,7 +46,7 @@ Example class >> exampleBoxRenderWithContextMenu [
 	"Opens the interactive context-menu presenter and logs memory usage around it."
 
 	CxxOcctLibrary cxxMemoryCheckpoint.
-	MyContextMenuPresenter new open.
+	MyCADViewportPresenter new open.
 	CxxOcctLibrary cxxDumpMemoryDifference
 ]
 
