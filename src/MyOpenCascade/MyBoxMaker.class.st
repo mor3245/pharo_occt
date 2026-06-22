@@ -21,13 +21,12 @@ MyBoxMaker class >> makeBoxDx: dx dy: dy dz: dz [
 
 { #category : 'factory' }
 MyBoxMaker class >> makeBoxDx: dx dy: dy dz: dz named: aString [
-	"Creates and persists a named box shape."
+	"Creates a named cylinder shape in memory. Persistence is always explicit."
 
 	| shape |
 	shape := CxxOcctLibrary cxxCreateBoxDx: dx dy: dy dz: dz.
 	shape isNull ifTrue: [ self error: 'cxxCreateBox failed' ].
 	shape setName: aString.
-	shape persistToDisk.
 	^ shape
 ]
 

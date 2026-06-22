@@ -22,13 +22,12 @@ MyCylinderMaker class >> makeCylinderRadius: radius height: height [
 
 { #category : 'as yet unclassified' }
 MyCylinderMaker class >> makeCylinderRadius: radius height: height named: aString [
-	"Creates and persists a named cylinder shape."
+		"Creates a named cylinder shape in memory. Persistence is always explicit."
 
 	| shape |
 	shape := CxxOcctLibrary cxxCreateCylinderRadius: radius height: height.
 	shape isNull ifTrue: [ self error: 'cxxCreateCylinder failed' ].
 	shape setName: aString.
-	shape persistToDisk.
 	^ shape
 ]
 

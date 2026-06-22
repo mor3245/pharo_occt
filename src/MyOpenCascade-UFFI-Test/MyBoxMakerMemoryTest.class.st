@@ -60,8 +60,10 @@ MyBoxMakerMemoryTest >> testLoadFromFileRestoresNameAndIdentity [
 		            dy: 1
 		            dz: 1
 		            named: 'Drive Housing'.
-	file := original storageFileReference.
+
 	storageId := original storageId.
+	file := FileLocator temp / original storageFileName.
+	original saveToFile: file.
 	original releaseNativeHandle.
 
 	[
@@ -69,28 +71,27 @@ MyBoxMakerMemoryTest >> testLoadFromFileRestoresNameAndIdentity [
 		self assert: loaded name equals: 'Drive Housing'.
 		self assert: loaded storageId equals: storageId ] ensure: [
 			loaded ifNotNil: [ loaded free ].
-			original storagePath: nil ]
+			original free.
+			file exists ifTrue: [ file delete ] ]
 ]
 
 { #category : 'tests' }
-MyBoxMakerMemoryTest >> testNamedShapeHasCorrelatedFileName [
+MyBoxMakerMemoryTest >> testNamedShapeIsNotAutomaticallyPersisted [
 
-	| shape fileName |
-	shape := MyBoxMaker makeBoxDx: 1 dy: 1 dz: 1 named: 'Mounting Bracket'.
+	| shape |
+	shape := MyBoxMaker
+		         makeBoxDx: 1
+		         dy: 1
+		         dz: 1
+		         named: 'Mounting Bracket'.
 
 	[
-		fileName := shape storageFileReference basename.
 		self assert: shape name equals: 'Mounting Bracket'.
-		self assert: (fileName beginsWith: 'Mounting Bracket--').
-		self assert: (fileName includesSubstring: shape storageId).
-		self assert: (fileName endsWith: '.brep') ]
-		ensure: [ shape free ]
-
-
+		self assert: shape storageFileReference isNil ] ensure: [ shape free ]
 ]
 
 { #category : 'tests' }
-MyBoxMakerMemoryTest >> testRenamePreservesIdentityAndMovesBRepFile [
+MyBoxMakerMemoryTest >> testRenameDoesNotWriteOrMoveBRepFile [
 
 	| shape oldFile oldStorageId newFile |
 	shape := MyBoxMaker
@@ -98,8 +99,9 @@ MyBoxMakerMemoryTest >> testRenamePreservesIdentityAndMovesBRepFile [
 		         dy: 1
 		         dz: 1
 		         named: 'Box 1'.
-	oldFile := shape storageFileReference.
 	oldStorageId := shape storageId.
+	oldFile := FileLocator temp / ('Box 1-' , UUID new asString , '.brep').
+	shape saveToFile: oldFile.
 
 	[
 		shape renameTo: 'Front Mount'.
@@ -107,9 +109,10 @@ MyBoxMakerMemoryTest >> testRenamePreservesIdentityAndMovesBRepFile [
 
 		self assert: shape name equals: 'Front Mount'.
 		self assert: shape storageId equals: oldStorageId.
-		self assert: newFile exists.
-		self deny: oldFile exists.
-		self assert: (newFile basename beginsWith: 'Front Mount--') ] ensure: [ shape free ]
+		self assert: newFile fullName equals: oldFile fullName.
+		self assert: oldFile exists ] ensure: [
+			shape free.
+			oldFile exists ifTrue: [ oldFile delete ] ]
 ]
 
 { #category : 'tests' }
@@ -122,7 +125,8 @@ MyBoxMakerMemoryTest >> testShapeRehydratesNativeHandleFromDisk [
 		         dy: 1
 		         dz: 1
 		         deflection: 0.01.
-	file := shape storageFileReference.
+	file := FileLocator temp / ('rehydration-' , UUID new asString , '.brep').
+	shape saveToFile: file.
 
 	[
 		self assert: file exists.
@@ -133,10 +137,10 @@ MyBoxMakerMemoryTest >> testShapeRehydratesNativeHandleFromDisk [
 
 		shape tessellateDeflection: 0.01.
 		self assert: shape hasNativeHandle.
-		self assert: shape vertexCount equals: originalVertexCount ]
-		ensure: [ shape free ].
+		self assert: shape vertexCount equals: originalVertexCount ] ensure: [ shape free ].
 
-	self deny: file exists
+	self assert: file exists.
+	file delete
 ]
 
 { #category : 'tests' }

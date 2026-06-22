@@ -81,6 +81,18 @@ MyCADViewportPresenter >> addMenuItemNamed: aString action: aBlock to: aGroup [
 				action: aBlock ]
 ]
 
+{ #category : 'actions - file' }
+MyCADViewportPresenter >> addShapeFromFile: aFileReference [
+	"Explicitly imports one BREP file into the current in-memory scene."
+
+	| renderedShape |
+	renderedShape := MyRenderedShape shape: (MyShape loadFromFile: aFileReference) deflection: 0.01.
+
+	scene add: renderedShape node.
+	renderedShapes addLast: renderedShape.
+	self geometryChanged
+]
+
 { #category : 'scene - updating' }
 MyCADViewportPresenter >> applyRenderNodeChange: aChange [
 
@@ -189,6 +201,18 @@ MyCADViewportPresenter >> cancelTranslationMode [
 	"Restores the selected node to its position before grab mode started."
 
 	translationMode cancel
+]
+
+{ #category : 'actions - file' }
+MyCADViewportPresenter >> clearAllShapes [
+	"Starts a new empty in-memory scene without deleting any user files."
+
+	self clearSelection.
+	renderedShapes do: [ :renderedShape |
+			scene remove: renderedShape node.
+			renderedShape free ].
+	renderedShapes removeAll.
+	self geometryChanged
 ]
 
 { #category : 'selection - managing' }
@@ -643,14 +667,32 @@ MyCADViewportPresenter >> refreshScene [
 
 { #category : 'actions - editing' }
 MyCADViewportPresenter >> renameSelectedShape [
-	"Prompts for a selected shape's name and renames its correlated BREP file."
+	"Uses a Spec2 request dialog to rename the selected in-memory shape."
+
+	| renderedShape |
+	renderedShape := self selectedRenderedShape.
+	renderedShape ifNil: [ ^ self ].
+
+	SpRequestDialog new
+		application: self application;
+		title: 'Rename Shape';
+		label: 'Shape name';
+		text: renderedShape name;
+		acceptLabel: 'Rename';
+		cancelLabel: 'Cancel';
+		onAccept: [ :dialog |
+			self renameSelectedShapeTo: dialog presenter text ];
+		openModal
+]
+
+{ #category : 'actions - editing' }
+MyCADViewportPresenter >> renameSelectedShapeTo: aString [
 
 	| renderedShape newName |
 	renderedShape := self selectedRenderedShape.
 	renderedShape ifNil: [ ^ self ].
-
-	newName := UIManager default request: 'Shape name' initialAnswer: renderedShape name.
-	(newName isNil or: [ newName trimBoth isEmpty ]) ifTrue: [ ^ self ].
+	newName := aString trimBoth.
+	newName isEmpty ifTrue: [ ^ self ].
 
 	renderedShape renameTo: newName.
 	self geometryChanged
@@ -687,6 +729,15 @@ MyCADViewportPresenter >> rotationDegreesPerPixel [
 	"Degrees rotated per horizontal mouse pixel."
 
 	^ 0.5
+]
+
+{ #category : 'actions - editing' }
+MyCADViewportPresenter >> saveSelectedShapeTo: aFileReference [
+	"Explicitly exports the selected shape. No editing operation calls this method."
+
+	self selectedShape ifNil: [ ^ self ].
+	self selectedShape saveToFile: aFileReference.
+	self geometryChanged
 ]
 
 { #category : 'selection - managing' }

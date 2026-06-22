@@ -126,7 +126,6 @@ MyShape >> cutWith: anotherShape [
 	result := CxxOcctLibrary cxxCut: self with: anotherShape.
 	result ifNil: [ ^ nil ].
 	result setName: self name.
-	result persistToDisk.
 	^ result
 ]
 
@@ -234,10 +233,9 @@ MyShape >> finalize [
 
 { #category : 'finalization' }
 MyShape >> free [
-	"Permanently releases this shape's native memory and backing BREP file."
+	"Releases this shape's native memory. User files are never deleted implicitly."
 
-	self releaseNativeHandle.
-	self deleteStorageFile
+	self releaseNativeHandle
 ]
 
 { #category : 'private' }
@@ -322,17 +320,16 @@ MyShape >> normals [
 
 { #category : 'persistence' }
 MyShape >> persistToDisk [
-	"Writes the current OCCT shape to its independent BREP file."
+	"Writes the current OCCT shape to an explicitly assigned BREP path."
 
 	| file succeeded |
 	self hasNativeHandle ifFalse: [ self error: 'Cannot persist a shape without a native handle' ].
+	storagePath ifNil: [ self error: 'No save destination. Use saveToFile: first' ].
 	self ensureStoragePath.
 	file := self storageFileReference.
 	file parent ensureCreateDirectory.
 
-	succeeded := CxxOcctLibrary
-		cxxWriteBRepFile: self
-		path: file fullName.
+	succeeded := CxxOcctLibrary cxxWriteBRepFile: self path: file fullName.
 	succeeded = 1 ifFalse: [ self error: 'Could not write the OCCT shape file' ].
 	^ self
 ]
@@ -394,35 +391,15 @@ MyShape >> releaseNativeHandle [
 
 { #category : 'persistence' }
 MyShape >> renameTo: aString [
-	"Renames the shape and its BREP file while preserving its stable identity."
+	"Renames the in-memory shape. Persistence is always explicit."
 
-	| normalizedName oldName oldPath oldFile newPath |
+	| normalizedName |
 	normalizedName := aString trimBoth.
 	normalizedName isEmpty ifTrue: [ self error: 'Shape name cannot be empty' ].
 
 	self ensureIdentity.
 	name = normalizedName ifTrue: [ ^ self ].
-	self ensureNativeHandle.
-	self hasNativeHandle ifFalse: [ self error: 'Cannot rename a shape without geometry' ].
-
-	oldName := name.
-	oldPath := storagePath.
-	oldFile := self storageFileReference.
 	name := normalizedName.
-
-	oldFile
-		ifNil: [ newPath := (self class storageDirectory / self storageFileName) fullName ]
-		ifNotNil: [ newPath := (oldFile parent / self storageFileName) fullName ].
-	storagePath := newPath.
-
-	[ self persistToDisk ]
-		on: Error
-		do: [ :error |
-				name := oldName.
-				storagePath := oldPath.
-				error pass ].
-
-	(oldFile notNil and: [ oldFile fullName ~= newPath and: [ oldFile exists ] ]) ifTrue: [ oldFile delete ].
 	^ self
 ]
 
@@ -475,18 +452,17 @@ MyShape >> rotateDegreesOnX: xDegrees y: yDegrees z: zDegrees around: centerPoin
 		centerX: centerPoint x
 		centerY: centerPoint y
 		centerZ: centerPoint z.
-	self clearTopologyInspectionData.
-	self persistToDisk
+	self clearTopologyInspectionData
 ]
 
 { #category : 'persistence' }
 MyShape >> saveToFile: aFileReference [
-	"Saves in the requested directory using a correlated name and stable identity."
+	"Explicitly exports the shape to the exact requested BREP file."
 
 	| requestedFile |
 	requestedFile := aFileReference asFileReference.
 	self setName: requestedFile basenameWithoutExtension.
-	storagePath := (requestedFile parent / self storageFileName) fullName.
+	storagePath := requestedFile fullName.
 	^ self persistToDisk
 ]
 
@@ -500,7 +476,7 @@ MyShape >> scaleBy: aVector [
 		sy: aVector y
 		sz: aVector z.
 	self clearTopologyInspectionData.
-	self persistToDisk
+
 ]
 
 { #category : 'topology' }
@@ -518,7 +494,6 @@ MyShape >> separatedSolids [
 			solid := CxxOcctLibrary cxxSolidAt: self index: index.
 			(solid notNil and: [ solid isNull not ]) ifTrue: [
 					solid setName: (self derivedBodyNameAt: index + 1).
-					solid persistToDisk.
 					solidsTemp add: solid ] ].
 
 	^ solidsTemp asArray
