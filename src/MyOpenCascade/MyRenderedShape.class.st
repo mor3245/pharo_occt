@@ -133,7 +133,8 @@ MyRenderedShape >> prepareForInspection [
 MyRenderedShape >> rebuildNode [
 
 	shape tessellateDeflection: deflection.
-	node := (MyShapeWodenAdapter new asWDMesh: shape) asSceneNode.
+	adapter := MyShapeWodenAdapter new.
+	node := adapter asWDDisplayNode: shape edgeDeflection: deflection.
 	^ node
 ]
 

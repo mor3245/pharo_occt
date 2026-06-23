@@ -164,10 +164,37 @@ MyShape >> derivedBodyNameAt: oneBasedIndex [
 	^ self rootBodyName , ' - Body ' , (self startingBodyNumber + oneBasedIndex - 1) asString
 ]
 
+{ #category : 'rendering' }
+MyShape >> edgeSegmentCount [
+	"Returns the number of sampled edge line segments."
+
+	self ensureNativeHandle.
+	^ CxxOcctLibrary cxxEdgeSegmentCount: self
+]
+
 { #category : 'topology constants' }
 MyShape >> edgeType [
 
 	^ 6
+]
+
+{ #category : 'rendering' }
+MyShape >> edgeVertexBufferLength [
+	"Returns the number of doubles in the sampled edge vertex buffer."
+
+	self ensureNativeHandle.
+	^ CxxOcctLibrary cxxGetEdgeVertexBufferLength: self
+]
+
+{ #category : 'rendering' }
+MyShape >> edgeVertices [
+	"Returns a Float64Array of sampled edge line endpoints, or an empty array if not yet sampled."
+
+	| address |
+	self ensureNativeHandle.
+	address := CxxOcctLibrary cxxGetEdgeVertices: self.
+	address isNull ifTrue: [ ^ Float64Array new: 0 ].
+	^ MyMakeShape float64ArrayFromExternalAddress: address count: self edgeVertexBufferLength
 ]
 
 { #category : 'topology' }
@@ -453,6 +480,14 @@ MyShape >> rotateDegreesOnX: xDegrees y: yDegrees z: zDegrees around: centerPoin
 		centerY: centerPoint y
 		centerZ: centerPoint z.
 	self clearTopologyInspectionData
+]
+
+{ #category : 'rendering' }
+MyShape >> sampleEdgesDeflection: deflection [
+	"Samples topological edges for CAD-style display lines."
+
+	self ensureNativeHandle.
+	CxxOcctLibrary cxxSampleEdges: self deflection: deflection
 ]
 
 { #category : 'persistence' }

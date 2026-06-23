@@ -76,6 +76,13 @@ CxxOcctLibrary class >> cxxDumpMemoryDifference [
     ^ self ffiCall: #(void cxxDumpMemoryDifference())
 ]
 
+{ #category : 'rendering' }
+CxxOcctLibrary class >> cxxEdgeSegmentCount: shape [
+	"Returns the number of line segments produced by the last edge sampling call."
+
+	^ self ffiCall: #( int cxxEdgeSegmentCount ( MyShape* shape ) )
+]
+
 { #category : 'unused' }
 CxxOcctLibrary class >> cxxGetAllNormals: shapeHandle buffer: bufferPtr [
 	"Fills bufferPtr with vertexCount*3 doubles representing per-vertex normals."
@@ -95,6 +102,20 @@ CxxOcctLibrary class >> cxxGetAllVertices: shapeHandle buffer: bufferPtr [
 	 "Fills bufferPtr with vertexCount*3 doubles representing vertex positions."
 
 	^ self ffiCall: #( void cxxGetAllVertices ( void* shapeHandle, void* bufferPtr ) )
+]
+
+{ #category : 'rendering' }
+CxxOcctLibrary class >> cxxGetEdgeVertexBufferLength: shape [
+	"Returns the total number of doubles in the sampled edge vertex buffer."
+
+	^ self ffiCall: #( int cxxGetEdgeVertexBufferLength ( MyShape* shape ) )
+]
+
+{ #category : 'rendering' }
+CxxOcctLibrary class >> cxxGetEdgeVertices: shape [
+	"Returns a raw pointer to the sampled edge display vertex data."
+
+	^ self ffiCall: #( void* cxxGetEdgeVertices ( MyShape* shape ) )
 ]
 
 { #category : 'as yet unclassified' }
@@ -208,6 +229,15 @@ CxxOcctLibrary class >> cxxRotateShape: shape xDegrees: xDegrees yDegrees: yDegr
 		double centerX,
 		double centerY,
 		double centerZ ) )
+]
+
+{ #category : 'rendering' }
+CxxOcctLibrary class >> cxxSampleEdges: shape deflection: deflection [
+	"Samples topological edges into a native line endpoint buffer."
+
+	^ self ffiCall: #( void cxxSampleEdges ( MyShape* shape, double deflection ) )
+
+
 ]
 
 { #category : 'as yet unclassified' }
