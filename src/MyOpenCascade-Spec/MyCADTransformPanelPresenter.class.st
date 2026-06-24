@@ -30,8 +30,8 @@ MyCADTransformPanelPresenter class >> defaultLayout [
 				   add: #uInput atPoint: 2 @ 1;
 				   add: 'V (mm)' atPoint: 1 @ 2;
 				   add: #vInput atPoint: 2 @ 2;
-				   add: 'W (mm)' at: 1 @ 3;
-				   add: #wInput at: 2 @ 3;
+				   add: 'W (mm)' atPoint: 1 @ 3;
+				   add: #wInput atPoint: 2 @ 3;
 				   yourself);
 		  add: (SpBoxLayout newHorizontal
 				   add: #okButton;
@@ -116,6 +116,14 @@ MyCADTransformPanelPresenter >> initializePresenters [
 	self resetValues
 ]
 
+{ #category : 'units' }
+MyCADTransformPanelPresenter >> modelUnitsPerMillimeter [
+	"Answers the current display/model scale for translation input.
+	The transform panel is edited in millimeters, while the current scene behaves as meter-like model units."
+
+	^ 1
+]
+
 { #category : 'actions' }
 MyCADTransformPanelPresenter >> previewChanged [
 
@@ -136,7 +144,10 @@ MyCADTransformPanelPresenter >> resetValues [
 { #category : 'accessing' }
 MyCADTransformPanelPresenter >> translationVector [
 
-	^ Vector3 x: uInput number y: vInput number z: wInput number
+	^ Vector3
+		  x: uInput number * self modelUnitsPerMillimeter
+		  y: vInput number * self modelUnitsPerMillimeter
+		  z: wInput number * self modelUnitsPerMillimeter
 ]
 
 { #category : 'callbacks' }
