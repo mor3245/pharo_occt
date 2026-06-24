@@ -73,6 +73,7 @@ MyCADTranslationMode >> cancel [
 
 	self reset.
 	presenter refreshScene.
+	presenter visualChanged.
 	presenter transformModeChanged: #none
 ]
 
@@ -93,6 +94,7 @@ MyCADTranslationMode >> confirm [
 
 	self reset.
 	presenter refreshScene.
+	presenter visualChanged.
 	presenter transformModeChanged: #none
 ]
 

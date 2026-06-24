@@ -6,7 +6,8 @@ Class {
 		'viewportPresenter',
 		'geometryTree',
 		'updatingGeometryTree',
-		'taskPanel'
+		'taskPanel',
+		'propertyTable'
 	],
 	#category : 'MyOpenCascade-Spec',
 	#package : 'MyOpenCascade-Spec'
@@ -25,7 +26,7 @@ MyCADWorkbenchPresenter class >> layoutWithTaskPanel [
 		  add: #mainMenuBar withConstraints: [ :constraints | constraints height: self toolbarHeight ];
 		  add: (SpPanedLayout newHorizontal
 				   positionOfSlider: 1 / 5;
-				   add: #geometryTree;
+				   add: (self leftPanelLayout);
 				   add: (SpPanedLayout newHorizontal
 						    positionOfSlider: 3 / 4;
 						    add: #viewportPresenter;
@@ -42,9 +43,19 @@ MyCADWorkbenchPresenter class >> layoutWithoutTaskPanel [
 		  add: #mainMenuBar withConstraints: [ :constraints | constraints height: self toolbarHeight ];
 		  add: (SpPanedLayout newHorizontal
 				   positionOfSlider: 1 / 5;
-				   add: #geometryTree;
+				   add: self leftPanelLayout;
 				   add: #viewportPresenter;
 				   yourself);
+		  yourself
+]
+
+{ #category : 'as yet unclassified' }
+MyCADWorkbenchPresenter class >> leftPanelLayout [
+
+	^ SpPanedLayout newVertical
+		  positionOfSlider: 2 / 3;
+		  add: #geometryTree;
+		  add: #propertyTable;
 		  yourself
 ]
 
@@ -195,17 +206,30 @@ MyCADWorkbenchPresenter >> initializePresenters [
 		whenSelectionChangedDo: [ :treeSelection |
 			updatingGeometryTree ifFalse: [ viewportPresenter selectRenderedShape: treeSelection selectedItem ] ].
 
+	propertyTable := self newTreeTable.
+	propertyTable
+		addColumn: (SpStringTableColumn title: 'Property' evaluated: [ :association | association key ]);
+		addColumn: (SpStringTableColumn title: 'Value' evaluated: [ :association | association value ]);
+		children: [ :association | #(  ) ];
+		beSingleSelection.
+
 	viewportPresenter
 		whenGeometryChangedDo: [ self updateGeometryTree ];
 		whenSelectionChangedDo: [ self updateGeometryTreeSelection ];
-		whenTransformModeChangedDo: [ :mode | self transformModeChanged: mode ].
+		whenTransformModeChangedDo: [ :mode | self transformModeChanged: mode ];
+		whenVisualChangedDo: [ self updatePropertyTable ].
 
 	taskPanel
 		whenPreviewChangedDo: [ :translation | viewportPresenter previewTranslation: translation ];
-		whenAcceptDo: [ viewportPresenter confirmTranslationMode ];
-		whenCancelDo: [ viewportPresenter cancelTranslationMode ].
+		whenAcceptDo: [
+				viewportPresenter confirmTranslationMode.
+				self updatePropertyTable ];
+		whenCancelDo: [
+				viewportPresenter cancelTranslationMode.
+				self updatePropertyTable ].
 
-	self updateGeometryTree
+	self updateGeometryTree.
+	self updatePropertyTable
 ]
 
 { #category : 'initialization' }
@@ -216,6 +240,12 @@ MyCADWorkbenchPresenter >> initializeWindow: aWindowPresenter [
 		title: 'MyCAD';
 		initialExtent: 1024 @ 768;
 		whenOpenedDo: [ viewportPresenter setupContextMenu ]
+]
+
+{ #category : 'units' }
+MyCADWorkbenchPresenter >> modelUnitsToMillimeters: aNumber [
+
+	^ aNumber / taskPanel modelUnitsPerMillimeter
 ]
 
 { #category : 'updating' }
@@ -248,8 +278,31 @@ MyCADWorkbenchPresenter >> updateGeometryTreeSelection [
 	updatingGeometryTree := true.
 	[
 		selectedShape := viewportPresenter selectedRenderedShape.
-		selectedShape ifNil: [ geometryTree unselectAll ] ifNotNil: [ geometryTree selectItems: { selectedShape } ] ] ensure: [
-		updatingGeometryTree := wasUpdating ]
+		selectedShape ifNil: [ geometryTree unselectAll ] ifNotNil: [ geometryTree selectItems: { selectedShape } ].
+		self updatePropertyTable ] ensure: [ updatingGeometryTree := wasUpdating ]
+]
+
+{ #category : 'updating' }
+MyCADWorkbenchPresenter >> updatePropertyTable [
+
+	| renderedShape propertiesTemp position |
+	renderedShape := viewportPresenter selectedRenderedShape.
+	renderedShape ifNil: [
+			propertyTable roots: #(  ).
+			^ self ].
+
+	position := renderedShape displayPosition.
+	propertiesTemp := OrderedCollection new.
+	propertiesTemp
+		add: 'Name' -> renderedShape name;
+		add: 'Type' -> renderedShape shape class name;
+		add: 'U position (mm)' -> (self modelUnitsToMillimeters: position x) asString;
+		add: 'V position (mm)' -> (self modelUnitsToMillimeters: position y) asString;
+		add: 'W position (mm)' -> (self modelUnitsToMillimeters: position z) asString;
+		add: 'Triangles' -> renderedShape shape triangleCount asString;
+		add: 'Vertices' -> renderedShape shape vertexCount asString.
+
+	propertyTable roots: propertiesTemp asArray
 ]
 
 { #category : 'accessing' }

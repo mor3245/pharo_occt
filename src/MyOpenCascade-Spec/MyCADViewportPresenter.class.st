@@ -16,7 +16,8 @@ Class {
 		'renderedShapes',
 		'geometryChangedAction',
 		'selectionChangedAction',
-		'transformModeChangedAction'
+		'transformModeChangedAction',
+		'visualChangedAction'
 	],
 	#category : 'MyOpenCascade-Spec',
 	#package : 'MyOpenCascade-Spec'
@@ -526,6 +527,7 @@ MyCADViewportPresenter >> initializePresenters [
 	geometryChangedAction := [ ].
 	selectionChangedAction := [ ].
 	transformModeChangedAction := [ :mode |  ].
+	visualChangedAction := [ ].
 	selection := MyCADSelectionController on: self.
 	translationMode := MyCADTranslationMode new.
 	rotationMode := MyCADRotationMode new.
@@ -623,7 +625,8 @@ MyCADViewportPresenter >> openWithContextMenu [
 MyCADViewportPresenter >> previewTranslation: aVector [
 	"Previews an absolute U/V/W translation from the active transform panel."
 
-	translationMode previewTranslation: aVector
+	translationMode previewTranslation: aVector.
+	self visualChanged
 ]
 
 { #category : 'picking - rays' }
@@ -934,6 +937,13 @@ MyCADViewportPresenter >> vertexAtZeroBasedIndex: vertexIndex in: vertices [
 ]
 
 { #category : 'announcing' }
+MyCADViewportPresenter >> visualChanged [
+	"Announces that rendered node state changed without necessarily changing the scene's shape list."
+
+	visualChangedAction value
+]
+
+{ #category : 'announcing' }
 MyCADViewportPresenter >> whenGeometryChangedDo: aBlock [
 
 	geometryChangedAction := aBlock
@@ -949,6 +959,12 @@ MyCADViewportPresenter >> whenSelectionChangedDo: aBlock [
 MyCADViewportPresenter >> whenTransformModeChangedDo: aBlock [
 
 	transformModeChangedAction := aBlock
+]
+
+{ #category : 'announcing' }
+MyCADViewportPresenter >> whenVisualChangedDo: aBlock [
+
+	visualChangedAction := aBlock
 ]
 
 { #category : 'accessing - widgets' }

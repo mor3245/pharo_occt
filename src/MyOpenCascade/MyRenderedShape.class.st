@@ -5,7 +5,8 @@ Class {
 		'shape',
 		'node',
 		'deflection',
-		'adapter'
+		'adapter',
+		'placementPosition'
 	],
 	#category : 'MyOpenCascade-Woden',
 	#package : 'MyOpenCascade',
@@ -57,6 +58,7 @@ MyRenderedShape >> bakeTranslation [
 
 	oldNode := node.
 	translation := node position.
+	placementPosition := self placementPosition + translation.
 
 	shape translateBy: translation.
 	self rebuildNode.
@@ -92,6 +94,13 @@ MyRenderedShape >> deflection: anObject [
 	deflection := anObject
 ]
 
+{ #category : 'accessing' }
+MyRenderedShape >> displayPosition [
+	"Answers the committed placement plus any current preview node offset."
+
+	^ self placementPosition + (node ifNil: [ Vector3 x: 0 y: 0 z: 0 ] ifNotNil: [ node position ])
+]
+
 { #category : 'finalization' }
 MyRenderedShape >> free [
 
@@ -117,6 +126,20 @@ MyRenderedShape >> node [
 MyRenderedShape >> node: anObject [
 
 	node := anObject
+]
+
+{ #category : 'accessing' }
+MyRenderedShape >> placementPosition [
+	"Answers accumulated committed translation. Existing instances from older images default to zero."
+
+	placementPosition ifNil: [ placementPosition := Vector3 x: 0 y: 0 z: 0 ].
+	^ placementPosition
+]
+
+{ #category : 'accessing' }
+MyRenderedShape >> placementPosition: aVector [
+
+	placementPosition := aVector
 ]
 
 { #category : 'inspection' }
