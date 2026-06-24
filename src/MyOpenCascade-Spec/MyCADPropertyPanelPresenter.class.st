@@ -41,8 +41,8 @@ MyCADPropertyPanelPresenter class >> defaultLayout [
 		  add: 'Box Height (mm)' atPoint: 1 @ 8;
 		  add: #heightInput atPoint: 2 @ 8;
 		  add: 'Triangles' atPoint: 1 @ 9;
-		  add: #trianglesValue at: 2 @ 9;
-		  add: 'Vertices' at: 1 @ 10;
+		  add: #trianglesValue atPoint: 2 @ 9;
+		  add: 'Vertices' atPoint: 1 @ 10;
 		  add: #verticesValue at: 2 @ 10;
 		  yourself
 ]
@@ -132,7 +132,7 @@ MyCADPropertyPanelPresenter >> showCADObject: aCADObject placementMillimeters: p
 					widthInput number: 0.0.
 					heightInput number: 0.0 ]. "Old static layout still labels these as Box dimensions. The selected CAD object now controls
 		whether the fields are meaningful; the next property-panel refactor can make labels dynamic."
-		trianglesValue label: aCADObject asString.
+		trianglesValue label: aCADObject triangleCount asString.
 		verticesValue label: aCADObject vertexCount asString ] ensure: [ updating := false ]
 ]
 
