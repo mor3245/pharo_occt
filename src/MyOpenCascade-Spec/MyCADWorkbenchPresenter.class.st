@@ -279,7 +279,7 @@ MyCADWorkbenchPresenter >> updateGeometryTree [
 
 	updatingGeometryTree := true.
 	[
-		geometryTree roots: viewportPresenter renderedShapes.
+		geometryTree roots: (viewportPresenter renderedShapes select: [ :each | each isAlive ]).
 		self updateGeometryTreeSelection ] ensure: [ updatingGeometryTree := false ]
 ]
 
@@ -291,6 +291,7 @@ MyCADWorkbenchPresenter >> updateGeometryTreeSelection [
 	updatingGeometryTree := true.
 	[
 		selectedShape := viewportPresenter selectedRenderedShape.
+		(selectedShape notNil and: [ selectedShape isAlive not ]) ifTrue: [ selectedShape := nil ].
 		selectedShape ifNil: [ geometryTree unselectAll ] ifNotNil: [ geometryTree selectItems: { selectedShape } ].
 		self updatePropertyPanel ] ensure: [ updatingGeometryTree := wasUpdating ]
 ]
@@ -300,7 +301,7 @@ MyCADWorkbenchPresenter >> updatePropertyPanel [
 
 	| renderedShape position dimensions |
 	renderedShape := viewportPresenter selectedRenderedShape.
-	renderedShape ifNil: [
+	(renderedShape isNil or: [ renderedShape isAlive not ]) ifTrue: [
 			propertyPanel clear.
 			^ self ].
 

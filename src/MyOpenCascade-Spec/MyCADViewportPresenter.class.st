@@ -796,6 +796,7 @@ MyCADViewportPresenter >> resizeSelectedBoxDx: dx dy: dy dz: dz [
 	| renderedShape change |
 	renderedShape := self selectedRenderedShape.
 	renderedShape ifNil: [ ^ self ].
+	renderedShape isAlive ifFalse: [ ^ self ].
 	renderedShape isBox ifFalse: [ ^ self ].
 
 	self restoreSelectedVisual.

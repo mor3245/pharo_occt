@@ -22,6 +22,7 @@ MyCADSelectionController class >> on: aPresenter [
 MyCADSelectionController >> applyVisualTo: aNode [
 	"Replaces the node's renderables with yellow unlit copies to indicate selection."
 
+	aNode ifNil: [ ^ self ].
 	selectedOriginalRenderables := aNode renderables.
 	aNode renderables: (selectedOriginalRenderables collect: [ :each | each copyWithMaterial: self selectionMaterial ])
 ]
@@ -55,6 +56,9 @@ MyCADSelectionController >> restoreVisual [
 
 	selectedRenderedShape ifNil: [ ^ self ].
 	selectedOriginalRenderables ifNil: [ ^ self ].
+	selectedRenderedShape isAlive ifFalse: [
+			selectedOriginalRenderables := nil.
+			^ self ].
 
 	selectedRenderedShape node renderables: selectedOriginalRenderables.
 	selectedOriginalRenderables := nil
@@ -86,6 +90,9 @@ MyCADSelectionController >> selectFrom: pickedEntries [
 	pickedIndex := selectedRenderedShape ifNil: [ 0 ] ifNotNil: [ pickedEntries indexOf: selectedRenderedShape ifAbsent: [ 0 ] ].
 
 	pickedEntry := pickedEntries at: pickedIndex \\ pickedEntries size + 1.
+	pickedEntry isAlive ifFalse: [
+			self clear.
+			^ self ].
 
 	self restoreVisual.
 	selectedRenderedShape := pickedEntry.

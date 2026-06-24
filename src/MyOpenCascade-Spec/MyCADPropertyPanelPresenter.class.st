@@ -25,10 +25,10 @@ MyCADPropertyPanelPresenter class >> defaultLayout [
 
 	^ SpGridLayout new
 		  add: 'Name' atPoint: 1 @ 1;
-		  add: #nameValue at: 2 @ 1;
-		  add: 'Type' at: 1 @ 2;
-		  add: #typeValue at: 2 @ 2;
-		  add: 'Placement U (mm)' at: 1 @ 3;
+		  add: #nameValue atPoint: 2 @ 1;
+		  add: 'Type' atPoint: 1 @ 2;
+		  add: #typeValue atPoint: 2 @ 2;
+		  add: 'Placement U (mm)' atPoint: 1 @ 3;
 		  add: #uValue at: 2 @ 3;
 		  add: 'Placement V (mm)' at: 1 @ 4;
 		  add: #vValue at: 2 @ 4;
@@ -109,6 +109,10 @@ MyCADPropertyPanelPresenter >> initializePresenters [
 
 { #category : 'updating' }
 MyCADPropertyPanelPresenter >> showRenderedShape: aRenderedShape placementMillimeters: placementVector dimensionsMillimeters: dimensionsVector [
+
+	aRenderedShape isAlive ifFalse: [
+			self clear.
+			^ self ].
 
 	selectedRenderedShape := aRenderedShape.
 	updating := true.

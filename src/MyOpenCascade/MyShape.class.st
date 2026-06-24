@@ -309,6 +309,7 @@ MyShape >> isNull [
 MyShape >> name [
 
 	self ensureIdentity.
+	name isString ifFalse: [ name := 'Shape' ].
 	^ name
 ]
 
@@ -421,7 +422,7 @@ MyShape >> renameTo: aString [
 	"Renames the in-memory shape. Persistence is always explicit."
 
 	| normalizedName |
-	normalizedName := aString trimBoth.
+	normalizedName := aString asString trimBoth.
 	normalizedName isEmpty ifTrue: [ self error: 'Shape name cannot be empty' ].
 
 	self ensureIdentity.
@@ -538,7 +539,7 @@ MyShape >> separatedSolids [
 MyShape >> setName: aString [
 
 	| normalizedName |
-	normalizedName := aString trimBoth.
+	normalizedName := aString asString trimBoth.
 	normalizedName isEmpty ifTrue: [ self error: 'Shape name cannot be empty' ].
 	name := normalizedName
 ]

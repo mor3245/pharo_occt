@@ -126,6 +126,13 @@ MyRenderedShape >> free [
 ]
 
 { #category : 'testing' }
+MyRenderedShape >> isAlive [
+	"Answers whether this wrapper still owns a usable rendered/native shape."
+
+	^ shape notNil and: [ node notNil ]
+]
+
+{ #category : 'testing' }
 MyRenderedShape >> isBox [
 
 	^ primitiveKind = #box
@@ -134,7 +141,8 @@ MyRenderedShape >> isBox [
 { #category : 'accessing' }
 MyRenderedShape >> name [
 
-	^ shape name
+	shape ifNil: [ ^ '<released shape>' ].
+	^ shape name asString
 ]
 
 { #category : 'accessing' }
