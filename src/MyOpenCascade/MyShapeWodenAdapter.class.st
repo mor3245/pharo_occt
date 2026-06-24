@@ -1,10 +1,21 @@
 Class {
 	#name : 'MyShapeWodenAdapter',
 	#superclass : 'Object',
+	#instVars : [
+		'renderStyle'
+	],
 	#category : 'MyOpenCascade-Woden',
 	#package : 'MyOpenCascade',
 	#tag : 'Woden'
 }
+
+{ #category : 'instance creation' }
+MyShapeWodenAdapter class >> renderStyle: aRenderStyle [
+
+	^ self new
+		  renderStyle: aRenderStyle;
+		  yourself
+]
 
 { #category : 'converting' }
 MyShapeWodenAdapter >> asWDDisplayNode: aShape edgeDeflection: edgeDeflection [
@@ -60,7 +71,7 @@ MyShapeWodenAdapter >> asWDMesh: aShape [
 	tris := aShape triangles.
 
 	builder := WDMeshBuilder new.
-	builder currentMaterial: self defaultCADMaterial.
+	builder currentMaterial: self renderStyle faceMaterial.
 	builder beginTriangles. "add vertices and normals"
 	0 to: aShape vertexCount - 1 do: [ :i |
 			builder addPx: (verts at: i * 3 + 1) y: (verts at: i * 3 + 2) z: (verts at: i * 3 + 3).
@@ -89,4 +100,16 @@ MyShapeWodenAdapter >> edgeMaterial [
 	^ WDUnlitMaterial new
 		  colorFactor: (Color gray: 0.06);
 		  yourself
+]
+
+{ #category : 'accessing' }
+MyShapeWodenAdapter >> renderStyle [
+
+	^ renderStyle ifNil: [ renderStyle := MyWodenRenderStyle default ]
+]
+
+{ #category : 'accessing' }
+MyShapeWodenAdapter >> renderStyle: aRenderStyle [
+
+	renderStyle := aRenderStyle
 ]

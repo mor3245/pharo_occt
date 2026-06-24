@@ -8,7 +8,8 @@ Class {
 		'adapter',
 		'placementPosition',
 		'primitiveKind',
-		'boxDimensions'
+		'boxDimensions',
+		'renderStyle'
 	],
 	#category : 'MyOpenCascade-Woden',
 	#package : 'MyOpenCascade',
@@ -185,8 +186,8 @@ MyRenderedShape >> prepareForInspection [
 MyRenderedShape >> rebuildNode [
 
 	shape tessellateDeflection: deflection.
-	adapter := MyShapeWodenAdapter new.
-	node := adapter asWDDisplayNode: shape edgeDeflection: deflection / 4.
+	adapter := MyShapeWodenAdapter renderStyle: self renderStyle.
+	node := adapter asWDDisplayNode: shape edgeDeflection: (self renderStyle edgeDeflectionFor: deflection).
 	^ node
 ]
 
@@ -194,6 +195,18 @@ MyRenderedShape >> rebuildNode [
 MyRenderedShape >> renameTo: aString [
 
 	shape renameTo: aString
+]
+
+{ #category : 'accessing' }
+MyRenderedShape >> renderStyle [
+
+	^ renderStyle ifNil: [ renderStyle := MyWodenRenderStyle default ]
+]
+
+{ #category : 'accessing' }
+MyRenderedShape >> renderStyle: aRenderStyle [
+
+	renderStyle := aRenderStyle
 ]
 
 { #category : 'editing' }
