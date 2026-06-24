@@ -29,9 +29,9 @@ MyCADPropertyPanelPresenter class >> defaultLayout [
 		  add: 'Type' atPoint: 1 @ 2;
 		  add: #typeValue atPoint: 2 @ 2;
 		  add: 'Placement U (mm)' atPoint: 1 @ 3;
-		  add: #uValue at: 2 @ 3;
-		  add: 'Placement V (mm)' at: 1 @ 4;
-		  add: #vValue at: 2 @ 4;
+		  add: #uValue atPoint: 2 @ 3;
+		  add: 'Placement V (mm)' atPoint: 1 @ 4;
+		  add: #vValue atPoint: 2 @ 4;
 		  add: 'Placement W (mm)' at: 1 @ 5;
 		  add: #wValue at: 2 @ 5;
 		  add: 'Box Length (mm)' at: 1 @ 6;

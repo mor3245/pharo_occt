@@ -23,6 +23,7 @@ MyCADRotationMode >> activateFor: aPresenter [
 	presenter := aPresenter.
 	selectedRenderedShape := presenter selectedRenderedShape.
 	selectedRenderedShape ifNil: [ ^ self ].
+	selectedRenderedShape isAlive ifFalse: [ ^ self ].
 
 	change := selectedRenderedShape bakeTranslation.
 	presenter applyRenderNodeChange: change.
@@ -61,6 +62,7 @@ MyCADRotationMode >> applyDegrees: degrees [
 	| selectedRenderedShape node startPosition startOffset rotatedOffset newPosition |
 	selectedRenderedShape := presenter selectedRenderedShape.
 	selectedRenderedShape ifNil: [ ^ self ].
+	selectedRenderedShape isAlive ifFalse: [ ^ self ].
 	startNodeTransform ifNil: [ ^ self ].
 	startCenter ifNil: [ ^ self ].
 
@@ -90,7 +92,8 @@ MyCADRotationMode >> cancel [
 	self isActive ifFalse: [ ^ self ].
 
 	presenter selectedRenderedShape ifNotNil: [ :selectedRenderedShape |
-		startNodeTransform ifNotNil: [ selectedRenderedShape node transform: startNodeTransform copy ] ].
+			(selectedRenderedShape isAlive and: [ selectedRenderedShape isAlive and: [ currentDegrees ~= 0 ] ]) ifTrue: [
+				selectedRenderedShape node transform: startNodeTransform copy ] ].
 
 	self reset.
 	presenter refreshScene
@@ -281,6 +284,7 @@ MyCADRotationMode >> updateAt: aPoint [
 
 	| delta degrees |
 	presenter selectedRenderedShape ifNil: [ ^ self ].
+	presenter selectedRenderedShape isAlive ifFalse: [ ^ self ].
 
 	startMousePosition ifNil: [ startMousePosition := aPoint ].
 	typedDegreesString isEmpty ifFalse: [ ^ self ].

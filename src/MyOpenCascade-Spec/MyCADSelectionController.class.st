@@ -71,6 +71,9 @@ MyCADSelectionController >> select: aRenderedShape [
 	aRenderedShape ifNil: [
 			self clear.
 			^ self ].
+	aRenderedShape isAlive ifFalse: [
+			self clear.
+			^ self ].
 
 	self restoreVisual.
 	selectedRenderedShape := aRenderedShape.
@@ -105,12 +108,13 @@ MyCADSelectionController >> selectFrom: pickedEntries [
 MyCADSelectionController >> selectedNode [
 	"Returns the scene node of the currently selected entry, or nil if nothing is selected."
 
-	^ selectedRenderedShape ifNil: [ nil ] ifNotNil: [ selectedRenderedShape node ]
+	^ selectedRenderedShape ifNil: [ nil ] ifNotNil: [ selectedRenderedShape isAlive ifTrue: [ selectedRenderedShape node ] ]
 ]
 
 { #category : 'accessing' }
 MyCADSelectionController >> selectedRenderedShape [
 
+	(selectedRenderedShape notNil and: [ selectedRenderedShape isAlive not ]) ifTrue: [ ^ nil ].
 	^ selectedRenderedShape
 ]
 
@@ -120,6 +124,7 @@ MyCADSelectionController >> selectedRotationCenter [
 
 	| box |
 	selectedRenderedShape ifNil: [ ^ Vector3 x: 0 y: 0 z: 0 ].
+	selectedRenderedShape isAlive ifFalse: [ ^ Vector3 x: 0 y: 0 z: 0 ].
 
 	box := presenter selectionBoundingBoxFor: selectedRenderedShape.
 
@@ -130,7 +135,7 @@ MyCADSelectionController >> selectedRotationCenter [
 MyCADSelectionController >> selectedShape [
 	"Returns the MyShape of the currently selected entry, or nil if nothing is selected."
 
-	^ selectedRenderedShape ifNil: [ nil ] ifNotNil: [ selectedRenderedShape shape ]
+	^ selectedRenderedShape ifNil: [ nil ] ifNotNil: [ selectedRenderedShape isAlive ifTrue: [ selectedRenderedShape shape ] ]
 ]
 
 { #category : 'accessing' }

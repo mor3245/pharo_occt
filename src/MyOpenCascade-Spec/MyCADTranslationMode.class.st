@@ -23,6 +23,7 @@ MyCADTranslationMode >> activateFor: aPresenter [
 	presenter := aPresenter.
 	selectedRenderedShape := presenter selectedRenderedShape.
 	selectedRenderedShape ifNil: [ ^ self ].
+	selectedRenderedShape isAlive ifFalse: [ ^ self ].
 
 	active := true.
 	axisLock := nil.
@@ -69,7 +70,8 @@ MyCADTranslationMode >> cancel [
 	self isActive ifFalse: [ ^ self ].
 
 	presenter selectedRenderedShape ifNotNil: [ :selectedRenderedShape |
-		startNodePosition ifNotNil: [ selectedRenderedShape node position: startNodePosition ] ].
+			(selectedRenderedShape isAlive and: [ startNodePosition notNil ]) ifTrue: [
+				selectedRenderedShape node position: startNodePosition ] ].
 
 	self reset.
 	presenter refreshScene.
@@ -85,7 +87,7 @@ MyCADTranslationMode >> confirm [
 	self isActive ifFalse: [ ^ self ].
 
 	selectedRenderedShape := presenter selectedRenderedShape.
-	selectedRenderedShape ifNotNil: [
+	(selectedRenderedShape notNil and: [ selectedRenderedShape isAlive ]) ifTrue: [
 			presenter restoreSelectedVisual.
 
 			change := selectedRenderedShape bakeTranslation.
@@ -193,7 +195,8 @@ MyCADTranslationMode >> previewTranslation: aVector [
 
 	self isActive ifFalse: [ ^ self ].
 	presenter selectedRenderedShape ifNotNil: [ :selectedRenderedShape |
-		startNodePosition ifNotNil: [ selectedRenderedShape node position: startNodePosition + aVector ] ].
+			(selectedRenderedShape isAlive and: [ startNodePosition notNil ]) ifTrue: [
+				selectedRenderedShape node position: startNodePosition + aVector ] ].
 	presenter refreshScene
 ]
 

@@ -17,7 +17,8 @@ Class {
 		'geometryChangedAction',
 		'selectionChangedAction',
 		'transformModeChangedAction',
-		'visualChangedAction'
+		'visualChangedAction',
+		'contextMenuWidget'
 	],
 	#category : 'MyOpenCascade-Spec',
 	#package : 'MyOpenCascade-Spec'
@@ -443,7 +444,8 @@ MyCADViewportPresenter >> geometryChanged [
 	"Redraws the viewport and informs owner presenters that the geometry list changed."
 
 	self refreshScene.
-	geometryChangedAction value
+	geometryChangedAction value.
+	self setupContextMenu
 
 ]
 
@@ -832,6 +834,9 @@ MyCADViewportPresenter >> saveSelectedShapeTo: aFileReference [
 { #category : 'selection - managing' }
 MyCADViewportPresenter >> selectRenderedShape: aRenderedShape [
 
+	(aRenderedShape notNil and: [ aRenderedShape isAlive not ]) ifTrue: [
+			selection clear.
+			^ self ].
 	selection selectedRenderedShape == aRenderedShape ifTrue: [ ^ self ].
 	selection select: aRenderedShape
 ]
@@ -899,14 +904,16 @@ MyCADViewportPresenter >> setupContextMenu [
 	| widget |
 	widget := self wodenWidget.
 	widget ifNil: [ ^ self ].
+	contextMenuWidget == widget ifTrue: [ ^ self ].
 
 	widget
 		on: #mouseDown send: #handleMouseDown: to: self;
 		on: #mouseMove send: #handleMouseMove: to: self;
 		on: #mouseUp send: #handleMouseUp: to: self;
-		on: #keyStroke send: #handleKeyStroke: to: self "If your image does not understand #keyStroke, try this instead:
+		on: #keyStroke send: #handleKeyStroke: to: self. "If your image does not understand #keyStroke, try this instead:
 
 	on: #keyDown send: #handleKeyStroke: to: self"
+	contextMenuWidget := widget
 ]
 
 { #category : 'context menu - handling' }
