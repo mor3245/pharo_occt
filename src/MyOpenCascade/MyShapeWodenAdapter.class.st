@@ -76,9 +76,9 @@ MyShapeWodenAdapter >> defaultCADMaterial [
 	"Answers a neutral, non-metallic CAD material with enough roughness to show form without glossy glare."
 
 	^ WDMetallicRoughnessMaterial new
-		  baseColorFactor: Color gray;
+		  baseColorFactor: (Color gray: 0.62);
 		  metallicFactor: 0.0;
-		  roughnessFactor: 0.75;
+		  roughnessFactor: 0.55;
 		  yourself
 ]
 
@@ -87,6 +87,6 @@ MyShapeWodenAdapter >> edgeMaterial [
 	"Answers a dark unlit material for topological edge overlays."
 
 	^ WDUnlitMaterial new
-		  colorFactor: Color black;
+		  colorFactor: (Color gray: 0.06);
 		  yourself
 ]

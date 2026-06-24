@@ -134,7 +134,7 @@ MyRenderedShape >> rebuildNode [
 
 	shape tessellateDeflection: deflection.
 	adapter := MyShapeWodenAdapter new.
-	node := adapter asWDDisplayNode: shape edgeDeflection: deflection.
+	node := adapter asWDDisplayNode: shape edgeDeflection: deflection / 4.
 	^ node
 ]
 

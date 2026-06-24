@@ -734,7 +734,6 @@ MyShape >> translateBy: aVector [
 		y: aVector y
 		z: aVector z.
 	self clearTopologyInspectionData.
-	self persistToDisk
 ]
 
 { #category : 'accessing' }

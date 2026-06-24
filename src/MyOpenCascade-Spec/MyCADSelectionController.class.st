@@ -111,11 +111,10 @@ MyCADSelectionController >> selectedRenderedShape [
 MyCADSelectionController >> selectedRotationCenter [
 	"Returns the visible world-space center of the selected rendered node."
 
-	| node box |
+	| box |
 	selectedRenderedShape ifNil: [ ^ Vector3 x: 0 y: 0 z: 0 ].
 
-	node := selectedRenderedShape node.
-	box := node localBoundingBox transformedWith: node globalTransform.
+	box := presenter selectionBoundingBoxFor: selectedRenderedShape.
 
 	^ box center
 ]

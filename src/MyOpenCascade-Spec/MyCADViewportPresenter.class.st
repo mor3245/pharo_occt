@@ -623,6 +623,72 @@ MyCADViewportPresenter >> openWithContextMenu [
 ]
 
 { #category : 'picking - rays' }
+MyCADViewportPresenter >> ray: aRay triangleIntersectionDistanceFrom: p0 to: p1 to: p2 [
+	"Answers the ray distance to a triangle using the Moller-Trumbore test, or nil for no hit."
+
+	| epsilon edge1 edge2 h determinant inverseDeterminant s u q v t |
+	epsilon := 0.0000001.
+	edge1 := p1 - p0.
+	edge2 := p2 - p0.
+	h := aRay direction cross: edge2.
+	determinant := edge1 dot: h.
+
+	determinant abs < epsilon ifTrue: [ ^ nil ].
+	inverseDeterminant := 1.0 / determinant.
+
+	s := aRay origin - p0.
+	u := inverseDeterminant * (s dot: h).
+	(u < 0.0 or: [ u > 1.0 ]) ifTrue: [ ^ nil ].
+
+	q := s cross: edge1.
+	v := inverseDeterminant * (aRay direction dot: q).
+	(v < 0.0 or: [ u + v > 1.0 ]) ifTrue: [ ^ nil ].
+
+	t := inverseDeterminant * (edge2 dot: q).
+	t < epsilon ifTrue: [ ^ nil ].
+
+	^ t
+]
+
+{ #category : 'picking - rays' }
+MyCADViewportPresenter >> ray: worldRay trianglePickDistanceFor: aRenderedShape [
+	"Answers the nearest world-ray distance to the rendered shape's tessellated face triangles, or nil when the ray only hits the broad bounding box."
+
+	| node localRay vertices triangles nearestLocalDistance triangleDistance hitWorldDistance |
+	node := aRenderedShape node.
+	localRay := worldRay inverseTransformedWith: node globalTransform.
+	vertices := aRenderedShape shape vertices.
+	triangles := aRenderedShape shape triangles.
+	nearestLocalDistance := nil.
+
+	0 to: aRenderedShape shape triangleCount - 1 do: [ :triangleIndex |
+			| i0 i1 i2 p0 p1 p2 |
+			i0 := triangles at: triangleIndex * 3 + 1.
+			i1 := triangles at: triangleIndex * 3 + 2.
+			i2 := triangles at: triangleIndex * 3 + 3.
+
+			p0 := self vertexAtZeroBasedIndex: i0 in: vertices.
+			p1 := self vertexAtZeroBasedIndex: i1 in: vertices.
+			p2 := self vertexAtZeroBasedIndex: i2 in: vertices.
+
+			triangleDistance := self
+				                    ray: localRay
+				                    triangleIntersectionDistanceFrom: p0
+				                    to: p1
+				                    to: p2.
+
+			triangleDistance ifNotNil: [
+				(nearestLocalDistance isNil or: [ triangleDistance < nearestLocalDistance ]) ifTrue: [
+					nearestLocalDistance := triangleDistance ] ] ].
+
+	nearestLocalDistance ifNil: [ ^ nil ].
+
+	hitWorldDistance := worldRay distanceForPoint:
+		                    (node globalTransform transformPosition: (localRay pointAtDistance: nearestLocalDistance)).
+	^ hitWorldDistance
+]
+
+{ #category : 'picking - rays' }
 MyCADViewportPresenter >> rayForScreenPosition: aPoint [
 	"Screen point -> normalized viewport point -> camera-space ray -> world-space ray"
 
@@ -641,19 +707,19 @@ MyCADViewportPresenter >> rayForScreenPosition: aPoint [
 
 { #category : 'picking - rays' }
 MyCADViewportPresenter >> rayPickEntriesAt: aPoint [
-	"Ray-casts against all mesh node bounding boxes and returns hit entries sorted by distance."
+	"Ray-casts against rendered CAD triangles and returns hit entries sorted by distance.
+	The face bounding box is used only as a cheap broad-phase reject; it is not enough for selection because it includes empty space around curved silhouettes."
 
 	| ray hits |
 	ray := self rayForScreenPosition: aPoint.
 	hits := OrderedCollection new.
 
 	renderedShapes do: [ :renderedShape |
-			| node box distance |
-			node := renderedShape node.
-			box := node localBoundingBox transformedWith: node globalTransform.
-			distance := box intersectionWithRay: ray.
-
-			distance ifNotNil: [ hits add: distance -> renderedShape ] ].
+			| box distance |
+			box := self selectionBoundingBoxFor: renderedShape.
+			(box intersectionWithRay: ray) ifNotNil: [
+					distance := self ray: ray trianglePickDistanceFor: renderedShape.
+					distance ifNotNil: [ hits add: distance -> renderedShape ] ] ].
 
 	^ (hits asSortedCollection: [ :a :b | a key < b key ]) collect: [ :each | each value ]
 ]
@@ -676,12 +742,11 @@ MyCADViewportPresenter >> renameSelectedShape [
 	SpRequestDialog new
 		application: self application;
 		title: 'Rename Shape';
-		label: 'Shape name';
+		message: 'Shape name';
 		text: renderedShape name;
 		acceptLabel: 'Rename';
 		cancelLabel: 'Cancel';
-		onAccept: [ :dialog |
-			self renameSelectedShapeTo: dialog presenter text ];
+		onAccept: [ :dialog | self renameSelectedShapeTo: dialog presenter text ];
 		openModal
 ]
 
@@ -781,6 +846,20 @@ MyCADViewportPresenter >> selectedShape [
 	^ selection selectedShape
 ]
 
+{ #category : 'picking - selection' }
+MyCADViewportPresenter >> selectionBoundingBoxFor: aRenderedShape [
+	"Answers the selectable world-space bounds for a rendered CAD shape.
+	The first renderable is the shaded face mesh; later renderables are decorative edge overlays and should not expand picking or pivot bounds."
+
+	| node renderables faceRenderable |
+	node := aRenderedShape node.
+	renderables := node renderables.
+	renderables ifEmpty: [ ^ node localBoundingBox transformedWith: node globalTransform ].
+
+	faceRenderable := renderables first.
+	^ faceRenderable boundingBox transformedWith: node globalTransform
+]
+
 { #category : 'announcing' }
 MyCADViewportPresenter >> selectionChanged [
 	"Redraws the viewport and informs owner presenters that selection changed."
@@ -833,6 +912,15 @@ MyCADViewportPresenter >> transformCameraDirection: aVector [
 MyCADViewportPresenter >> useSelectedAsPivot [
 
 	self selectedNode ifNotNil: [ :node | self cameraControlMorph useNodePivot: node ]
+]
+
+{ #category : 'picking - geometry' }
+MyCADViewportPresenter >> vertexAtZeroBasedIndex: vertexIndex in: vertices [
+	"Answers a Vector3 from a flat xyz vertex buffer whose mesh indices are zero-based."
+
+	| baseIndex |
+	baseIndex := vertexIndex * 3.
+	^ Vector3 x: (vertices at: baseIndex + 1) y: (vertices at: baseIndex + 2) z: (vertices at: baseIndex + 3)
 ]
 
 { #category : 'announcing' }
