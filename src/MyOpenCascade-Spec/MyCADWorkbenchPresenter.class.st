@@ -200,11 +200,11 @@ MyCADWorkbenchPresenter >> initializePresenters [
 	mainMenuBar := self buildMainMenuBar.
 	geometryTree := self newTreeTable.
 	geometryTree
-		addColumn: (SpStringTableColumn title: 'Geometry' evaluated: [ :renderedShape | renderedShape name ]);
-		children: [ :renderedShape | #(  ) ];
+		addColumn: (SpStringTableColumn title: 'Geometry' evaluated: [ :cadObject | cadObject name ]);
+		children: [ :cadObject | #(  ) ];
 		beSingleSelection;
 		whenSelectionChangedDo: [ :treeSelection |
-			updatingGeometryTree ifFalse: [ viewportPresenter selectRenderedShape: treeSelection selectedItem ] ].
+			updatingGeometryTree ifFalse: [ viewportPresenter selectCADObject: treeSelection selectedItem ] ].
 
 	propertyPanel := self instantiate: MyCADPropertyPanelPresenter.
 	propertyPanel whenDimensionsChangedDo: [ :length :width :height |
@@ -279,7 +279,7 @@ MyCADWorkbenchPresenter >> updateGeometryTree [
 
 	updatingGeometryTree := true.
 	[
-		geometryTree roots: (viewportPresenter renderedShapes select: [ :each | each isAlive ]).
+		geometryTree roots: (viewportPresenter cadObjects select: [ :each | each isAlive ]).
 		self updateGeometryTreeSelection ] ensure: [ updatingGeometryTree := false ]
 ]
 
@@ -290,7 +290,7 @@ MyCADWorkbenchPresenter >> updateGeometryTreeSelection [
 	wasUpdating := updatingGeometryTree.
 	updatingGeometryTree := true.
 	[
-		selectedShape := viewportPresenter selectedRenderedShape.
+		selectedShape := viewportPresenter selectedCADObject.
 		(selectedShape notNil and: [ selectedShape isAlive not ]) ifTrue: [ selectedShape := nil ].
 		selectedShape ifNil: [ geometryTree unselectAll ] ifNotNil: [ geometryTree selectItems: { selectedShape } ].
 		self updatePropertyPanel ] ensure: [ updatingGeometryTree := wasUpdating ]
@@ -299,16 +299,16 @@ MyCADWorkbenchPresenter >> updateGeometryTreeSelection [
 { #category : 'updating' }
 MyCADWorkbenchPresenter >> updatePropertyPanel [
 
-	| renderedShape position dimensions |
-	renderedShape := viewportPresenter selectedRenderedShape.
-	(renderedShape isNil or: [ renderedShape isAlive not ]) ifTrue: [
+	| cadObject position dimensions |
+	cadObject := viewportPresenter selectedCADObject.
+	(cadObject isNil or: [ cadObject isAlive not ]) ifTrue: [
 			propertyPanel clear.
 			^ self ].
 
-	position := renderedShape displayPosition.
-	dimensions := renderedShape boxDimensions.
+	position := cadObject displayPosition.
+	dimensions := cadObject editableDimensions.
 	propertyPanel
-		showRenderedShape: renderedShape
+		showRenderedShape: cadObject
 		placementMillimeters: (Vector3
 				 x: (self modelUnitsToMillimeters: position x)
 				 y: (self modelUnitsToMillimeters: position y)

@@ -32,12 +32,12 @@ MyCADPropertyPanelPresenter class >> defaultLayout [
 		  add: #uValue atPoint: 2 @ 3;
 		  add: 'Placement V (mm)' atPoint: 1 @ 4;
 		  add: #vValue atPoint: 2 @ 4;
-		  add: 'Placement W (mm)' at: 1 @ 5;
-		  add: #wValue at: 2 @ 5;
-		  add: 'Box Length (mm)' at: 1 @ 6;
-		  add: #lengthInput at: 2 @ 6;
-		  add: 'Box Width (mm)' at: 1 @ 7;
-		  add: #widthInput at: 2 @ 7;
+		  add: 'Placement W (mm)' atPoint: 1 @ 5;
+		  add: #wValue atPoint: 2 @ 5;
+		  add: 'Box Length (mm)' atPoint: 1 @ 6;
+		  add: #lengthInput atPoint: 2 @ 6;
+		  add: 'Box Width (mm)' atPoint: 1 @ 7;
+		  add: #widthInput atPoint: 2 @ 7;
 		  add: 'Box Height (mm)' at: 1 @ 8;
 		  add: #heightInput at: 2 @ 8;
 		  add: 'Triangles' at: 1 @ 9;
@@ -69,7 +69,7 @@ MyCADPropertyPanelPresenter >> clear [
 MyCADPropertyPanelPresenter >> dimensionsChanged [
 
 	(updating or: [ selectedRenderedShape isNil ]) ifTrue: [ ^ self ].
-	selectedRenderedShape isBox ifFalse: [ ^ self ].
+	selectedRenderedShape editableDimensionLabels isEmpty ifTrue: [ ^ self ].
 
 	dimensionsChangedAction value: lengthInput number value: widthInput number value: heightInput number
 ]
@@ -118,19 +118,22 @@ MyCADPropertyPanelPresenter >> showRenderedShape: aRenderedShape placementMillim
 	updating := true.
 	[
 		nameValue label: aRenderedShape name.
-		typeValue label: aRenderedShape shape class name.
+		typeValue label: ((aRenderedShape respondsTo: #typeName)
+				 ifTrue: [ aRenderedShape typeName ]
+				 ifFalse: [ aRenderedShape shape class name ]).
 		uValue label: placementVector x asString.
 		vValue label: placementVector y asString.
 		wValue label: placementVector z asString.
-		aRenderedShape isBox
-			ifTrue: [
+		aRenderedShape editableDimensionLabels isEmpty
+			ifFalse: [
 					lengthInput number: dimensionsVector x.
 					widthInput number: dimensionsVector y.
 					heightInput number: dimensionsVector z ]
-			ifFalse: [
+			ifTrue: [
 					lengthInput number: 0.0.
 					widthInput number: 0.0.
-					heightInput number: 0.0 ].
+					heightInput number: 0.0 ]. "Old static layout still labels these as Box dimensions. The selected CAD object now controls
+		whether the fields are meaningful; the next property-panel refactor can make labels dynamic."
 		trianglesValue label: aRenderedShape shape triangleCount asString.
 		verticesValue label: aRenderedShape shape vertexCount asString ] ensure: [ updating := false ]
 ]

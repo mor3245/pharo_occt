@@ -13,6 +13,7 @@ Class {
 		'selection',
 		'translationMode',
 		'rotationMode',
+		'cadDocument',
 		'renderedShapes',
 		'geometryChangedAction',
 		'selectionChangedAction',
@@ -55,8 +56,7 @@ MyCADViewportPresenter >> addBox [
 		                 deflection: 0.01.
 	renderedShape beBoxDx: 1 dy: 1 dz: 1.
 
-	scene add: renderedShape node.
-	renderedShapes addLast: renderedShape.
+	self addRenderedShape: renderedShape asCADObject: MyCADPrimitiveBoxObject.
 
 	self geometryChanged
 ]
@@ -70,8 +70,7 @@ MyCADViewportPresenter >> addCylinder [
 		                 shape: (MyCylinderMaker makeCylinderRadius: 1 height: 1 named: (self nextAvailableNameFor: 'Cylinder'))
 		                 deflection: 0.01.
 
-	scene add: renderedShape node.
-	renderedShapes addLast: renderedShape.
+	self addRenderedShape: renderedShape asCADObject: MyCADPrimitiveCylinderObject.
 
 	self geometryChanged
 ]
@@ -86,6 +85,15 @@ MyCADViewportPresenter >> addMenuItemNamed: aString action: aBlock to: aGroup [
 				action: aBlock ]
 ]
 
+{ #category : 'scene - geometry management' }
+MyCADViewportPresenter >> addRenderedShape: aRenderedShape asCADObject: cadObjectClass [
+	"Adds a rendered shape to the scene and creates the document object that owns it."
+
+	scene add: aRenderedShape node.
+	renderedShapes addLast: aRenderedShape.
+	self cadDocument addObject: (cadObjectClass renderedShape: aRenderedShape)
+]
+
 { #category : 'actions - file' }
 MyCADViewportPresenter >> addShapeFromFile: aFileReference [
 	"Explicitly imports one BREP file into the current in-memory scene."
@@ -93,8 +101,7 @@ MyCADViewportPresenter >> addShapeFromFile: aFileReference [
 	| renderedShape |
 	renderedShape := MyRenderedShape shape: (MyShape loadFromFile: aFileReference) deflection: 0.01.
 
-	scene add: renderedShape node.
-	renderedShapes addLast: renderedShape.
+	self addRenderedShape: renderedShape asCADObject: MyCADShapeObject.
 	self geometryChanged
 ]
 
@@ -181,6 +188,37 @@ MyCADViewportPresenter >> buildViewMenuGroup: aGroup [
 	self addMenuItemNamed: 'Inspect Selected' action: [ self inspectSelectedShape ] to: aGroup
 ]
 
+{ #category : 'geometry - accessing' }
+MyCADViewportPresenter >> cadDocument [
+	"Answers the document model, lazily creating it for old live presenters after code reload."
+
+	cadDocument ifNil: [
+			cadDocument := MyCADDocument new.
+			renderedShapes ifNotNil: [
+					renderedShapes do: [ :renderedShape |
+							cadDocument addObject: ((renderedShape isBox
+									  ifTrue: [ MyCADPrimitiveBoxObject ]
+									  ifFalse: [ MyCADShapeObject ]) renderedShape: renderedShape) ] ] ].
+	^ cadDocument
+]
+
+{ #category : 'geometry - accessing' }
+MyCADViewportPresenter >> cadObjectForRenderedShape: aRenderedShape [
+
+	aRenderedShape ifNil: [ ^ nil ].
+	^ self cadDocument objects
+		  detect: [ :each |
+				  (each respondsTo: #renderedShape)
+					  and: [ each renderedShape == aRenderedShape ] ]
+		  ifNone: [ nil ]
+]
+
+{ #category : 'geometry - accessing' }
+MyCADViewportPresenter >> cadObjects [
+
+	^ self cadDocument objects
+]
+
 { #category : 'camera - accessing' }
 MyCADViewportPresenter >> cameraControlMorph [
 
@@ -217,6 +255,7 @@ MyCADViewportPresenter >> clearAllShapes [
 			scene remove: renderedShape node.
 			renderedShape free ].
 	renderedShapes removeAll.
+	self cadDocument clear.
 	self geometryChanged
 ]
 
@@ -301,13 +340,7 @@ MyCADViewportPresenter >> cutSelectedWithLastAdded [
 	resultRenderedShapes := resultRenderedShapes reject: [ :each | each isNil or: [ each shape isNull ] ].
 	resultRenderedShapes ifEmpty: [ ^ self ].
 
-	scene remove: target node.
-	renderedShapes remove: target ifAbsent: [ ].
-	target free.
-
-	resultRenderedShapes do: [ :resultRenderedShape |
-			scene add: resultRenderedShape node.
-			renderedShapes addLast: resultRenderedShape ].
+	self replaceRenderedShape: target withAll: resultRenderedShapes.
 
 	selection forget.
 
@@ -382,10 +415,12 @@ MyCADViewportPresenter >> defaultLayout [
 MyCADViewportPresenter >> deleteLastAdded [
 	"Removes the most recently added node from the scene and frees its C++ shape."
 
-	| renderedShape |
+	| renderedShape cadObject |
 	renderedShapes ifEmpty: [ ^ self ].
 
 	renderedShape := renderedShapes removeLast.
+	cadObject := self cadObjectForRenderedShape: renderedShape.
+	cadObject ifNotNil: [ self cadDocument removeObject: cadObject ].
 
 	self selectedRenderedShape == renderedShape ifTrue: [
 			self restoreSelectedVisual.
@@ -401,13 +436,15 @@ MyCADViewportPresenter >> deleteLastAdded [
 MyCADViewportPresenter >> deleteSelected [
 	"Removes the currently selected node from the scene and frees its C++ shape."
 
-	| renderedShape |
+	| renderedShape cadObject |
 	renderedShape := self selectedRenderedShape.
 	renderedShape ifNil: [ ^ self ].
+	cadObject := self cadObjectForRenderedShape: renderedShape.
 
 	self restoreSelectedVisual.
 
 	renderedShapes remove: renderedShape ifAbsent: [ ].
+	cadObject ifNotNil: [ self cadDocument removeObject: cadObject ].
 	scene remove: renderedShape node.
 	renderedShape free.
 
@@ -531,6 +568,7 @@ MyCADViewportPresenter >> initializePresenters [
 	selectionChangedAction := [ ].
 	transformModeChangedAction := [ :mode |  ].
 	visualChangedAction := [ ].
+	cadDocument := MyCADDocument new.
 	selection := MyCADSelectionController on: self.
 	translationMode := MyCADTranslationMode new.
 	rotationMode := MyCADRotationMode new.
@@ -783,9 +821,16 @@ MyCADViewportPresenter >> renderedShapes [
 MyCADViewportPresenter >> replaceRenderedShape: oldRenderedShape withAll: newRenderedShapes [
 	"Replace one scene body with zero or more rendered bodies."
 
+	| oldObject newObjects |
+	oldObject := self cadObjectForRenderedShape: oldRenderedShape.
+	newObjects := newRenderedShapes collect: [ :newRenderedShape | MyCADBooleanResultObject renderedShape: newRenderedShape ].
+
 	scene remove: oldRenderedShape node.
 	renderedShapes remove: oldRenderedShape ifAbsent: [ ].
 	oldRenderedShape free.
+	oldObject
+		ifNil: [ newObjects do: [ :each | self cadDocument addObject: each ] ]
+		ifNotNil: [ self cadDocument replaceObject: oldObject withAll: newObjects ].
 
 	newRenderedShapes do: [ :newRenderedShape |
 			scene add: newRenderedShape node.
@@ -832,6 +877,12 @@ MyCADViewportPresenter >> saveSelectedShapeTo: aFileReference [
 ]
 
 { #category : 'selection - managing' }
+MyCADViewportPresenter >> selectCADObject: aCADObject [
+
+	aCADObject ifNil: [ self clearSelection ] ifNotNil: [ self selectRenderedShape: aCADObject renderedShape ]
+]
+
+{ #category : 'selection - managing' }
 MyCADViewportPresenter >> selectRenderedShape: aRenderedShape [
 
 	(aRenderedShape notNil and: [ aRenderedShape isAlive not ]) ifTrue: [
@@ -846,6 +897,12 @@ MyCADViewportPresenter >> selectShapeAt: aPoint [
 	"Picks the shape under the cursor; cycles to the next hit if the same node was already selected."
 
 	selection selectFrom: (self rayPickEntriesAt: aPoint)
+]
+
+{ #category : 'selection - accessing' }
+MyCADViewportPresenter >> selectedCADObject [
+
+	^ self cadObjectForRenderedShape: self selectedRenderedShape
 ]
 
 { #category : 'selection - accessing' }
