@@ -76,7 +76,19 @@ MyCADObject >> shape [
 ]
 
 { #category : 'metadata' }
+MyCADObject >> triangleCount [
+
+	^ self shape ifNil: [ 0 ] ifNotNil: [ :aShape | aShape triangleCount ]
+]
+
+{ #category : 'metadata' }
 MyCADObject >> typeName [
 
 	^ self class name
+]
+
+{ #category : 'metadata' }
+MyCADObject >> vertexCount [
+
+	^ self shape ifNil: [ 0 ] ifNotNil: [ :aShape | aShape vertexCount ]
 ]
