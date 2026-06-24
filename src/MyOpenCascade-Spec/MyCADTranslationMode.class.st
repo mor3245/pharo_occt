@@ -229,19 +229,8 @@ MyCADTranslationMode >> translationUnitsPerPixel [
 
 { #category : 'mouse' }
 MyCADTranslationMode >> updateAt: aPoint [
-	"Moves the selected rendered node by dragging freely or along the locked global axis."
+	"Mouse-drag translation is intentionally disabled.
+	Translation is edited through the transform panel's U/V/W fields and committed with OK."
 
-	| selectedRenderedShape node translation newPosition |
-	selectedRenderedShape := presenter selectedRenderedShape.
-	selectedRenderedShape ifNil: [ ^ self ].
-
-	node := selectedRenderedShape node.
-	translation := axisLock
-		               ifNil: [ self freeTranslationAtScreenPosition: aPoint ]
-		               ifNotNil: [ self axisTranslationAtScreenPosition: aPoint ].
-
-	newPosition := startNodePosition + translation.
-
-	node position: newPosition.
-	presenter refreshScene
+	^ self
 ]

@@ -26,11 +26,11 @@ MyCADTransformPanelPresenter class >> defaultLayout [
 		  add: #titleLabel withConstraints: [ :constraints | constraints height: 26 ];
 		  add: #statusLabel withConstraints: [ :constraints | constraints height: 44 ];
 		  add: (SpGridLayout new
-				   add: 'U' atPoint: 1 @ 1;
-				   add: #uInput at: 2 @ 1;
-				   add: 'V' at: 1 @ 2;
-				   add: #vInput at: 2 @ 2;
-				   add: 'W' at: 1 @ 3;
+				   add: 'U (mm)' atPoint: 1 @ 1;
+				   add: #uInput atPoint: 2 @ 1;
+				   add: 'V (mm)' atPoint: 1 @ 2;
+				   add: #vInput atPoint: 2 @ 2;
+				   add: 'W (mm)' at: 1 @ 3;
 				   add: #wInput at: 2 @ 3;
 				   yourself);
 		  add: (SpBoxLayout newHorizontal

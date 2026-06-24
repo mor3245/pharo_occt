@@ -478,7 +478,6 @@ MyCADViewportPresenter >> handleMouseDown: anEvent [
 	translationMode isActive ifTrue: [
 			anEvent redButtonPressed ifTrue: [
 					anEvent wasHandled: true.
-					self confirmTranslationMode.
 					^ self ] ].
 
 	(self shouldTrackContextMenuFrom: anEvent) ifTrue: [
@@ -494,11 +493,6 @@ MyCADViewportPresenter >> handleMouseMove: anEvent [
 
 	rotationMode isActive ifTrue: [
 			rotationMode updateAt: anEvent position.
-			anEvent wasHandled: true.
-			^ self ].
-
-	translationMode isActive ifTrue: [
-			translationMode updateAt: anEvent position.
 			anEvent wasHandled: true.
 			^ self ].
 
