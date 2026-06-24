@@ -72,7 +72,8 @@ MyCADTranslationMode >> cancel [
 		startNodePosition ifNotNil: [ selectedRenderedShape node position: startNodePosition ] ].
 
 	self reset.
-	presenter refreshScene
+	presenter refreshScene.
+	presenter transformModeChanged: #none
 ]
 
 { #category : 'activation' }
@@ -91,7 +92,8 @@ MyCADTranslationMode >> confirm [
 			presenter applySelectedVisualTo: selectedRenderedShape node ].
 
 	self reset.
-	presenter refreshScene
+	presenter refreshScene.
+	presenter transformModeChanged: #none
 ]
 
 { #category : 'geometry' }
@@ -181,6 +183,16 @@ MyCADTranslationMode >> initialize [
 MyCADTranslationMode >> isActive [
 
 	^ active
+]
+
+{ #category : 'geometry' }
+MyCADTranslationMode >> previewTranslation: aVector [
+	"Moves the selected rendered node to the absolute preview translation measured from the activation point."
+
+	self isActive ifFalse: [ ^ self ].
+	presenter selectedRenderedShape ifNotNil: [ :selectedRenderedShape |
+		startNodePosition ifNotNil: [ selectedRenderedShape node position: startNodePosition + aVector ] ].
+	presenter refreshScene
 ]
 
 { #category : 'initialization' }

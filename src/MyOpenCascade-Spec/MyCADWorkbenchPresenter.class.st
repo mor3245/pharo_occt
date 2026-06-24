@@ -5,6 +5,7 @@ Class {
 		'mainMenuBar',
 		'viewportPresenter',
 		'geometryTree',
+		'transformPanel',
 		'updatingGeometryTree'
 	],
 	#category : 'MyOpenCascade-Spec',
@@ -19,7 +20,11 @@ MyCADWorkbenchPresenter class >> defaultLayout [
 		  add: (SpPanedLayout newHorizontal
 				   positionOfSlider: 1 / 5;
 				   add: #geometryTree;
-				   add: #viewportPresenter;
+				   add: (SpPanedLayout newHorizontal
+						    positionOfSlider: 3 / 4;
+						    add: #viewportPresenter;
+						    add: #transformPanel;
+						    yourself);
 				   yourself);
 		  yourself
 ]
@@ -161,6 +166,7 @@ MyCADWorkbenchPresenter >> initializePresenters [
 
 	updatingGeometryTree := false.
 	viewportPresenter := self instantiate: MyCADViewportPresenter.
+	transformPanel := self instantiate: MyCADTransformPanelPresenter.
 	mainMenuBar := self buildMainMenuBar.
 	geometryTree := self newTreeTable.
 	geometryTree
@@ -172,7 +178,13 @@ MyCADWorkbenchPresenter >> initializePresenters [
 
 	viewportPresenter
 		whenGeometryChangedDo: [ self updateGeometryTree ];
-		whenSelectionChangedDo: [ self updateGeometryTreeSelection ].
+		whenSelectionChangedDo: [ self updateGeometryTreeSelection ];
+		whenTransformModeChangedDo: [ :mode | self transformModeChanged: mode ].
+
+	transformPanel
+		whenPreviewChangedDo: [ :translation | viewportPresenter previewTranslation: translation ];
+		whenAcceptDo: [ viewportPresenter confirmTranslationMode ];
+		whenCancelDo: [ viewportPresenter cancelTranslationMode ].
 
 	self updateGeometryTree
 ]
@@ -185,6 +197,14 @@ MyCADWorkbenchPresenter >> initializeWindow: aWindowPresenter [
 		title: 'MyCAD';
 		initialExtent: 1024 @ 768;
 		whenOpenedDo: [ viewportPresenter setupContextMenu ]
+]
+
+{ #category : 'updating' }
+MyCADWorkbenchPresenter >> transformModeChanged: mode [
+
+	mode = #translation
+		ifTrue: [ transformPanel activateForTranslation ]
+		ifFalse: [ transformPanel deactivate ]
 ]
 
 { #category : 'updating' }

@@ -15,7 +15,8 @@ Class {
 		'rotationMode',
 		'renderedShapes',
 		'geometryChangedAction',
-		'selectionChangedAction'
+		'selectionChangedAction',
+		'transformModeChangedAction'
 	],
 	#category : 'MyOpenCascade-Spec',
 	#package : 'MyOpenCascade-Spec'
@@ -34,7 +35,8 @@ MyCADViewportPresenter >> activateTranslationMode [
 	"Starts interactive translation for the selected rendered node."
 
 	rotationMode isActive ifTrue: [ rotationMode confirm ].
-	translationMode activateFor: self
+	translationMode activateFor: self.
+	translationMode isActive ifTrue: [ self transformModeChanged: #translation ]
 ]
 
 { #category : 'actions - creation' }
@@ -529,6 +531,7 @@ MyCADViewportPresenter >> initializePresenters [
 	renderedShapes := OrderedCollection new.
 	geometryChangedAction := [ ].
 	selectionChangedAction := [ ].
+	transformModeChangedAction := [ :mode |  ].
 	selection := MyCADSelectionController on: self.
 	translationMode := MyCADTranslationMode new.
 	rotationMode := MyCADRotationMode new.
@@ -620,6 +623,13 @@ MyCADViewportPresenter >> openWithContextMenu [
 
 	self open.
 	self withWindowDo: [ :window | self setupContextMenu ]
+]
+
+{ #category : 'transform modes - translation' }
+MyCADViewportPresenter >> previewTranslation: aVector [
+	"Previews an absolute U/V/W translation from the active transform panel."
+
+	translationMode previewTranslation: aVector
 ]
 
 { #category : 'picking - rays' }
@@ -908,6 +918,12 @@ MyCADViewportPresenter >> transformCameraDirection: aVector [
 	^ cameraNode transform transformVector3: aVector
 ]
 
+{ #category : 'announcing' }
+MyCADViewportPresenter >> transformModeChanged: mode [
+
+	transformModeChangedAction value: mode
+]
+
 { #category : 'camera - actions' }
 MyCADViewportPresenter >> useSelectedAsPivot [
 
@@ -933,6 +949,12 @@ MyCADViewportPresenter >> whenGeometryChangedDo: aBlock [
 MyCADViewportPresenter >> whenSelectionChangedDo: aBlock [
 
 	selectionChangedAction := aBlock
+]
+
+{ #category : 'announcing' }
+MyCADViewportPresenter >> whenTransformModeChangedDo: aBlock [
+
+	transformModeChangedAction := aBlock
 ]
 
 { #category : 'accessing - widgets' }
