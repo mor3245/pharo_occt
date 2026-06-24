@@ -308,7 +308,7 @@ MyCADWorkbenchPresenter >> updatePropertyPanel [
 	position := cadObject displayPosition.
 	dimensions := cadObject editableDimensions.
 	propertyPanel
-		showRenderedShape: cadObject
+		showCADObject: cadObject
 		placementMillimeters: (Vector3
 				 x: (self modelUnitsToMillimeters: position x)
 				 y: (self modelUnitsToMillimeters: position y)

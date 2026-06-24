@@ -14,7 +14,7 @@ Class {
 		'verticesValue',
 		'dimensionsChangedAction',
 		'updating',
-		'selectedRenderedShape'
+		'selectedCADObject'
 	],
 	#category : 'MyOpenCascade-Spec',
 	#package : 'MyOpenCascade-Spec'
@@ -38,7 +38,7 @@ MyCADPropertyPanelPresenter class >> defaultLayout [
 		  add: #lengthInput atPoint: 2 @ 6;
 		  add: 'Box Width (mm)' atPoint: 1 @ 7;
 		  add: #widthInput atPoint: 2 @ 7;
-		  add: 'Box Height (mm)' at: 1 @ 8;
+		  add: 'Box Height (mm)' atPoint: 1 @ 8;
 		  add: #heightInput at: 2 @ 8;
 		  add: 'Triangles' at: 1 @ 9;
 		  add: #trianglesValue at: 2 @ 9;
@@ -50,7 +50,7 @@ MyCADPropertyPanelPresenter class >> defaultLayout [
 { #category : 'updating' }
 MyCADPropertyPanelPresenter >> clear [
 
-	selectedRenderedShape := nil.
+	selectedCADObject := nil.
 	updating := true.
 	[
 		nameValue label: ''.
@@ -68,8 +68,8 @@ MyCADPropertyPanelPresenter >> clear [
 { #category : 'actions' }
 MyCADPropertyPanelPresenter >> dimensionsChanged [
 
-	(updating or: [ selectedRenderedShape isNil ]) ifTrue: [ ^ self ].
-	selectedRenderedShape editableDimensionLabels isEmpty ifTrue: [ ^ self ].
+	(updating or: [ selectedCADObject isNil ]) ifTrue: [ ^ self ].
+	selectedCADObject editableDimensionLabels isEmpty ifTrue: [ ^ self ].
 
 	dimensionsChangedAction value: lengthInput number value: widthInput number value: heightInput number
 ]
@@ -108,23 +108,21 @@ MyCADPropertyPanelPresenter >> initializePresenters [
 ]
 
 { #category : 'updating' }
-MyCADPropertyPanelPresenter >> showRenderedShape: aRenderedShape placementMillimeters: placementVector dimensionsMillimeters: dimensionsVector [
+MyCADPropertyPanelPresenter >> showCADObject: aCADObject placementMillimeters: placementVector dimensionsMillimeters: dimensionsVector [
 
-	aRenderedShape isAlive ifFalse: [
+	aCADObject isAlive ifFalse: [
 			self clear.
 			^ self ].
 
-	selectedRenderedShape := aRenderedShape.
+	selectedCADObject := aCADObject.
 	updating := true.
 	[
-		nameValue label: aRenderedShape name.
-		typeValue label: ((aRenderedShape respondsTo: #typeName)
-				 ifTrue: [ aRenderedShape typeName ]
-				 ifFalse: [ aRenderedShape shape class name ]).
+		nameValue label: aCADObject name.
+		typeValue label: aCADObject typeName.
 		uValue label: placementVector x asString.
 		vValue label: placementVector y asString.
 		wValue label: placementVector z asString.
-		aRenderedShape editableDimensionLabels isEmpty
+		aCADObject editableDimensionLabels isEmpty
 			ifFalse: [
 					lengthInput number: dimensionsVector x.
 					widthInput number: dimensionsVector y.
@@ -134,8 +132,8 @@ MyCADPropertyPanelPresenter >> showRenderedShape: aRenderedShape placementMillim
 					widthInput number: 0.0.
 					heightInput number: 0.0 ]. "Old static layout still labels these as Box dimensions. The selected CAD object now controls
 		whether the fields are meaningful; the next property-panel refactor can make labels dynamic."
-		trianglesValue label: aRenderedShape shape triangleCount asString.
-		verticesValue label: aRenderedShape shape vertexCount asString ] ensure: [ updating := false ]
+		trianglesValue label: aCADObject shape triangleCount asString.
+		verticesValue label: aCADObject shape vertexCount asString ] ensure: [ updating := false ]
 ]
 
 { #category : 'callbacks' }
