@@ -69,6 +69,12 @@ MyCADObject >> renderedShape: aRenderedShape [
 	renderedShape := aRenderedShape
 ]
 
+{ #category : 'editing' }
+MyCADObject >> resizeToDimensions: aVector [
+
+	^ MyRenderNodeChange unchanged
+]
+
 { #category : 'accessing' }
 MyCADObject >> shape [
 

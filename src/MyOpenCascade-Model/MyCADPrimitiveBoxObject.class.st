@@ -17,6 +17,15 @@ MyCADPrimitiveBoxObject >> editableDimensions [
 	^ self renderedShape boxDimensions
 ]
 
+{ #category : 'editing' }
+MyCADPrimitiveBoxObject >> resizeToDimensions: aVector [
+
+	^ self renderedShape
+		  resizeBoxDx: aVector x
+		  dy: aVector y
+		  dz: aVector z
+]
+
 { #category : 'metadata' }
 MyCADPrimitiveBoxObject >> typeName [
 

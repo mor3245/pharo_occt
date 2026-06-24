@@ -205,7 +205,7 @@ MyCADViewportPresenter >> cadDocument [
 { #category : 'geometry - accessing' }
 MyCADViewportPresenter >> cadObjectForRenderedShape: aRenderedShape [
 
-		^ self cadDocument objectForRenderedShape: aRenderedShape
+	^ self cadDocument objectForRenderedShape: aRenderedShape
 ]
 
 { #category : 'geometry - accessing' }
@@ -835,16 +835,22 @@ MyCADViewportPresenter >> replaceRenderedShape: oldRenderedShape withAll: newRen
 { #category : 'actions - editing' }
 MyCADViewportPresenter >> resizeSelectedBoxDx: dx dy: dy dz: dz [
 
-	| renderedShape change |
-	renderedShape := self selectedRenderedShape.
-	renderedShape ifNil: [ ^ self ].
-	renderedShape isAlive ifFalse: [ ^ self ].
-	renderedShape isBox ifFalse: [ ^ self ].
+	self resizeSelectedCADObjectToDimensions: (Vector3 x: dx y: dy z: dz)
+]
+
+{ #category : 'actions - editing' }
+MyCADViewportPresenter >> resizeSelectedCADObjectToDimensions: dimensionsVector [
+
+	| cadObject change |
+	cadObject := self selectedCADObject.
+	cadObject ifNil: [ ^ self ].
+	cadObject isAlive ifFalse: [ ^ self ].
+	cadObject editableDimensionLabels isEmpty ifTrue: [ ^ self ].
 
 	self restoreSelectedVisual.
-	change := renderedShape resizeBoxDx: dx dy: dy dz: dz.
+	change := cadObject resizeToDimensions: dimensionsVector.
 	self applyRenderNodeChange: change.
-	self applySelectedVisualTo: renderedShape node.
+	self applySelectedVisualTo: cadObject renderedShape node.
 	self visualChanged
 ]
 

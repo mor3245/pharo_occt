@@ -43,7 +43,7 @@ MyCADPropertyPanelPresenter class >> defaultLayout [
 		  add: 'Triangles' atPoint: 1 @ 9;
 		  add: #trianglesValue atPoint: 2 @ 9;
 		  add: 'Vertices' atPoint: 1 @ 10;
-		  add: #verticesValue at: 2 @ 10;
+		  add: #verticesValue atPoint: 2 @ 10;
 		  yourself
 ]
 
