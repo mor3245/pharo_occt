@@ -39,7 +39,7 @@ MyCADPropertyPanelPresenter class >> defaultLayout [
 		  add: 'Box Width (mm)' atPoint: 1 @ 7;
 		  add: #widthInput atPoint: 2 @ 7;
 		  add: 'Box Height (mm)' atPoint: 1 @ 8;
-		  add: #heightInput at: 2 @ 8;
+		  add: #heightInput atPoint: 2 @ 8;
 		  add: 'Triangles' at: 1 @ 9;
 		  add: #trianglesValue at: 2 @ 9;
 		  add: 'Vertices' at: 1 @ 10;

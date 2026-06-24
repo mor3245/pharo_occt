@@ -36,6 +36,15 @@ MyCADDocument >> initialize [
 ]
 
 { #category : 'accessing' }
+MyCADDocument >> objectForRenderedShape: aRenderedShape [
+
+	aRenderedShape ifNil: [ ^ nil ].
+	^ objects
+		  detect: [ :each | each renderedShape == aRenderedShape ]
+		  ifNone: [ nil ]
+]
+
+{ #category : 'accessing' }
 MyCADDocument >> objects [
 
 	^ objects asArray

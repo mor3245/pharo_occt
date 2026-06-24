@@ -205,12 +205,7 @@ MyCADViewportPresenter >> cadDocument [
 { #category : 'geometry - accessing' }
 MyCADViewportPresenter >> cadObjectForRenderedShape: aRenderedShape [
 
-	aRenderedShape ifNil: [ ^ nil ].
-	^ self cadDocument objects
-		  detect: [ :each |
-				  (each respondsTo: #renderedShape)
-					  and: [ each renderedShape == aRenderedShape ] ]
-		  ifNone: [ nil ]
+		^ self cadDocument objectForRenderedShape: aRenderedShape
 ]
 
 { #category : 'geometry - accessing' }
