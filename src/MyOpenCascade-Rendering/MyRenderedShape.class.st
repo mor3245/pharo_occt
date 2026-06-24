@@ -11,9 +11,8 @@ Class {
 		'boxDimensions',
 		'renderStyle'
 	],
-	#category : 'MyOpenCascade-Woden',
-	#package : 'MyOpenCascade',
-	#tag : 'Woden'
+	#category : 'MyOpenCascade-Rendering',
+	#package : 'MyOpenCascade-Rendering'
 }
 
 { #category : 'instance creation' }

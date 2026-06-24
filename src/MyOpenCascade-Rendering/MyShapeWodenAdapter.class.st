@@ -4,9 +4,8 @@ Class {
 	#instVars : [
 		'renderStyle'
 	],
-	#category : 'MyOpenCascade-Woden',
-	#package : 'MyOpenCascade',
-	#tag : 'Woden'
+	#category : 'MyOpenCascade-Rendering',
+	#package : 'MyOpenCascade-Rendering'
 }
 
 { #category : 'instance creation' }
@@ -46,7 +45,7 @@ MyShapeWodenAdapter >> asWDEdgeMesh: aShape deflection: edgeDeflection [
 	edgeSegmentCount <= 0 ifTrue: [ ^ nil ].
 
 	builder := WDMeshBuilder new.
-	builder currentMaterial: self edgeMaterial.
+	builder currentMaterial: self renderStyle edgeMaterial.
 	builder beginLines.
 
 	0 to: (edgeVertices size // 3) - 1 do: [ :index |
@@ -80,26 +79,6 @@ MyShapeWodenAdapter >> asWDMesh: aShape [
 	builder addTriangleI0: (tris at: i * 3 + 1) i1: (tris at: i * 3 + 2) i2: (tris at: i * 3 + 3) ].
 
 	^ builder mesh
-]
-
-{ #category : 'rendering' }
-MyShapeWodenAdapter >> defaultCADMaterial [
-	"Answers a neutral, non-metallic CAD material with enough roughness to show form without glossy glare."
-
-	^ WDMetallicRoughnessMaterial new
-		  baseColorFactor: (Color gray: 0.62);
-		  metallicFactor: 0.0;
-		  roughnessFactor: 0.55;
-		  yourself
-]
-
-{ #category : 'rendering' }
-MyShapeWodenAdapter >> edgeMaterial [
-	"Answers a dark unlit material for topological edge overlays."
-
-	^ WDUnlitMaterial new
-		  colorFactor: (Color gray: 0.06);
-		  yourself
 ]
 
 { #category : 'accessing' }
