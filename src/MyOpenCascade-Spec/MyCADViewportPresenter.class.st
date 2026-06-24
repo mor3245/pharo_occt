@@ -833,12 +833,6 @@ MyCADViewportPresenter >> replaceRenderedShape: oldRenderedShape withAll: newRen
 ]
 
 { #category : 'actions - editing' }
-MyCADViewportPresenter >> resizeSelectedBoxDx: dx dy: dy dz: dz [
-
-	self resizeSelectedCADObjectToDimensions: (Vector3 x: dx y: dy z: dz)
-]
-
-{ #category : 'actions - editing' }
 MyCADViewportPresenter >> resizeSelectedCADObjectToDimensions: dimensionsVector [
 
 	| cadObject change |
