@@ -35,6 +35,17 @@ MyCADDocument >> initialize [
 	objects := OrderedCollection new
 ]
 
+{ #category : 'naming' }
+MyCADDocument >> nextAvailableNameFor: baseName [
+
+	| index candidate |
+	index := 1.
+	[
+		candidate := baseName , ' ' , index asString.
+		objects noneSatisfy: [ :each | each name = candidate ] ] whileFalse: [ index := index + 1 ].
+	^ candidate
+]
+
 { #category : 'accessing' }
 MyCADDocument >> objectForRenderedShape: aRenderedShape [
 

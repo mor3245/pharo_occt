@@ -617,12 +617,7 @@ MyCADViewportPresenter >> keyStringFromEvent: anEvent [
 MyCADViewportPresenter >> nextAvailableNameFor: baseName [
 	"Answers the first unused numbered display name for this scene."
 
-	| index candidate |
-	index := 1.
-	[
-		candidate := baseName , ' ' , index asString.
-		renderedShapes noneSatisfy: [ :renderedShape | renderedShape name = candidate ] ] whileFalse: [ index := index + 1 ].
-	^ candidate
+	^ self cadDocument nextAvailableNameFor: baseName
 ]
 
 { #category : 'events - keyboard' }
