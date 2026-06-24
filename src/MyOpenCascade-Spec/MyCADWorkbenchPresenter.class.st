@@ -279,7 +279,7 @@ MyCADWorkbenchPresenter >> updateGeometryTree [
 
 	updatingGeometryTree := true.
 	[
-		geometryTree roots: (viewportPresenter cadObjects select: [ :each | each isAlive ]).
+		geometryTree roots: (viewportPresenter visibleCADObjects).
 		self updateGeometryTreeSelection ] ensure: [ updatingGeometryTree := false ]
 ]
 

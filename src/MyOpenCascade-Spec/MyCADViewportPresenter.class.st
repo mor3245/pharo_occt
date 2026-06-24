@@ -1012,6 +1012,12 @@ MyCADViewportPresenter >> vertexAtZeroBasedIndex: vertexIndex in: vertices [
 	^ Vector3 x: (vertices at: baseIndex + 1) y: (vertices at: baseIndex + 2) z: (vertices at: baseIndex + 3)
 ]
 
+{ #category : 'geometry - accessing' }
+MyCADViewportPresenter >> visibleCADObjects [
+
+	^ self cadDocument visibleObjects
+]
+
 { #category : 'announcing' }
 MyCADViewportPresenter >> visualChanged [
 	"Announces that rendered node state changed without necessarily changing the scene's shape list."

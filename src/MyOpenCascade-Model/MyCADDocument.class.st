@@ -71,3 +71,9 @@ MyCADDocument >> replaceObject: oldObject withAll: newObjects [
 	objects addAll: newObjects.
 	oldIndex + 1 to: oldObjects size do: [ :index | objects addLast: (oldObjects at: index) ]
 ]
+
+{ #category : 'accessing' }
+MyCADDocument >> visibleObjects [
+
+	^ objects select: [ :each | each isAlive ]
+]
