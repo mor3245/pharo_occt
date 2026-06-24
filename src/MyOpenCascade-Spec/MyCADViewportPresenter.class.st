@@ -46,17 +46,18 @@ MyCADViewportPresenter >> addBox [
 
 	| renderedShape |
 	renderedShape := MyRenderedShape
-		shape: (MyBoxMaker
-			makeBoxDx: 1
-			dy: 1
-			dz: 1
-			named: (self nextAvailableNameFor: 'Box'))
-		deflection: 0.01.
+		                 shape: (MyBoxMaker
+				                  makeBoxDx: 1
+				                  dy: 1
+				                  dz: 1
+				                  named: (self nextAvailableNameFor: 'Box'))
+		                 deflection: 0.01.
+	renderedShape beBoxDx: 1 dy: 1 dz: 1.
 
 	scene add: renderedShape node.
 	renderedShapes addLast: renderedShape.
 
-	self geometryChanged 
+	self geometryChanged
 ]
 
 { #category : 'actions - creation' }
@@ -787,6 +788,21 @@ MyCADViewportPresenter >> replaceRenderedShape: oldRenderedShape withAll: newRen
 	newRenderedShapes do: [ :newRenderedShape |
 			scene add: newRenderedShape node.
 			renderedShapes addLast: newRenderedShape ]
+]
+
+{ #category : 'actions - editing' }
+MyCADViewportPresenter >> resizeSelectedBoxDx: dx dy: dy dz: dz [
+
+	| renderedShape change |
+	renderedShape := self selectedRenderedShape.
+	renderedShape ifNil: [ ^ self ].
+	renderedShape isBox ifFalse: [ ^ self ].
+
+	self restoreSelectedVisual.
+	change := renderedShape resizeBoxDx: dx dy: dy dz: dz.
+	self applyRenderNodeChange: change.
+	self applySelectedVisualTo: renderedShape node.
+	self visualChanged
 ]
 
 { #category : 'selection - highlighting' }

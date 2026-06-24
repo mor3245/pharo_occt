@@ -6,7 +6,9 @@ Class {
 		'node',
 		'deflection',
 		'adapter',
-		'placementPosition'
+		'placementPosition',
+		'primitiveKind',
+		'boxDimensions'
 	],
 	#category : 'MyOpenCascade-Woden',
 	#package : 'MyOpenCascade',
@@ -66,6 +68,19 @@ MyRenderedShape >> bakeTranslation [
 	^ MyRenderNodeChange oldNode: oldNode newNode: node
 ]
 
+{ #category : 'metadata' }
+MyRenderedShape >> beBoxDx: dx dy: dy dz: dz [
+
+	primitiveKind := #box.
+	boxDimensions := Vector3 x: dx y: dy z: dz
+]
+
+{ #category : 'metadata' }
+MyRenderedShape >> boxDimensions [
+
+	^ boxDimensions ifNil: [ Vector3 x: 0 y: 0 z: 0 ]
+]
+
 { #category : 'boolean operations' }
 MyRenderedShape >> cutWith: anotherRenderedShape [
 
@@ -108,6 +123,12 @@ MyRenderedShape >> free [
 			shape free.
 			shape := nil ].
 	node := nil
+]
+
+{ #category : 'testing' }
+MyRenderedShape >> isBox [
+
+	^ primitiveKind = #box
 ]
 
 { #category : 'accessing' }
@@ -165,6 +186,30 @@ MyRenderedShape >> rebuildNode [
 MyRenderedShape >> renameTo: aString [
 
 	shape renameTo: aString
+]
+
+{ #category : 'editing' }
+MyRenderedShape >> resizeBoxDx: dx dy: dy dz: dz [
+	"Rebuilds this rendered box with new dimensions, preserving display name and accumulated placement."
+
+	| oldNode oldShape newShape |
+	self isBox ifFalse: [ ^ MyRenderNodeChange unchanged ].
+	node ifNil: [ ^ MyRenderNodeChange unchanged ].
+
+	oldNode := node.
+	oldShape := shape.
+	newShape := MyBoxMaker
+		            makeBoxDx: dx
+		            dy: dy
+		            dz: dz
+		            named: oldShape name.
+	self placementPosition = (Vector3 x: 0 y: 0 z: 0) ifFalse: [ newShape translateBy: self placementPosition ].
+	shape := newShape.
+	boxDimensions := Vector3 x: dx y: dy z: dz.
+	self rebuildNode.
+
+	oldShape free.
+	^ MyRenderNodeChange oldNode: oldNode newNode: node
 ]
 
 { #category : 'accessing' }
