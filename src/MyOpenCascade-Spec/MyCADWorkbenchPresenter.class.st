@@ -5,8 +5,8 @@ Class {
 		'mainMenuBar',
 		'viewportPresenter',
 		'geometryTree',
-		'transformPanel',
-		'updatingGeometryTree'
+		'updatingGeometryTree',
+		'taskPanel'
 	],
 	#category : 'MyOpenCascade-Spec',
 	#package : 'MyOpenCascade-Spec'
@@ -14,6 +14,12 @@ Class {
 
 { #category : 'layout' }
 MyCADWorkbenchPresenter class >> defaultLayout [
+
+	^ self layoutWithoutTaskPanel
+]
+
+{ #category : 'layout' }
+MyCADWorkbenchPresenter class >> layoutWithTaskPanel [
 
 	^ SpBoxLayout newVertical
 		  add: #mainMenuBar withConstraints: [ :constraints | constraints height: self toolbarHeight ];
@@ -23,8 +29,21 @@ MyCADWorkbenchPresenter class >> defaultLayout [
 				   add: (SpPanedLayout newHorizontal
 						    positionOfSlider: 3 / 4;
 						    add: #viewportPresenter;
-						    add: #transformPanel;
+						    add: #taskPanel;
 						    yourself);
+				   yourself);
+		  yourself
+]
+
+{ #category : 'layout' }
+MyCADWorkbenchPresenter class >> layoutWithoutTaskPanel [
+
+	^ SpBoxLayout newVertical
+		  add: #mainMenuBar withConstraints: [ :constraints | constraints height: self toolbarHeight ];
+		  add: (SpPanedLayout newHorizontal
+				   positionOfSlider: 1 / 5;
+				   add: #geometryTree;
+				   add: #viewportPresenter;
 				   yourself);
 		  yourself
 ]
@@ -166,7 +185,7 @@ MyCADWorkbenchPresenter >> initializePresenters [
 
 	updatingGeometryTree := false.
 	viewportPresenter := self instantiate: MyCADViewportPresenter.
-	transformPanel := self instantiate: MyCADTransformPanelPresenter.
+	taskPanel := self instantiate: MyCADTransformPanelPresenter.
 	mainMenuBar := self buildMainMenuBar.
 	geometryTree := self newTreeTable.
 	geometryTree
@@ -181,7 +200,7 @@ MyCADWorkbenchPresenter >> initializePresenters [
 		whenSelectionChangedDo: [ self updateGeometryTreeSelection ];
 		whenTransformModeChangedDo: [ :mode | self transformModeChanged: mode ].
 
-	transformPanel
+	taskPanel
 		whenPreviewChangedDo: [ :translation | viewportPresenter previewTranslation: translation ];
 		whenAcceptDo: [ viewportPresenter confirmTranslationMode ];
 		whenCancelDo: [ viewportPresenter cancelTranslationMode ].
@@ -203,8 +222,13 @@ MyCADWorkbenchPresenter >> initializeWindow: aWindowPresenter [
 MyCADWorkbenchPresenter >> transformModeChanged: mode [
 
 	mode = #translation
-		ifTrue: [ transformPanel activateForTranslation ]
-		ifFalse: [ transformPanel deactivate ]
+		ifTrue: [
+				self layout: self class layoutWithTaskPanel.
+				taskPanel activateForTranslation ]
+		ifFalse: [
+				taskPanel deactivate.
+				self layout: self class layoutWithoutTaskPanel ].
+	viewportPresenter setupContextMenu
 ]
 
 { #category : 'updating' }
