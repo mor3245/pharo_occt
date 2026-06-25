@@ -30,7 +30,8 @@ MyCADViewportPresenter >> activateRotationMode [
 	"Starts interactive rotation for the selected rendered node."
 
 	translationMode isActive ifTrue: [ translationMode confirm ].
-	rotationMode activateFor: self
+	rotationMode activateFor: self.
+	rotationMode isActive ifTrue: [ self transformModeChanged: #rotation ]
 ]
 
 { #category : 'transform modes - translation' }
@@ -232,6 +233,13 @@ MyCADViewportPresenter >> cameraForwardDirection [
 	^ (self transformCameraDirection: (Vector3 x: 0 y: 0 z: -1)) normalized
 ]
 
+{ #category : 'transform modes' }
+MyCADViewportPresenter >> cancelActiveTransformMode [
+
+	rotationMode isActive ifTrue: [ ^ self cancelRotationMode ].
+	translationMode isActive ifTrue: [ ^ self cancelTranslationMode ]
+]
+
 { #category : 'transform modes - rotation' }
 MyCADViewportPresenter >> cancelRotationMode [
 	"Restores the selected node transform to its state before rotation mode started."
@@ -264,6 +272,13 @@ MyCADViewportPresenter >> clearSelection [
 	"Restores the previously selected node's visuals and clears the selection state."
 
 	selection clear
+]
+
+{ #category : 'transform modes' }
+MyCADViewportPresenter >> confirmActiveTransformMode [
+
+	rotationMode isActive ifTrue: [ ^ self confirmRotationMode ].
+	translationMode isActive ifTrue: [ ^ self confirmTranslationMode ]
 ]
 
 { #category : 'transform modes - rotation' }
@@ -513,7 +528,6 @@ MyCADViewportPresenter >> handleMouseDown: anEvent [
 	rotationMode isActive ifTrue: [
 			anEvent redButtonPressed ifTrue: [
 					anEvent wasHandled: true.
-					self confirmRotationMode.
 					^ self ] ].
 
 	translationMode isActive ifTrue: [
@@ -655,6 +669,22 @@ MyCADViewportPresenter >> openWithContextMenu [
 
 	self open.
 	self withWindowDo: [ :window | self setupContextMenu ]
+]
+
+{ #category : 'transform modes' }
+MyCADViewportPresenter >> previewActiveTransform: aVector [
+	"Previews panel values for whichever transform mode owns the active edit."
+
+	rotationMode isActive ifTrue: [ ^ self previewRotationDegrees: aVector ].
+	translationMode isActive ifTrue: [ ^ self previewTranslation: aVector ]
+]
+
+{ #category : 'transform modes - translation' }
+MyCADViewportPresenter >> previewRotationDegrees: aVector [
+	"Previews absolute X/Y/Z rotation degrees from the active transform panel."
+
+	rotationMode previewDegrees: aVector.
+	self visualChanged
 ]
 
 { #category : 'transform modes - translation' }
@@ -855,13 +885,6 @@ MyCADViewportPresenter >> restoreSelectedVisual [
 	"Puts the originally saved renderables back on the selected node."
 
 	selection restoreVisual
-]
-
-{ #category : 'transform modes - rotation' }
-MyCADViewportPresenter >> rotationDegreesPerPixel [
-	"Degrees rotated per horizontal mouse pixel."
-
-	^ 0.5
 ]
 
 { #category : 'actions - editing' }

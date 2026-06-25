@@ -217,12 +217,12 @@ MyCADWorkbenchPresenter >> initializePresenters [
 		whenVisualChangedDo: [ self updatePropertyPanel ].
 
 	taskPanel
-		whenPreviewChangedDo: [ :translation | viewportPresenter previewTranslation: translation ];
+		whenPreviewChangedDo: [ :transformValues | viewportPresenter previewActiveTransform: transformValues ];
 		whenAcceptDo: [
-				viewportPresenter confirmTranslationMode.
+				viewportPresenter confirmActiveTransformMode.
 				self updatePropertyPanel ];
 		whenCancelDo: [
-				viewportPresenter cancelTranslationMode.
+				viewportPresenter cancelActiveTransformMode.
 				self updatePropertyPanel ].
 
 	self updateGeometryTree.
@@ -264,13 +264,15 @@ MyCADWorkbenchPresenter >> resizeSelectedDimensions: dimensionsMillimeters [
 { #category : 'updating' }
 MyCADWorkbenchPresenter >> transformModeChanged: mode [
 
-	mode = #translation
-		ifTrue: [
-				self layout: self class layoutWithTaskPanel.
-				taskPanel activateForTranslation ]
-		ifFalse: [
-				taskPanel deactivate.
-				self layout: self class layoutWithoutTaskPanel ].
+	(#( translation rotation ) includes: mode) ifFalse: [
+			taskPanel deactivate.
+			self layout: self class layoutWithoutTaskPanel.
+			viewportPresenter setupContextMenu.
+			^ self ].
+
+	self layout: self class layoutWithTaskPanel.
+	mode = #translation ifTrue: [ taskPanel activateForTranslation ].
+	mode = #rotation ifTrue: [ taskPanel activateForRotation ].
 	viewportPresenter setupContextMenu
 ]
 

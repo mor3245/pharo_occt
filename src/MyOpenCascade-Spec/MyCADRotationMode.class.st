@@ -4,7 +4,6 @@ Class {
 	#instVars : [
 		'presenter',
 		'active',
-		'startMousePosition',
 		'startNodeTransform',
 		'axisLock',
 		'typedDegreesString',
@@ -29,7 +28,6 @@ MyCADRotationMode >> activateFor: aPresenter [
 	presenter applyRenderNodeChange: change.
 
 	active := true.
-	startMousePosition := nil.
 	startNodeTransform := selectedRenderedShape node transform copy.
 	startCenter := presenter selectedNodeRotationCenter.
 	axisLock := #z.
@@ -92,11 +90,12 @@ MyCADRotationMode >> cancel [
 	self isActive ifFalse: [ ^ self ].
 
 	presenter selectedRenderedShape ifNotNil: [ :selectedRenderedShape |
-			(selectedRenderedShape isAlive and: [ selectedRenderedShape isAlive and: [ currentDegrees ~= 0 ] ]) ifTrue: [
+			(selectedRenderedShape isAlive and: [ self hasCurrentRotation ]) ifTrue: [
 				selectedRenderedShape node transform: startNodeTransform copy ] ].
 
 	self reset.
-	presenter refreshScene
+	presenter refreshScene.
+	presenter transformModeChanged: #none
 ]
 
 { #category : 'activation' }
@@ -107,16 +106,16 @@ MyCADRotationMode >> confirm [
 	self isActive ifFalse: [ ^ self ].
 
 	selectedRenderedShape := presenter selectedRenderedShape.
-	(selectedRenderedShape notNil and: [ currentDegrees ~= 0 ]) ifTrue: [
+	(selectedRenderedShape notNil and: [ self hasCurrentRotation ]) ifTrue: [
 			presenter restoreSelectedVisual.
 
 			change := selectedRenderedShape bakeRotationDegrees: currentDegrees axis: axisLock center: startCenter.
-
 			presenter applyRenderNodeChange: change.
 			presenter applySelectedVisualTo: selectedRenderedShape node ].
 
 	self reset.
-	presenter refreshScene
+	presenter refreshScene.
+	presenter transformModeChanged: #none
 ]
 
 { #category : 'keyboard' }
@@ -182,6 +181,12 @@ MyCADRotationMode >> handleNumericKey: key [
 	^ true
 ]
 
+{ #category : 'testing' }
+MyCADRotationMode >> hasCurrentRotation [
+
+	^ currentDegrees ~= 0
+]
+
 { #category : 'initialization' }
 MyCADRotationMode >> initialize [
 
@@ -206,6 +211,24 @@ MyCADRotationMode >> isNumericKey: key [
 	key = '.' ifTrue: [ ^ (typedDegreesString includes: $.) not ].
 
 	^ false
+]
+
+{ #category : 'mouse' }
+MyCADRotationMode >> previewDegrees: degreesVector [
+	"Previews the single active X/Y/Z degree value from the transform panel."
+
+	typedDegreesString := ''.
+	degreesVector x ~= 0 ifTrue: [
+			axisLock := #x.
+			^ self applyDegrees: degreesVector x ].
+	degreesVector y ~= 0 ifTrue: [
+			axisLock := #y.
+			^ self applyDegrees: degreesVector y ].
+	degreesVector z ~= 0 ifTrue: [
+			axisLock := #z.
+			^ self applyDegrees: degreesVector z ].
+
+	self applyDegrees: 0
 ]
 
 { #category : 'keyboard' }
@@ -233,7 +256,6 @@ MyCADRotationMode >> reset [
 	"Clears transient rotation-mode state."
 
 	active := false.
-	startMousePosition := nil.
 	startNodeTransform := nil.
 	startCenter := nil.
 	axisLock := nil.
@@ -263,13 +285,6 @@ MyCADRotationMode >> rotateVector: aVector degrees: degrees axis: axisSymbol [
 	^ aVector
 ]
 
-{ #category : 'geometry' }
-MyCADRotationMode >> rotationDegreesPerPixel [
-	"Degrees rotated per horizontal mouse pixel."
-
-	^ 0.5
-]
-
 { #category : 'keyboard' }
 MyCADRotationMode >> setAxisLock: aSymbol [
 	"Sets the global rotation axis and reapplies the current angle."
@@ -280,17 +295,8 @@ MyCADRotationMode >> setAxisLock: aSymbol [
 
 { #category : 'mouse' }
 MyCADRotationMode >> updateAt: aPoint [
-	"Updates selected rendered-node rotation from mouse movement."
+	"Mouse-drag rotation is intentionally disabled.
+	Rotation is edited through the transform panel's X/Y/Z degree fields and committed with OK."
 
-	| delta degrees |
-	presenter selectedRenderedShape ifNil: [ ^ self ].
-	presenter selectedRenderedShape isAlive ifFalse: [ ^ self ].
-
-	startMousePosition ifNil: [ startMousePosition := aPoint ].
-	typedDegreesString isEmpty ifFalse: [ ^ self ].
-
-	delta := aPoint - startMousePosition.
-	degrees := delta x * self rotationDegreesPerPixel.
-
-	self applyDegrees: degrees
+	^ self
 ]

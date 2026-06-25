@@ -4,6 +4,9 @@ Class {
 	#instVars : [
 		'titleLabel',
 		'statusLabel',
+		'uLabel',
+		'vLabel',
+		'wLabel',
 		'uInput',
 		'vInput',
 		'wInput',
@@ -13,7 +16,9 @@ Class {
 		'acceptAction',
 		'cancelAction',
 		'updating',
-		'active'
+		'active',
+		'mode',
+		'activeRotationAxis'
 	],
 	#category : 'MyOpenCascade-Spec',
 	#package : 'MyOpenCascade-Spec'
@@ -26,11 +31,11 @@ MyCADTransformPanelPresenter class >> defaultLayout [
 		  add: #titleLabel withConstraints: [ :constraints | constraints height: 26 ];
 		  add: #statusLabel withConstraints: [ :constraints | constraints height: 44 ];
 		  add: (SpGridLayout new
-				   add: 'U (mm)' atPoint: 1 @ 1;
+				   add: #uLabel atPoint: 1 @ 1;
 				   add: #uInput atPoint: 2 @ 1;
-				   add: 'V (mm)' atPoint: 1 @ 2;
+				   add: #vLabel atPoint: 1 @ 2;
 				   add: #vInput atPoint: 2 @ 2;
-				   add: 'W (mm)' atPoint: 1 @ 3;
+				   add: #wLabel atPoint: 1 @ 3;
 				   add: #wInput atPoint: 2 @ 3;
 				   yourself);
 		  add: (SpBoxLayout newHorizontal
@@ -49,10 +54,28 @@ MyCADTransformPanelPresenter >> accept [
 ]
 
 { #category : 'activation' }
+MyCADTransformPanelPresenter >> activateForRotation [
+
+	active := true.
+	mode := #rotation.
+	statusLabel label: 'Rotation'.
+	uLabel label: 'X (deg)'.
+	vLabel label: 'Y (deg)'.
+	wLabel label: 'Z (deg)'.
+	self resetValues.
+	self previewChanged
+]
+
+{ #category : 'activation' }
 MyCADTransformPanelPresenter >> activateForTranslation [
 
 	active := true.
+	mode := #translation.
+	activeRotationAxis := #z.
 	statusLabel label: 'Translation'.
+	uLabel label: 'U (mm)'.
+	vLabel label: 'V (mm)'.
+	wLabel label: 'W (mm)'.
 	self resetValues.
 	self previewChanged
 ]
@@ -69,6 +92,8 @@ MyCADTransformPanelPresenter >> cancel [
 MyCADTransformPanelPresenter >> deactivate [
 
 	active := false.
+	mode := nil.
+	activeRotationAxis := nil.
 	statusLabel label: 'No active transform'
 ]
 
@@ -78,8 +103,10 @@ MyCADTransformPanelPresenter >> initializePresenters [
 	super initializePresenters.
 
 	active := false.
+	mode := nil.
+	activeRotationAxis := nil.
 	updating := false.
-	previewAction := [ :translation |  ].
+	previewAction := [ :transformValues |  ].
 	acceptAction := [ ].
 	cancelAction := [ ].
 
@@ -89,6 +116,15 @@ MyCADTransformPanelPresenter >> initializePresenters [
 	statusLabel := self newLabel
 		               label: 'No active transform';
 		               yourself.
+	uLabel := self newLabel
+		          label: 'U (mm)';
+		          yourself.
+	vLabel := self newLabel
+		          label: 'V (mm)';
+		          yourself.
+	wLabel := self newLabel
+		          label: 'W (mm)';
+		          yourself.
 
 	uInput := self newNumberInput
 		          beFloat;
@@ -100,9 +136,10 @@ MyCADTransformPanelPresenter >> initializePresenters [
 		          beFloat;
 		          yourself.
 
-	uInput whenNumberChangedDo: [ :newNumber | self previewChanged ].
-	vInput whenNumberChangedDo: [ :newNumber | self previewChanged ].
-	wInput whenNumberChangedDo: [ :newNumber | self previewChanged ].
+	uInput whenNumberChangedDo: [ :newNumber | self valueChangedForAxis: #x ].
+	vInput whenNumberChangedDo: [ :newNumber | self valueChangedForAxis: #y ].
+	wInput whenNumberChangedDo: [ :newNumber | self valueChangedForAxis: #z ].
+
 
 	okButton := self newButton
 		            label: 'OK';
@@ -128,7 +165,7 @@ MyCADTransformPanelPresenter >> modelUnitsPerMillimeter [
 MyCADTransformPanelPresenter >> previewChanged [
 
 	(active not or: [ updating ]) ifTrue: [ ^ self ].
-	previewAction value: self translationVector
+	previewAction value: self transformValues
 ]
 
 { #category : 'activation' }
@@ -142,12 +179,35 @@ MyCADTransformPanelPresenter >> resetValues [
 ]
 
 { #category : 'accessing' }
-MyCADTransformPanelPresenter >> translationVector [
+MyCADTransformPanelPresenter >> transformValues [
 
-	^ Vector3
-		  x: uInput number * self modelUnitsPerMillimeter
-		  y: vInput number * self modelUnitsPerMillimeter
-		  z: wInput number * self modelUnitsPerMillimeter
+	mode = #translation ifTrue: [
+			^ Vector3
+				  x: uInput number * self modelUnitsPerMillimeter
+				  y: vInput number * self modelUnitsPerMillimeter
+				  z: wInput number * self modelUnitsPerMillimeter ].
+
+	mode = #rotation ifTrue: [
+			activeRotationAxis = #x ifTrue: [ ^ Vector3 x: uInput number y: 0 z: 0 ].
+			activeRotationAxis = #y ifTrue: [ ^ Vector3 x: 0 y: vInput number z: 0 ].
+			activeRotationAxis = #z ifTrue: [ ^ Vector3 x: 0 y: 0 z: wInput number ] ].
+
+	^ Vector3 x: 0 y: 0 z: 0
+]
+
+{ #category : 'actions' }
+MyCADTransformPanelPresenter >> valueChangedForAxis: axisSymbol [
+
+	(active and: [ mode = #rotation ]) ifFalse: [ ^ self previewChanged ].
+	updating ifTrue: [ ^ self ].
+
+	activeRotationAxis := axisSymbol.
+	updating := true.
+	[
+		axisSymbol = #x ifFalse: [ uInput number: 0.0 ].
+		axisSymbol = #y ifFalse: [ vInput number: 0.0 ].
+		axisSymbol = #z ifFalse: [ wInput number: 0.0 ] ] ensure: [ updating := false ].
+	self previewChanged
 ]
 
 { #category : 'callbacks' }
