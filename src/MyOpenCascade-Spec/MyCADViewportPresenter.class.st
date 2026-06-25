@@ -69,6 +69,7 @@ MyCADViewportPresenter >> addCylinder [
 	renderedShape := MyRenderedShape
 		                 shape: (MyCylinderMaker makeCylinderRadius: 1 height: 1 named: (self nextAvailableNameFor: 'Cylinder'))
 		                 deflection: 0.01.
+	renderedShape beCylinderRadius: 1 height: 1.
 
 	self addRenderedShape: renderedShape asCADObject: MyCADPrimitiveCylinderObject.
 
@@ -196,10 +197,17 @@ MyCADViewportPresenter >> cadDocument [
 			cadDocument := MyCADDocument new.
 			renderedShapes ifNotNil: [
 					renderedShapes do: [ :renderedShape |
-							cadDocument addObject: ((renderedShape isBox
-									  ifTrue: [ MyCADPrimitiveBoxObject ]
-									  ifFalse: [ MyCADShapeObject ]) renderedShape: renderedShape) ] ] ].
+						cadDocument addObject: ((self cadObjectClassForRenderedShape: renderedShape) renderedShape: renderedShape) ] ] ].
 	^ cadDocument
+]
+
+{ #category : 'geometry - accessing' }
+MyCADViewportPresenter >> cadObjectClassForRenderedShape: aRenderedShape [
+
+	aRenderedShape isBox ifTrue: [ ^ MyCADPrimitiveBoxObject ].
+	aRenderedShape isCylinder ifTrue: [ ^ MyCADPrimitiveCylinderObject ].
+
+	^ MyCADShapeObject
 ]
 
 { #category : 'geometry - accessing' }

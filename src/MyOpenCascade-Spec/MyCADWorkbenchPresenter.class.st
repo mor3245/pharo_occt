@@ -207,8 +207,8 @@ MyCADWorkbenchPresenter >> initializePresenters [
 			updatingGeometryTree ifFalse: [ viewportPresenter selectCADObject: treeSelection selectedItem ] ].
 
 	propertyPanel := self instantiate: MyCADPropertyPanelPresenter.
-	propertyPanel whenDimensionsChangedDo: [ :length :width :height |
-		self resizeSelectedDimensionsLength: length width: width height: height ].
+	propertyPanel whenDimensionsChangedDo: [ :dimensionOne :dimensionTwo :dimensionThree |
+		self resizeSelectedDimensions: (Vector3 x: dimensionOne y: dimensionTwo z: dimensionThree) ].
 
 	viewportPresenter
 		whenGeometryChangedDo: [ self updateGeometryTree ];
@@ -252,12 +252,12 @@ MyCADWorkbenchPresenter >> modelUnitsToMillimeters: aNumber [
 ]
 
 { #category : 'updating' }
-MyCADWorkbenchPresenter >> resizeSelectedDimensionsLength: length width: width height: height [
+MyCADWorkbenchPresenter >> resizeSelectedDimensions: dimensionsMillimeters [
 
 	viewportPresenter resizeSelectedCADObjectToDimensions: (Vector3
-			 x: (self millimetersToModelUnits: length)
-			 y: (self millimetersToModelUnits: width)
-			 z: (self millimetersToModelUnits: height)).
+			 x: (self millimetersToModelUnits: dimensionsMillimeters x)
+			 y: (self millimetersToModelUnits: dimensionsMillimeters y)
+			 z: (self millimetersToModelUnits: dimensionsMillimeters z)).
 	self updatePropertyPanel
 ]
 

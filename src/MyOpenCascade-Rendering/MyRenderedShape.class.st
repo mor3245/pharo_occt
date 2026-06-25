@@ -9,6 +9,7 @@ Class {
 		'placementPosition',
 		'primitiveKind',
 		'boxDimensions',
+		'cylinderDimensions',
 		'renderStyle'
 	],
 	#category : 'MyOpenCascade-Rendering',
@@ -76,6 +77,13 @@ MyRenderedShape >> beBoxDx: dx dy: dy dz: dz [
 ]
 
 { #category : 'metadata' }
+MyRenderedShape >> beCylinderRadius: radius height: height [
+
+	primitiveKind := #cylinder.
+	cylinderDimensions := Vector3 x: radius y: height z: 0
+]
+
+{ #category : 'metadata' }
 MyRenderedShape >> boxDimensions [
 
 	^ boxDimensions ifNil: [ Vector3 x: 0 y: 0 z: 0 ]
@@ -95,6 +103,12 @@ MyRenderedShape >> cutWithSeparatedSolids: anotherRenderedShape [
 	"Answer one rendered shape per OCCT solid produced by the cut."
 
 	^ (shape cutWithSeparatedSolids: anotherRenderedShape shape) collect: [ :each | self class shape: each deflection: deflection ]
+]
+
+{ #category : 'metadata' }
+MyRenderedShape >> cylinderDimensions [
+
+	^ cylinderDimensions ifNil: [ Vector3 x: 0 y: 0 z: 0 ]
 ]
 
 { #category : 'accessing' }
@@ -136,6 +150,12 @@ MyRenderedShape >> isAlive [
 MyRenderedShape >> isBox [
 
 	^ primitiveKind = #box
+]
+
+{ #category : 'testing' }
+MyRenderedShape >> isCylinder [
+
+	^ primitiveKind = #cylinder
 ]
 
 { #category : 'accessing' }
@@ -226,6 +246,26 @@ MyRenderedShape >> resizeBoxDx: dx dy: dy dz: dz [
 	self placementPosition = (Vector3 x: 0 y: 0 z: 0) ifFalse: [ newShape translateBy: self placementPosition ].
 	shape := newShape.
 	boxDimensions := Vector3 x: dx y: dy z: dz.
+	self rebuildNode.
+
+	oldShape free.
+	^ MyRenderNodeChange oldNode: oldNode newNode: node
+]
+
+{ #category : 'editing' }
+MyRenderedShape >> resizeCylinderRadius: radius height: height [
+	"Rebuilds this rendered cylinder with new dimensions, preserving display name and accumulated placement."
+
+	| oldNode oldShape newShape |
+	self isCylinder ifFalse: [ ^ MyRenderNodeChange unchanged ].
+	node ifNil: [ ^ MyRenderNodeChange unchanged ].
+
+	oldNode := node.
+	oldShape := shape.
+	newShape := MyCylinderMaker makeCylinderRadius: radius height: height named: oldShape name.
+	self placementPosition = (Vector3 x: 0 y: 0 z: 0) ifFalse: [ newShape translateBy: self placementPosition ].
+	shape := newShape.
+	cylinderDimensions := Vector3 x: radius y: height z: 0.
 	self rebuildNode.
 
 	oldShape free.
