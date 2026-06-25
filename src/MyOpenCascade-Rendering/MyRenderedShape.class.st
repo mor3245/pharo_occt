@@ -1,3 +1,11 @@
+"
+I bridge an OCCT MyShape to its current Woden scene node.
+
+I own transient rendering state: the native shape handle, tessellation
+deflection, accumulated display placement, and the Woden node built from the
+shape. Document semantics such as primitive dimensions, type names, materials,
+or user-facing properties belong in MyCADObject subclasses, not here.
+"
 Class {
 	#name : 'MyRenderedShape',
 	#superclass : 'Object',
@@ -5,9 +13,7 @@ Class {
 		'shape',
 		'node',
 		'deflection',
-		'adapter',
-		'placementPosition',
-		'renderStyle'
+		'placementPosition'
 	],
 	#category : 'MyOpenCascade-Rendering',
 	#package : 'MyOpenCascade-Rendering'
@@ -23,23 +29,12 @@ MyRenderedShape class >> shape: aShape deflection: aNumber [
 		  yourself
 ]
 
-{ #category : 'accessing' }
-MyRenderedShape >> adapter [
-
-	^ adapter
-]
-
-{ #category : 'accessing' }
-MyRenderedShape >> adapter: anObject [
-
-	adapter := anObject
-]
-
 { #category : 'baking' }
 MyRenderedShape >> bakeRotationDegrees: degrees axis: axisSymbol center: centerPoint [
 
 	| oldNode |
-	node ifNil: [ ^ MyRenderNodeChange unchanged ].
+	self isAlive ifFalse: [ ^ MyRenderNodeChange unchanged ].
+
 
 	oldNode := node.
 
@@ -54,7 +49,8 @@ MyRenderedShape >> bakeRotationDegrees: degrees axis: axisSymbol center: centerP
 MyRenderedShape >> bakeTranslation [
 
 	| oldNode translation |
-	node ifNil: [ ^ MyRenderNodeChange unchanged ].
+	self isAlive ifFalse: [ ^ MyRenderNodeChange unchanged ].
+
 
 	oldNode := node.
 	translation := node position.
@@ -67,25 +63,10 @@ MyRenderedShape >> bakeTranslation [
 ]
 
 { #category : 'boolean operations' }
-MyRenderedShape >> cutWith: anotherRenderedShape [
-
-	| resultShape |
-	resultShape := shape cutWith: anotherRenderedShape shape.
-
-	^ self class shape: resultShape deflection: deflection
-]
-
-{ #category : 'boolean operations' }
 MyRenderedShape >> cutWithSeparatedSolids: anotherRenderedShape [
 	"Answer one rendered shape per OCCT solid produced by the cut."
 
 	^ (shape cutWithSeparatedSolids: anotherRenderedShape shape) collect: [ :each | self class shape: each deflection: deflection ]
-]
-
-{ #category : 'accessing' }
-MyRenderedShape >> deflection [
-
-	^ deflection
 ]
 
 { #category : 'accessing' }
@@ -131,23 +112,11 @@ MyRenderedShape >> node [
 ]
 
 { #category : 'accessing' }
-MyRenderedShape >> node: anObject [
-
-	node := anObject
-]
-
-{ #category : 'accessing' }
 MyRenderedShape >> placementPosition [
 	"Answers accumulated committed translation. Existing instances from older images default to zero."
 
 	placementPosition ifNil: [ placementPosition := Vector3 x: 0 y: 0 z: 0 ].
 	^ placementPosition
-]
-
-{ #category : 'accessing' }
-MyRenderedShape >> placementPosition: aVector [
-
-	placementPosition := aVector
 ]
 
 { #category : 'inspection' }
@@ -163,9 +132,11 @@ MyRenderedShape >> prepareForInspection [
 { #category : 'rendering' }
 MyRenderedShape >> rebuildNode [
 
+	| renderStyle shapeAdapter |
 	shape tessellateDeflection: deflection.
-	adapter := MyShapeWodenAdapter renderStyle: self renderStyle.
-	node := adapter asWDDisplayNode: shape edgeDeflection: (self renderStyle edgeDeflectionFor: deflection).
+	renderStyle := MyWodenRenderStyle default.
+	shapeAdapter := MyShapeWodenAdapter renderStyle: renderStyle.
+	node := shapeAdapter asWDDisplayNode: shape edgeDeflection: (renderStyle edgeDeflectionFor: deflection).
 	^ node
 ]
 
@@ -175,24 +146,14 @@ MyRenderedShape >> renameTo: aString [
 	shape renameTo: aString
 ]
 
-{ #category : 'accessing' }
-MyRenderedShape >> renderStyle [
-
-	^ renderStyle ifNil: [ renderStyle := MyWodenRenderStyle default ]
-]
-
-{ #category : 'accessing' }
-MyRenderedShape >> renderStyle: aRenderStyle [
-
-	renderStyle := aRenderStyle
-]
-
 { #category : 'editing' }
 MyRenderedShape >> replaceShapeWith: aShape [
 	"Replaces the native CAD shape and rebuilds the render node, preserving accumulated placement."
 
 	| oldNode oldShape |
-	node ifNil: [ ^ MyRenderNodeChange unchanged ].
+	(aShape isNil or: [ self isAlive not ]) ifTrue: [
+			aShape ifNotNil: [ aShape free ].
+			^ MyRenderNodeChange unchanged ].
 
 	oldNode := node.
 	oldShape := shape.
@@ -200,7 +161,7 @@ MyRenderedShape >> replaceShapeWith: aShape [
 	shape := aShape.
 	self rebuildNode.
 
-	oldShape free.
+	oldShape ifNotNil: [ oldShape free ].
 	^ MyRenderNodeChange oldNode: oldNode newNode: node
 ]
 

@@ -1,3 +1,12 @@
+"
+I describe the Woden scene-node replacement caused by rebuilding or baking a
+rendered CAD shape.
+
+MyRenderedShape answers me after an operation that may replace its node. The
+viewport uses my old and new nodes to update the scene graph without needing to
+know why the shape changed. An unchanged instance means no scene update is
+required.
+"
 Class {
 	#name : 'MyRenderNodeChange',
 	#superclass : 'Object',
