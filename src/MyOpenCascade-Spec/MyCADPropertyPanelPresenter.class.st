@@ -103,7 +103,8 @@ MyCADPropertyPanelPresenter >> clear [
 MyCADPropertyPanelPresenter >> dimensionsChanged [
 
 	(updating or: [ selectedCADObject isNil ]) ifTrue: [ ^ self ].
-	selectedCADObject editableDimensionLabels isEmpty ifTrue: [ ^ self ].
+	selectedCADObject hasEditableDimensions ifFalse: [ ^ self ].
+
 
 	dimensionsChangedAction value: dimensionOneInput number value: dimensionTwoInput number value: dimensionThreeInput number
 ]

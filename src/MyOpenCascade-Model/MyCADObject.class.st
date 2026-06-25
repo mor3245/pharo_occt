@@ -32,17 +32,25 @@ MyCADObject >> displayPosition [
 { #category : 'metadata' }
 MyCADObject >> editableDimensionLabels [
 	"Answers the user-facing dimension fields this object exposes.
-	Generic CAD objects expose none; primitive feature objects can override this."
+	Subclasses with editable dimensions must override this method."
 
+	self hasEditableDimensions ifTrue: [ ^ self subclassResponsibility ].
 	^ #(  )
 ]
 
 { #category : 'metadata' }
 MyCADObject >> editableDimensions [
 	"Answers the current dimension values used by the editable dimension fields.
-	Only meaningful when #editableDimensionLabels is not empty."
+	Subclasses with editable dimensions must override this method."
 
+	self hasEditableDimensions ifTrue: [ ^ self subclassResponsibility ].
 	^ Vector3 x: 0 y: 0 z: 0
+]
+
+{ #category : 'testing' }
+MyCADObject >> hasEditableDimensions [
+
+	^ false
 ]
 
 { #category : 'testing' }
@@ -72,6 +80,7 @@ MyCADObject >> renderedShape: aRenderedShape [
 { #category : 'editing' }
 MyCADObject >> resizeToDimensions: aVector [
 
+	self hasEditableDimensions ifTrue: [ ^ self subclassResponsibility ].
 	^ MyRenderNodeChange unchanged
 ]
 
@@ -90,7 +99,7 @@ MyCADObject >> triangleCount [
 { #category : 'metadata' }
 MyCADObject >> typeName [
 
-	^ self class name
+	^ self subclassResponsibility
 ]
 
 { #category : 'metadata' }

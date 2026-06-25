@@ -840,6 +840,8 @@ MyCADViewportPresenter >> resizeSelectedCADObjectToDimensions: dimensionsVector 
 	cadObject ifNil: [ ^ self ].
 	cadObject isAlive ifFalse: [ ^ self ].
 	cadObject editableDimensionLabels isEmpty ifTrue: [ ^ self ].
+	cadObject hasEditableDimensions ifFalse: [ ^ self ].
+
 
 	self restoreSelectedVisual.
 	change := cadObject resizeToDimensions: dimensionsVector.

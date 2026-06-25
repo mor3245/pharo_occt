@@ -30,6 +30,12 @@ MyCADPrimitiveCylinderObject >> editableDimensions [
 	^ Vector3 x: self radius y: self height z: 0
 ]
 
+{ #category : 'testing' }
+MyCADPrimitiveCylinderObject >> hasEditableDimensions [
+
+	^ true
+]
+
 { #category : 'accessing' }
 MyCADPrimitiveCylinderObject >> height [
 

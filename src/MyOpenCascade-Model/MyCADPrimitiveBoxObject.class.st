@@ -40,6 +40,12 @@ MyCADPrimitiveBoxObject >> editableDimensions [
 	^ self dimensions
 ]
 
+{ #category : 'testing' }
+MyCADPrimitiveBoxObject >> hasEditableDimensions [
+
+	^ true
+]
+
 { #category : 'editing' }
 MyCADPrimitiveBoxObject >> resizeToDimensions: aVector [
 
