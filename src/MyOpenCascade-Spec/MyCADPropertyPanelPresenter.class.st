@@ -23,6 +23,18 @@ Class {
 { #category : 'layout' }
 MyCADPropertyPanelPresenter class >> defaultLayout [
 
+	^ self emptyLayout
+]
+
+{ #category : 'layout' }
+MyCADPropertyPanelPresenter class >> emptyLayout [
+
+	^ SpBoxLayout newVertical
+]
+
+{ #category : 'layout' }
+MyCADPropertyPanelPresenter class >> propertyLayout [
+
 	^ SpGridLayout new
 		  add: 'Name' atPoint: 1 @ 1;
 		  add: #nameValue atPoint: 2 @ 1;
@@ -51,6 +63,8 @@ MyCADPropertyPanelPresenter class >> defaultLayout [
 MyCADPropertyPanelPresenter >> clear [
 
 	selectedCADObject := nil.
+	self layout: self class emptyLayout.
+
 	updating := true.
 	[
 		nameValue label: ''.
@@ -115,6 +129,8 @@ MyCADPropertyPanelPresenter >> showCADObject: aCADObject placementMillimeters: p
 			^ self ].
 
 	selectedCADObject := aCADObject.
+	self layout: self class propertyLayout.
+
 	updating := true.
 	[
 		nameValue label: aCADObject name.
