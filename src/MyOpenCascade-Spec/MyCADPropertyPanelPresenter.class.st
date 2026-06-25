@@ -10,14 +10,14 @@ Class {
 		'dimensionOneLabel',
 		'dimensionTwoLabel',
 		'dimensionThreeLabel',
-		'lengthInput',
-		'widthInput',
-		'heightInput',
 		'trianglesValue',
 		'verticesValue',
 		'dimensionsChangedAction',
 		'updating',
-		'selectedCADObject'
+		'selectedCADObject',
+		'dimensionOneInput',
+		'dimensionTwoInput',
+		'dimensionThreeInput'
 	],
 	#category : 'MyOpenCascade-Spec',
 	#package : 'MyOpenCascade-Spec'
@@ -36,15 +36,10 @@ MyCADPropertyPanelPresenter class >> emptyLayout [
 ]
 
 { #category : 'layout' }
-MyCADPropertyPanelPresenter class >> propertyLayout [
-
-	^ self propertyLayoutWithDimensionRows: 3
-]
-
-{ #category : 'layout' }
 MyCADPropertyPanelPresenter class >> propertyLayoutWithDimensionRows: dimensionRowCount [
 
-	| layout statisticsRow |
+	| layout rowCount statisticsRow |
+	rowCount := dimensionRowCount min: 3.
 	layout := SpGridLayout new.
 	layout
 		add: 'Name' atPoint: 1 @ 1;
@@ -58,20 +53,20 @@ MyCADPropertyPanelPresenter class >> propertyLayoutWithDimensionRows: dimensionR
 		add: 'Placement W (mm)' atPoint: 1 @ 5;
 		add: #wValue atPoint: 2 @ 5.
 
-	dimensionRowCount >= 1 ifTrue: [
+	rowCount >= 1 ifTrue: [
 			layout
 				add: #dimensionOneLabel atPoint: 1 @ 6;
-				add: #lengthInput atPoint: 2 @ 6 ].
-	dimensionRowCount >= 2 ifTrue: [
+				add: #dimensionOneInput atPoint: 2 @ 6 ].
+	rowCount >= 2 ifTrue: [
 			layout
 				add: #dimensionTwoLabel atPoint: 1 @ 7;
-				add: #widthInput atPoint: 2 @ 7 ].
-	dimensionRowCount >= 3 ifTrue: [
+				add: #dimensionTwoInput atPoint: 2 @ 7 ].
+	rowCount >= 3 ifTrue: [
 			layout
 				add: #dimensionThreeLabel atPoint: 1 @ 8;
-				add: #heightInput atPoint: 2 @ 8 ].
+				add: #dimensionThreeInput atPoint: 2 @ 8 ].
 
-	statisticsRow := 6 + (dimensionRowCount min: 3).
+	statisticsRow := 6 + rowCount.
 	layout
 		add: 'Triangles' atPoint: 1 @ statisticsRow;
 		add: #trianglesValue atPoint: 2 @ statisticsRow;
@@ -97,9 +92,9 @@ MyCADPropertyPanelPresenter >> clear [
 		dimensionOneLabel label: ''.
 		dimensionTwoLabel label: ''.
 		dimensionThreeLabel label: ''.
-		lengthInput number: 0.0.
-		widthInput number: 0.0.
-		heightInput number: 0.0.
+		dimensionOneInput number: 0.0.
+		dimensionTwoInput number: 0.0.
+		dimensionThreeInput number: 0.0.
 		trianglesValue label: ''.
 		verticesValue label: '' ] ensure: [ updating := false ]
 ]
@@ -110,7 +105,7 @@ MyCADPropertyPanelPresenter >> dimensionsChanged [
 	(updating or: [ selectedCADObject isNil ]) ifTrue: [ ^ self ].
 	selectedCADObject editableDimensionLabels isEmpty ifTrue: [ ^ self ].
 
-	dimensionsChangedAction value: lengthInput number value: widthInput number value: heightInput number
+	dimensionsChangedAction value: dimensionOneInput number value: dimensionTwoInput number value: dimensionThreeInput number
 ]
 
 { #category : 'initialization' }
@@ -132,19 +127,19 @@ MyCADPropertyPanelPresenter >> initializePresenters [
 	trianglesValue := self newLabel.
 	verticesValue := self newLabel.
 
-	lengthInput := self newNumberInput
-		               beFloat;
-		               yourself.
-	widthInput := self newNumberInput
-		              beFloat;
-		              yourself.
-	heightInput := self newNumberInput
-		               beFloat;
-		               yourself.
+	dimensionOneInput := self newNumberInput
+		                     beFloat;
+		                     yourself.
+	dimensionTwoInput := self newNumberInput
+		                     beFloat;
+		                     yourself.
+	dimensionThreeInput := self newNumberInput
+		                       beFloat;
+		                       yourself.
 
-	lengthInput whenNumberChangedDo: [ :newNumber | self dimensionsChanged ].
-	widthInput whenNumberChangedDo: [ :newNumber | self dimensionsChanged ].
-	heightInput whenNumberChangedDo: [ :newNumber | self dimensionsChanged ].
+	dimensionOneInput whenNumberChangedDo: [ :newNumber | self dimensionsChanged ].
+	dimensionTwoInput whenNumberChangedDo: [ :newNumber | self dimensionsChanged ].
+	dimensionThreeInput whenNumberChangedDo: [ :newNumber | self dimensionsChanged ].
 
 	self clear
 ]
@@ -180,13 +175,13 @@ MyCADPropertyPanelPresenter >> showCADObject: aCADObject placementMillimeters: p
 		dimensionThreeLabel label: (self labelForDimension: 3 in: dimensionLabels).
 		dimensionLabels isEmpty
 			ifFalse: [
-					lengthInput number: dimensionsVector x.
-					widthInput number: dimensionsVector y.
-					heightInput number: dimensionsVector z ]
+					dimensionOneInput number: dimensionsVector x.
+					dimensionTwoInput number: dimensionsVector y.
+					dimensionThreeInput number: dimensionsVector z ]
 			ifTrue: [
-					lengthInput number: 0.0.
-					widthInput number: 0.0.
-					heightInput number: 0.0 ].
+					dimensionOneInput number: 0.0.
+					dimensionTwoInput number: 0.0.
+					dimensionThreeInput number: 0.0 ].
 		trianglesValue label: aCADObject triangleCount asString.
 		verticesValue label: aCADObject vertexCount asString ] ensure: [ updating := false ]
 ]
