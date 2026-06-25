@@ -213,7 +213,7 @@ MyCADRotationMode >> isNumericKey: key [
 	^ false
 ]
 
-{ #category : 'mouse' }
+{ #category : 'applying' }
 MyCADRotationMode >> previewDegrees: degreesVector [
 	"Previews the single active X/Y/Z degree value from the transform panel."
 
@@ -285,7 +285,7 @@ MyCADRotationMode >> rotateVector: aVector degrees: degrees axis: axisSymbol [
 	^ aVector
 ]
 
-{ #category : 'keyboard' }
+{ #category : 'applying' }
 MyCADRotationMode >> setAxisLock: aSymbol [
 	"Sets the global rotation axis and reapplies the current angle."
 
