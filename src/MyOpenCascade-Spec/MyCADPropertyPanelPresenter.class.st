@@ -7,6 +7,9 @@ Class {
 		'uValue',
 		'vValue',
 		'wValue',
+		'dimensionOneLabel',
+		'dimensionTwoLabel',
+		'dimensionThreeLabel',
 		'lengthInput',
 		'widthInput',
 		'heightInput',
@@ -35,28 +38,47 @@ MyCADPropertyPanelPresenter class >> emptyLayout [
 { #category : 'layout' }
 MyCADPropertyPanelPresenter class >> propertyLayout [
 
-	^ SpGridLayout new
-		  add: 'Name' atPoint: 1 @ 1;
-		  add: #nameValue atPoint: 2 @ 1;
-		  add: 'Type' atPoint: 1 @ 2;
-		  add: #typeValue atPoint: 2 @ 2;
-		  add: 'Placement U (mm)' atPoint: 1 @ 3;
-		  add: #uValue atPoint: 2 @ 3;
-		  add: 'Placement V (mm)' atPoint: 1 @ 4;
-		  add: #vValue atPoint: 2 @ 4;
-		  add: 'Placement W (mm)' atPoint: 1 @ 5;
-		  add: #wValue atPoint: 2 @ 5;
-		  add: 'Box Length (mm)' atPoint: 1 @ 6;
-		  add: #lengthInput atPoint: 2 @ 6;
-		  add: 'Box Width (mm)' atPoint: 1 @ 7;
-		  add: #widthInput atPoint: 2 @ 7;
-		  add: 'Box Height (mm)' atPoint: 1 @ 8;
-		  add: #heightInput atPoint: 2 @ 8;
-		  add: 'Triangles' atPoint: 1 @ 9;
-		  add: #trianglesValue atPoint: 2 @ 9;
-		  add: 'Vertices' atPoint: 1 @ 10;
-		  add: #verticesValue atPoint: 2 @ 10;
-		  yourself
+	^ self propertyLayoutWithDimensionRows: 3
+]
+
+{ #category : 'layout' }
+MyCADPropertyPanelPresenter class >> propertyLayoutWithDimensionRows: dimensionRowCount [
+
+	| layout statisticsRow |
+	layout := SpGridLayout new.
+	layout
+		add: 'Name' atPoint: 1 @ 1;
+		add: #nameValue atPoint: 2 @ 1;
+		add: 'Type' atPoint: 1 @ 2;
+		add: #typeValue atPoint: 2 @ 2;
+		add: 'Placement U (mm)' atPoint: 1 @ 3;
+		add: #uValue atPoint: 2 @ 3;
+		add: 'Placement V (mm)' atPoint: 1 @ 4;
+		add: #vValue atPoint: 2 @ 4;
+		add: 'Placement W (mm)' atPoint: 1 @ 5;
+		add: #wValue atPoint: 2 @ 5.
+
+	dimensionRowCount >= 1 ifTrue: [
+			layout
+				add: #dimensionOneLabel atPoint: 1 @ 6;
+				add: #lengthInput atPoint: 2 @ 6 ].
+	dimensionRowCount >= 2 ifTrue: [
+			layout
+				add: #dimensionTwoLabel atPoint: 1 @ 7;
+				add: #widthInput atPoint: 2 @ 7 ].
+	dimensionRowCount >= 3 ifTrue: [
+			layout
+				add: #dimensionThreeLabel atPoint: 1 @ 8;
+				add: #heightInput atPoint: 2 @ 8 ].
+
+	statisticsRow := 6 + (dimensionRowCount min: 3).
+	layout
+		add: 'Triangles' atPoint: 1 @ statisticsRow;
+		add: #trianglesValue atPoint: 2 @ statisticsRow;
+		add: 'Vertices' atPoint: 1 @ (statisticsRow + 1);
+		add: #verticesValue atPoint: 2 @ (statisticsRow + 1).
+
+	^ layout
 ]
 
 { #category : 'updating' }
@@ -72,6 +94,9 @@ MyCADPropertyPanelPresenter >> clear [
 		uValue label: ''.
 		vValue label: ''.
 		wValue label: ''.
+		dimensionOneLabel label: ''.
+		dimensionTwoLabel label: ''.
+		dimensionThreeLabel label: ''.
 		lengthInput number: 0.0.
 		widthInput number: 0.0.
 		heightInput number: 0.0.
@@ -101,6 +126,9 @@ MyCADPropertyPanelPresenter >> initializePresenters [
 	uValue := self newLabel.
 	vValue := self newLabel.
 	wValue := self newLabel.
+	dimensionOneLabel := self newLabel.
+	dimensionTwoLabel := self newLabel.
+	dimensionThreeLabel := self newLabel.
 	trianglesValue := self newLabel.
 	verticesValue := self newLabel.
 
@@ -122,15 +150,24 @@ MyCADPropertyPanelPresenter >> initializePresenters [
 ]
 
 { #category : 'updating' }
+MyCADPropertyPanelPresenter >> labelForDimension: dimensionIndex in: dimensionLabels [
+
+	dimensionIndex > dimensionLabels size ifTrue: [ ^ '' ].
+
+	^ (dimensionLabels at: dimensionIndex) , ' (mm)'
+]
+
+{ #category : 'updating' }
 MyCADPropertyPanelPresenter >> showCADObject: aCADObject placementMillimeters: placementVector dimensionsMillimeters: dimensionsVector [
 
+	| dimensionLabels |
 	aCADObject isAlive ifFalse: [
 			self clear.
 			^ self ].
 
 	selectedCADObject := aCADObject.
-	self layout: self class propertyLayout.
-
+	dimensionLabels := aCADObject editableDimensionLabels.
+	self layout: (self class propertyLayoutWithDimensionRows: dimensionLabels size).
 	updating := true.
 	[
 		nameValue label: aCADObject name.
@@ -138,7 +175,10 @@ MyCADPropertyPanelPresenter >> showCADObject: aCADObject placementMillimeters: p
 		uValue label: placementVector x asString.
 		vValue label: placementVector y asString.
 		wValue label: placementVector z asString.
-		aCADObject editableDimensionLabels isEmpty
+		dimensionOneLabel label: (self labelForDimension: 1 in: dimensionLabels).
+		dimensionTwoLabel label: (self labelForDimension: 2 in: dimensionLabels).
+		dimensionThreeLabel label: (self labelForDimension: 3 in: dimensionLabels).
+		dimensionLabels isEmpty
 			ifFalse: [
 					lengthInput number: dimensionsVector x.
 					widthInput number: dimensionsVector y.
@@ -146,8 +186,7 @@ MyCADPropertyPanelPresenter >> showCADObject: aCADObject placementMillimeters: p
 			ifTrue: [
 					lengthInput number: 0.0.
 					widthInput number: 0.0.
-					heightInput number: 0.0 ]. "Old static layout still labels these as Box dimensions. The selected CAD object now controls
-		whether the fields are meaningful; the next property-panel refactor can make labels dynamic."
+					heightInput number: 0.0 ].
 		trianglesValue label: aCADObject triangleCount asString.
 		verticesValue label: aCADObject vertexCount asString ] ensure: [ updating := false ]
 ]
