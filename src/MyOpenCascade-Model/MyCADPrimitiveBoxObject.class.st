@@ -1,9 +1,32 @@
 Class {
 	#name : 'MyCADPrimitiveBoxObject',
 	#superclass : 'MyCADObject',
+	#instVars : [
+		'dimensions'
+	],
 	#category : 'MyOpenCascade-Model',
 	#package : 'MyOpenCascade-Model'
 }
+
+{ #category : 'instance creation' }
+MyCADPrimitiveBoxObject class >> renderedShape: aRenderedShape dimensions: dimensionsVector [
+
+	^ (self renderedShape: aRenderedShape)
+		  dimensions: dimensionsVector;
+		  yourself
+]
+
+{ #category : 'accessing' }
+MyCADPrimitiveBoxObject >> dimensions [
+
+	^ dimensions ifNil: [ dimensions := Vector3 x: 1 y: 1 z: 1 ]
+]
+
+{ #category : 'accessing' }
+MyCADPrimitiveBoxObject >> dimensions: aVector [
+
+	dimensions := aVector
+]
 
 { #category : 'metadata' }
 MyCADPrimitiveBoxObject >> editableDimensionLabels [
@@ -14,16 +37,21 @@ MyCADPrimitiveBoxObject >> editableDimensionLabels [
 { #category : 'metadata' }
 MyCADPrimitiveBoxObject >> editableDimensions [
 
-	^ self renderedShape boxDimensions
+	^ self dimensions
 ]
 
 { #category : 'editing' }
 MyCADPrimitiveBoxObject >> resizeToDimensions: aVector [
 
-	^ self renderedShape
-		  resizeBoxDx: aVector x
-		  dy: aVector y
-		  dz: aVector z
+	| newShape |
+	dimensions := aVector.
+	newShape := MyBoxMaker
+		            makeBoxDx: aVector x
+		            dy: aVector y
+		            dz: aVector z
+		            named: self name.
+
+	^ self renderedShape replaceShapeWith: newShape
 ]
 
 { #category : 'metadata' }

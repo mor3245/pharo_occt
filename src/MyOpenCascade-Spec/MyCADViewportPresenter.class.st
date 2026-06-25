@@ -54,9 +54,10 @@ MyCADViewportPresenter >> addBox [
 				                  dz: 1
 				                  named: (self nextAvailableNameFor: 'Box'))
 		                 deflection: 0.01.
-	renderedShape beBoxDx: 1 dy: 1 dz: 1.
 
-	self addRenderedShape: renderedShape asCADObject: MyCADPrimitiveBoxObject.
+	self
+		addRenderedShape: renderedShape
+		cadObject: (MyCADPrimitiveBoxObject renderedShape: renderedShape dimensions: (Vector3 x: 1 y: 1 z: 1)).
 
 	self geometryChanged
 ]
@@ -69,9 +70,8 @@ MyCADViewportPresenter >> addCylinder [
 	renderedShape := MyRenderedShape
 		                 shape: (MyCylinderMaker makeCylinderRadius: 1 height: 1 named: (self nextAvailableNameFor: 'Cylinder'))
 		                 deflection: 0.01.
-	renderedShape beCylinderRadius: 1 height: 1.
 
-	self addRenderedShape: renderedShape asCADObject: MyCADPrimitiveCylinderObject.
+	self addRenderedShape: renderedShape cadObject: (MyCADPrimitiveCylinderObject renderedShape: renderedShape radius: 1 height: 1).
 
 	self geometryChanged
 ]
@@ -90,9 +90,16 @@ MyCADViewportPresenter >> addMenuItemNamed: aString action: aBlock to: aGroup [
 MyCADViewportPresenter >> addRenderedShape: aRenderedShape asCADObject: cadObjectClass [
 	"Adds a rendered shape to the scene and creates the document object that owns it."
 
+	self addRenderedShape: aRenderedShape cadObject: (cadObjectClass renderedShape: aRenderedShape)
+]
+
+{ #category : 'scene - geometry management' }
+MyCADViewportPresenter >> addRenderedShape: aRenderedShape cadObject: aCADObject [
+	"Adds a rendered shape to the scene and records its document object."
+
 	scene add: aRenderedShape node.
 	renderedShapes addLast: aRenderedShape.
-	self cadDocument addObject: (cadObjectClass renderedShape: aRenderedShape)
+	self cadDocument addObject: aCADObject
 ]
 
 { #category : 'actions - file' }
@@ -196,18 +203,8 @@ MyCADViewportPresenter >> cadDocument [
 	cadDocument ifNil: [
 			cadDocument := MyCADDocument new.
 			renderedShapes ifNotNil: [
-					renderedShapes do: [ :renderedShape |
-						cadDocument addObject: ((self cadObjectClassForRenderedShape: renderedShape) renderedShape: renderedShape) ] ] ].
+				renderedShapes do: [ :renderedShape | cadDocument addObject: (MyCADShapeObject renderedShape: renderedShape) ] ] ].
 	^ cadDocument
-]
-
-{ #category : 'geometry - accessing' }
-MyCADViewportPresenter >> cadObjectClassForRenderedShape: aRenderedShape [
-
-	aRenderedShape isBox ifTrue: [ ^ MyCADPrimitiveBoxObject ].
-	aRenderedShape isCylinder ifTrue: [ ^ MyCADPrimitiveCylinderObject ].
-
-	^ MyCADShapeObject
 ]
 
 { #category : 'geometry - accessing' }

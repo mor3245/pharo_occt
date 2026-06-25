@@ -7,9 +7,6 @@ Class {
 		'deflection',
 		'adapter',
 		'placementPosition',
-		'primitiveKind',
-		'boxDimensions',
-		'cylinderDimensions',
 		'renderStyle'
 	],
 	#category : 'MyOpenCascade-Rendering',
@@ -69,26 +66,6 @@ MyRenderedShape >> bakeTranslation [
 	^ MyRenderNodeChange oldNode: oldNode newNode: node
 ]
 
-{ #category : 'metadata' }
-MyRenderedShape >> beBoxDx: dx dy: dy dz: dz [
-
-	primitiveKind := #box.
-	boxDimensions := Vector3 x: dx y: dy z: dz
-]
-
-{ #category : 'metadata' }
-MyRenderedShape >> beCylinderRadius: radius height: height [
-
-	primitiveKind := #cylinder.
-	cylinderDimensions := Vector3 x: radius y: height z: 0
-]
-
-{ #category : 'metadata' }
-MyRenderedShape >> boxDimensions [
-
-	^ boxDimensions ifNil: [ Vector3 x: 0 y: 0 z: 0 ]
-]
-
 { #category : 'boolean operations' }
 MyRenderedShape >> cutWith: anotherRenderedShape [
 
@@ -103,12 +80,6 @@ MyRenderedShape >> cutWithSeparatedSolids: anotherRenderedShape [
 	"Answer one rendered shape per OCCT solid produced by the cut."
 
 	^ (shape cutWithSeparatedSolids: anotherRenderedShape shape) collect: [ :each | self class shape: each deflection: deflection ]
-]
-
-{ #category : 'metadata' }
-MyRenderedShape >> cylinderDimensions [
-
-	^ cylinderDimensions ifNil: [ Vector3 x: 0 y: 0 z: 0 ]
 ]
 
 { #category : 'accessing' }
@@ -144,18 +115,6 @@ MyRenderedShape >> isAlive [
 	"Answers whether this wrapper still owns a usable rendered/native shape."
 
 	^ shape notNil and: [ node notNil ]
-]
-
-{ #category : 'testing' }
-MyRenderedShape >> isBox [
-
-	^ primitiveKind = #box
-]
-
-{ #category : 'testing' }
-MyRenderedShape >> isCylinder [
-
-	^ primitiveKind = #cylinder
 ]
 
 { #category : 'accessing' }
@@ -229,43 +188,16 @@ MyRenderedShape >> renderStyle: aRenderStyle [
 ]
 
 { #category : 'editing' }
-MyRenderedShape >> resizeBoxDx: dx dy: dy dz: dz [
-	"Rebuilds this rendered box with new dimensions, preserving display name and accumulated placement."
+MyRenderedShape >> replaceShapeWith: aShape [
+	"Replaces the native CAD shape and rebuilds the render node, preserving accumulated placement."
 
-	| oldNode oldShape newShape |
-	self isBox ifFalse: [ ^ MyRenderNodeChange unchanged ].
+	| oldNode oldShape |
 	node ifNil: [ ^ MyRenderNodeChange unchanged ].
 
 	oldNode := node.
 	oldShape := shape.
-	newShape := MyBoxMaker
-		            makeBoxDx: dx
-		            dy: dy
-		            dz: dz
-		            named: oldShape name.
-	self placementPosition = (Vector3 x: 0 y: 0 z: 0) ifFalse: [ newShape translateBy: self placementPosition ].
-	shape := newShape.
-	boxDimensions := Vector3 x: dx y: dy z: dz.
-	self rebuildNode.
-
-	oldShape free.
-	^ MyRenderNodeChange oldNode: oldNode newNode: node
-]
-
-{ #category : 'editing' }
-MyRenderedShape >> resizeCylinderRadius: radius height: height [
-	"Rebuilds this rendered cylinder with new dimensions, preserving display name and accumulated placement."
-
-	| oldNode oldShape newShape |
-	self isCylinder ifFalse: [ ^ MyRenderNodeChange unchanged ].
-	node ifNil: [ ^ MyRenderNodeChange unchanged ].
-
-	oldNode := node.
-	oldShape := shape.
-	newShape := MyCylinderMaker makeCylinderRadius: radius height: height named: oldShape name.
-	self placementPosition = (Vector3 x: 0 y: 0 z: 0) ifFalse: [ newShape translateBy: self placementPosition ].
-	shape := newShape.
-	cylinderDimensions := Vector3 x: radius y: height z: 0.
+	self placementPosition = (Vector3 x: 0 y: 0 z: 0) ifFalse: [ aShape translateBy: self placementPosition ].
+	shape := aShape.
 	self rebuildNode.
 
 	oldShape free.
