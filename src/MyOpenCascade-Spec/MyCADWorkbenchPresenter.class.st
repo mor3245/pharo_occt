@@ -59,6 +59,22 @@ MyCADWorkbenchPresenter class >> leftPanelLayout [
 		  yourself
 ]
 
+{ #category : 'world menu' }
+MyCADWorkbenchPresenter class >> menuCommandOn: builder [
+
+	<worldMenu>
+	(builder item: #'Pharo CAD')
+		parent: #Tools;
+		order: 1;
+		action: [ self openFromWorldMenu ]
+]
+
+{ #category : 'world menu' }
+MyCADWorkbenchPresenter class >> openFromWorldMenu [
+
+	^ self new open
+]
+
 { #category : 'actions - edit' }
 MyCADWorkbenchPresenter >> actionClearSelection [
 
@@ -239,16 +255,6 @@ MyCADWorkbenchPresenter >> initializeWindow: aWindowPresenter [
 		whenOpenedDo: [ viewportPresenter setupContextMenu ]
 ]
 
-{ #category : 'world menu' }
-MyCADWorkbenchPresenter >> menuCommandOn: builder [
-
-	<worldMenu>
-	(builder item: #'Pharo CAD')
-		parent: #Tools;
-		order: 1;
-		action: [ self openFromWorldMenu ]
-]
-
 { #category : 'units' }
 MyCADWorkbenchPresenter >> millimetersToModelUnits: aNumber [
 
@@ -259,12 +265,6 @@ MyCADWorkbenchPresenter >> millimetersToModelUnits: aNumber [
 MyCADWorkbenchPresenter >> modelUnitsToMillimeters: aNumber [
 
 	^ aNumber / taskPanel modelUnitsPerMillimeter
-]
-
-{ #category : 'world menu' }
-MyCADWorkbenchPresenter >> openFromWorldMenu [
-
-	^ self open
 ]
 
 { #category : 'updating' }
