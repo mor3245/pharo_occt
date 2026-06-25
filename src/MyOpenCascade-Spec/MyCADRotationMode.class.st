@@ -24,8 +24,10 @@ MyCADRotationMode >> activateFor: aPresenter [
 	selectedRenderedShape ifNil: [ ^ self ].
 	selectedRenderedShape isAlive ifFalse: [ ^ self ].
 
+	presenter restoreSelectedVisual.
 	change := selectedRenderedShape bakeTranslation.
 	presenter applyRenderNodeChange: change.
+	presenter applySelectedVisualTo: selectedRenderedShape node.
 
 	active := true.
 	startNodeTransform := selectedRenderedShape node transform copy.
