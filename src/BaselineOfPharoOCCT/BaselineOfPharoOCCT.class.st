@@ -33,6 +33,6 @@ BaselineOfPharoOCCT >> baseline: spec [
 			group: 'Model' with: #( 'MyOpenCascade-Model' );
 			group: 'UI' with: #( 'MyOpenCascade-Spec' );
 			group: 'Tests' with: #( 'MyOpenCascade-UFFI-Test' );
-			group: 'default' with: #( 'Core' 'Rendering' 'Model' 'UI' );
-			group: 'all' with: #( 'default' 'Tests' ) ].
+			group: 'default' with: #( 'Core' 'Rendering' 'Model' 'UI' 'Tests' );
+			group: 'all' with: #( 'default' ) ].
 ]
