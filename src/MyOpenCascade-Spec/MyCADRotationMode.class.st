@@ -33,8 +33,6 @@ MyCADRotationMode >> activateFor: aPresenter [
 	startCenter := presenter selectedNodeRotationCenter.
 	axisLock := #z.
 	currentDegrees := 0.
-
-	presenter focusWodenWidget
 ]
 
 { #category : 'applying' }

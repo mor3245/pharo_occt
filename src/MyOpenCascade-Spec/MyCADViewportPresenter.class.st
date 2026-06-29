@@ -480,17 +480,6 @@ MyCADViewportPresenter >> fitSelected [
 	self selectedNode ifNotNil: [ :node | self cameraControlMorph fitNode: node ]
 ]
 
-{ #category : 'events - focus' }
-MyCADViewportPresenter >> focusWodenWidget [
-	"Requests keyboard focus so X/Y/Z/Enter work after choosing the menu item."
-
-	| widget |
-	widget := self wodenWidget.
-	widget ifNil: [ ^ self ].
-
-	widget takeKeyboardFocus
-]
-
 { #category : 'announcing' }
 MyCADViewportPresenter >> geometryChanged [
 	"Redraws the viewport and informs owner presenters that the geometry list changed."
@@ -499,17 +488,6 @@ MyCADViewportPresenter >> geometryChanged [
 	geometryChangedAction value.
 	self setupContextMenu
 
-]
-
-{ #category : 'events - keyboard' }
-MyCADViewportPresenter >> handleKeyStroke: anEvent [
-
-	| key |
-	key := self keyStringFromEvent: anEvent.
-
-	(translationMode handleKey: key) ifTrue: [
-			anEvent wasHandled: true.
-			^ self ]
 ]
 
 { #category : 'events - mouse' }
@@ -616,30 +594,11 @@ MyCADViewportPresenter >> inspectSelectedShape [
 			renderedShape inspect ]
 ]
 
-{ #category : 'events - keyboard' }
-MyCADViewportPresenter >> keyStringFromEvent: anEvent [
-	"Normalizes common Morphic key event variants."
-
-	^ self normalizedKeyCharacter: anEvent keyCharacter
-]
-
 { #category : 'geometry - naming' }
 MyCADViewportPresenter >> nextAvailableNameFor: baseName [
 	"Answers the first unused numbered display name for this scene."
 
 	^ self cadDocument nextAvailableNameFor: baseName
-]
-
-{ #category : 'events - keyboard' }
-MyCADViewportPresenter >> normalizedKeyCharacter: aCharacter [
-	"Answers the key name used by the transform modes."
-
-	aCharacter ifNil: [ ^ '' ].
-	aCharacter = (Character value: 13) ifTrue: [ ^ 'return' ].
-	aCharacter = (Character value: 27) ifTrue: [ ^ 'escape' ].
-	aCharacter = (Character value: 8) ifTrue: [ ^ 'backspace' ].
-
-	^ aCharacter asString asLowercase
 ]
 
 { #category : 'picking - coordinates' }
@@ -977,10 +936,8 @@ MyCADViewportPresenter >> setupContextMenu [
 	widget
 		on: #mouseDown send: #handleMouseDown: to: self;
 		on: #mouseMove send: #handleMouseMove: to: self;
-		on: #mouseUp send: #handleMouseUp: to: self;
-		on: #keyStroke send: #handleKeyStroke: to: self. "If your image does not understand #keyStroke, try this instead:
+		on: #mouseUp send: #handleMouseUp: to: self.
 
-	on: #keyDown send: #handleKeyStroke: to: self"
 	contextMenuWidget := widget
 ]
 
