@@ -507,18 +507,9 @@ MyCADViewportPresenter >> handleKeyStroke: anEvent [
 	| key |
 	key := self keyStringFromEvent: anEvent.
 
-	(rotationMode handleKey: key) ifTrue: [
-			anEvent wasHandled: true.
-			^ self ].
-
 	(translationMode handleKey: key) ifTrue: [
 			anEvent wasHandled: true.
-			^ self ].
-
-	key = 'r' ifFalse: [ ^ self ].
-	anEvent wasHandled: true.
-	self activateRotationMode.
-	^ self
+			^ self ]
 ]
 
 { #category : 'events - mouse' }

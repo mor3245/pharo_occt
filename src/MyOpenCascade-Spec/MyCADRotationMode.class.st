@@ -6,7 +6,6 @@ Class {
 		'active',
 		'startNodeTransform',
 		'axisLock',
-		'typedDegreesString',
 		'currentDegrees',
 		'startCenter'
 	],
@@ -33,26 +32,9 @@ MyCADRotationMode >> activateFor: aPresenter [
 	startNodeTransform := selectedRenderedShape node transform copy.
 	startCenter := presenter selectedNodeRotationCenter.
 	axisLock := #z.
-	typedDegreesString := ''.
 	currentDegrees := 0.
 
 	presenter focusWodenWidget
-]
-
-{ #category : 'keyboard' }
-MyCADRotationMode >> appendTypedCharacter: key [
-	"Accumulates typed numeric degrees and applies them immediately."
-
-	| degrees |
-	(self isNumericKey: key) ifFalse: [ ^ self ].
-
-	typedDegreesString := typedDegreesString , key.
-
-	degrees := [ typedDegreesString asNumber ]
-		           on: Error
-		           do: [ ^ self ].
-
-	self applyDegrees: degrees
 ]
 
 { #category : 'applying' }
@@ -120,69 +102,6 @@ MyCADRotationMode >> confirm [
 	presenter transformModeChanged: #none
 ]
 
-{ #category : 'keyboard' }
-MyCADRotationMode >> handleAxisKey: key [
-	"Handles X/Y/Z axis lock keys."
-
-	(#( 'x' 'y' 'z' ) includes: key) ifFalse: [ ^ false ].
-
-	self setAxisLock: key asSymbol.
-	^ true
-]
-
-{ #category : 'keyboard' }
-MyCADRotationMode >> handleCancellationKey: key [
-	"Handles rotation cancellation keys."
-
-	key = 'escape' ifFalse: [ ^ false ].
-
-	self cancel.
-	^ true
-]
-
-{ #category : 'keyboard' }
-MyCADRotationMode >> handleCompletionKey: key [
-
-	(#( 'enter' 'return' ) includes: key) ifFalse: [ ^ false ].
-	self confirm.
-	^ true
-]
-
-{ #category : 'keyboard' }
-MyCADRotationMode >> handleDeletionKey: key [
-	"Handles deletion of typed rotation degrees."
-
-	(key = 'backspace' or: [ key = (Character value: 8) asString ]) ifFalse: [ ^ false ].
-
-	self removeLastTypedCharacter.
-	^ true
-]
-
-{ #category : 'keyboard' }
-MyCADRotationMode >> handleKey: key [
-	"Handles a normalized key string. Answers whether the key was consumed."
-
-	self isActive ifFalse: [ ^ false ].
-
-	(self handleAxisKey: key) ifTrue: [ ^ true ].
-	(self handleCompletionKey: key) ifTrue: [ ^ true ].
-	(self handleCancellationKey: key) ifTrue: [ ^ true ].
-	(self handleDeletionKey: key) ifTrue: [ ^ true ].
-	(self handleNumericKey: key) ifTrue: [ ^ true ].
-
-	^ false
-]
-
-{ #category : 'keyboard' }
-MyCADRotationMode >> handleNumericKey: key [
-	"Handles numeric rotation degree input."
-
-	(self isNumericKey: key) ifFalse: [ ^ false ].
-
-	self appendTypedCharacter: key.
-	^ true
-]
-
 { #category : 'testing' }
 MyCADRotationMode >> hasCurrentRotation [
 
@@ -202,24 +121,10 @@ MyCADRotationMode >> isActive [
 	^ active
 ]
 
-{ #category : 'keyboard' }
-MyCADRotationMode >> isNumericKey: key [
-	"Answers whether key can be part of a typed degree number."
-
-	key size = 1 ifFalse: [ ^ false ].
-
-	key first isDigit ifTrue: [ ^ true ].
-	key = '-' ifTrue: [ ^ typedDegreesString isEmpty ].
-	key = '.' ifTrue: [ ^ (typedDegreesString includes: $.) not ].
-
-	^ false
-]
-
 { #category : 'applying' }
 MyCADRotationMode >> previewDegrees: degreesVector [
 	"Previews the single active X/Y/Z degree value from the transform panel."
 
-	typedDegreesString := ''.
 	degreesVector x ~= 0 ifTrue: [
 			axisLock := #x.
 			^ self applyDegrees: degreesVector x ].
@@ -233,26 +138,6 @@ MyCADRotationMode >> previewDegrees: degreesVector [
 	self applyDegrees: 0
 ]
 
-{ #category : 'keyboard' }
-MyCADRotationMode >> removeLastTypedCharacter [
-	"Deletes the last typed degree character and reapplies the value."
-
-	| degrees |
-	typedDegreesString isEmpty ifTrue: [ ^ self ].
-
-	typedDegreesString := typedDegreesString copyFrom: 1 to: typedDegreesString size - 1.
-
-	typedDegreesString isEmpty ifTrue: [
-			self applyDegrees: 0.
-			^ self ].
-
-	degrees := [ typedDegreesString asNumber ]
-		           on: Error
-		           do: [ ^ self ].
-
-	self applyDegrees: degrees
-]
-
 { #category : 'initialization' }
 MyCADRotationMode >> reset [
 	"Clears transient rotation-mode state."
@@ -261,7 +146,6 @@ MyCADRotationMode >> reset [
 	startNodeTransform := nil.
 	startCenter := nil.
 	axisLock := nil.
-	typedDegreesString := ''.
 	currentDegrees := 0
 ]
 
