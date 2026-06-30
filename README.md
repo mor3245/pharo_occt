@@ -225,3 +225,15 @@ individual faces, wires, edges, and vertices.
 - `MyOpenCascade-Spec`: Spec UI presenters
 - `MyOpenCascade-UFFI-Test`: native wrapper tests
 - `BaselineOfPharoOCCT`: Metacello baseline
+
+## Acknowledgements
+
+Pharo OCCT builds on Pharo, OpenCascade, Woden, and the related Smalltalk tooling communities.
+
+Thanks to everyone who contributed ideas, testing, examples, and feedback while this project was taking shape, and to the Pharo community for being responsive and helpful.
+
+Additional thanks to:
+
+- Dr. Aik Siong Koh: for allowing me to take on this project, and for his encouragement and guidance
+- Dr. Chai Ian: for being open to my outreach and helping this project get started
+- Ronie Salgado: for developing Woden
