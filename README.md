@@ -111,6 +111,25 @@ Choose `Library > Pharo CAD` to start the MyCAD workbench. The workbench can
 create box and cylinder primitives, import and export BREP files, select
 objects, edit primitive dimensions, and apply transforms.
 
+## Controls
+
+Camera controls:
+
+- Select: Left-click
+- Zoom: Scroll
+- Rotate view: Shift + Right-click
+- Pan view: Ctrl + Right-click
+
+## Current Features
+
+- 1 Unit Model = 1mm
+- Cylinder and box basic shapes
+- Import/export BREP files
+- Boolean cut operations
+- Rotation and translation
+- Geometry class runtime inspection
+- Default CAD navigation controls
+
 ## Package Layout
 
 - `LibImports-UFFI-CWrap`: native library lookup for the C wrapper
