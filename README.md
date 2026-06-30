@@ -130,6 +130,92 @@ Camera controls:
 - Geometry class runtime inspection
 - Default CAD navigation controls
 
+## Known Limitations
+
+  not a complete production CAD environment.
+- Built-in primitive creation is currently limited to boxes and cylinders.
+- Document persistence is based on BREP import/export; there is not yet a full
+  MyCAD project file format for saving UI state, selection state, or editing
+  history.
+- Boolean operations depend on valid OpenCascade input shapes and may need
+  follow-up inspection when imported or generated geometry is complex.
+- Rendering is functional but not yet sophisticated.
+
+## Workbench Examples
+
+The MyCAD workbench supports a small CAD workflow from primitive creation to
+runtime shape inspection.
+
+### Primitive Shapes
+
+Box and cylinder primitives can be created directly in the workbench. Primitive
+objects appear in the geometry tree and expose their editable dimensions in the
+property panel.
+
+![Box primitive displayed in the MyCAD workbench](docs/images/workbench-box-primitive.png)
+
+### Workbench Overview
+
+The main workbench keeps the document tree, property panel, viewport, transform
+panel, and shape context menu visible together. This gives one place to select
+geometry, edit primitive dimensions, apply translations or rotations, fit the
+camera, import or export BREP files, and inspect the selected runtime object.
+
+![MyCAD workbench showing geometry selection, properties, transform controls, viewport, and context menu](docs/images/workbench-feature-overview.png)
+
+BREP results can be saved and loaded as shapes. This example shows a hollow
+cylinder imported back into the workbench.
+
+![Imported hollow cylinder BREP shown in the MyCAD workbench](docs/images/workbench-hollow-cylinder.png)
+
+### Boolean Cut Workflow
+
+Boolean cut operations work on selected bodies in the document. In this example,
+two overlapping boxes are positioned so one body can be cut by the other.
+
+![Two overlapping boxes selected in the MyCAD workbench](docs/images/boolean-cut-overlapping-boxes.png)
+
+The selected body can then be used from the context menu with the cut commands.
+`Cut Selected With Other Bodies` subtracts the other bodies from the selected
+body, while `Cut Other Bodies With Selected` uses the selected body as the
+cutting tool.
+
+![Boolean cut commands in the MyCAD context menu](docs/images/boolean-cut-context-command.png)
+
+The result is added back into the geometry tree as a document object, alongside
+the original bodies.
+
+![Boolean cut result added to the geometry tree](docs/images/boolean-cut-result-body.png)
+
+### BREP Import
+
+Imported BREP files are loaded as document shapes and rendered through the same
+Woden bridge as primitive geometry.
+
+![Imported Motor-c BREP shape displayed in the MyCAD workbench](docs/images/workbench-imported-motor-brep.png)
+
+Imported shapes participate in selection, property display, and viewport
+navigation. Selection highlighting is transient UI state, so it remains separate
+from the persisted CAD object.
+
+![Selected imported Motor-c shape highlighted in yellow](docs/images/workbench-selected-imported-shape.png)
+
+### Runtime Inspection
+
+The Inspect Selected command opens Pharo inspectors on the rendered shape and
+its wrapped OpenCascade topology. This is useful while developing the CAD object
+model and wrapper layer because it exposes solids, shells, faces, wires, edges,
+vertices, storage metadata, and mesh counts.
+
+| Imported shape topology | Hollow cylinder topology |
+| --- | --- |
+| ![Inspector showing imported Motor-c topology counts](docs/images/inspector-imported-shape-topology.png) | ![Inspector showing hollow cylinder topology counts](docs/images/inspector-hollow-cylinder-topology.png) |
+
+Nested topology objects can be expanded for primitive shapes as well, down to
+individual faces, wires, edges, and vertices.
+
+![Inspector expanded into box face topology](docs/images/inspector-box-face-topology.png)
+
 ## Package Layout
 
 - `LibImports-UFFI-CWrap`: native library lookup for the C wrapper
