@@ -41,9 +41,19 @@ its dependent OpenCascade DLLs beside the Pharo image. This lets the Windows DLL
 loader find both `my_occt_c_wrapper.dll` and the OCCT DLLs it depends on without
 installing anything OS-wide.
 
-Download the Windows DLL bundle from the
-[pharo_occt_cwrapper v0.1.0-dev1 release](https://github.com/mor3245/pharo_occt_cwrapper/releases/tag/v0.1.0-dev1),
-then copy the DLLs into the directory that contains your `.image` file.
+Use a C wrapper build that matches the Smalltalk code you loaded:
+
+- If you loaded Pharo OCCT from `master`, compile the C wrapper from the
+  matching `pharo_occt_cwrapper` source checkout.
+- If you loaded a tagged Pharo OCCT release, use the C wrapper version named by
+  that Smalltalk release. You can either download its Windows DLL bundle from
+  the [pharo_occt_cwrapper releases page](https://github.com/mor3245/pharo_occt_cwrapper/releases)
+  or compile it yourself from the corresponding source tag.
+
+Then copy the DLLs into the directory that contains your `.image` file. Do not
+mix the latest Smalltalk code with an older C wrapper release. The Smalltalk
+wrapper and native DLL are versioned together because the UFFI calls must match
+the exported C wrapper API.
 
 For example, if Pharo Launcher shows an image named
 `pharo_opencascade_integrationX`, use `Show in folder` and copy the DLL files
