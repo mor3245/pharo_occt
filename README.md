@@ -36,21 +36,53 @@ github://mor3245/woden-core-scene-graph:master
 
 ## Native Libraries
 
-The OpenCascade wrapper is a native DLL. Keep the wrapper DLL and its dependent
-OpenCascade DLLs beside the Pharo image:
+The OpenCascade wrapper is a native DLL. On Windows, keep the wrapper DLL and
+its dependent OpenCascade DLLs beside the Pharo image. This lets the Windows DLL
+loader find both `my_occt_c_wrapper.dll` and the OCCT DLLs it depends on without
+installing anything OS-wide.
+
+Download the Windows DLL bundle from the
+[pharo_occt_cwrapper v0.1.0-dev1 release](https://github.com/mor3245/pharo_occt_cwrapper/releases/tag/v0.1.0-dev1),
+then copy the DLLs into the directory that contains your `.image` file.
+
+For example, if Pharo Launcher shows an image named
+`pharo_opencascade_integrationX`, use `Show in folder` and copy the DLL files
+into:
+
+![Pharo Launcher context menu with Show in folder selected](docs/images/pharo-launcher-show-in-folder.png)
 
 ```text
-<image directory>/my_occt_c_wrapper.dll
-<image directory>/TKBRep.dll
-<image directory>/TKPrim.dll
-<image directory>/TKernel.dll
-...
+C:\Users\morgan\Documents\Pharo\images\pharo_opencascade_integrationX
 ```
 
-This avoids installing the DLLs OS-wide and matches the Windows loader behavior
-used by the working images. If `my_occt_c_wrapper.dll` is moved into a nested
-folder without also configuring the DLL search path, Windows may find the wrapper
-but fail to load one of its dependent DLLs.
+The final layout should look like this:
+
+```text
+C:\Users\morgan\Documents\Pharo\images\pharo_opencascade_integrationX\
+  pharo_opencascade_integrationX.image
+  pharo_opencascade_integrationX.changes
+  my_occt_c_wrapper.dll
+  TKBRep.dll
+  TKPrim.dll
+  TKernel.dll
+  ...
+```
+
+Step by step:
+
+1. Open Pharo Launcher.
+2. Select the image that will run Pharo OCCT, for example
+   `pharo_opencascade_integrationX`.
+3. Right-click the image and choose `Show in folder`.
+4. Open the downloaded `pharo_occt_cwrapper` release archive.
+5. Copy `my_occt_c_wrapper.dll` and all shipped `.dll` dependency files from the
+   archive into the image folder opened in step 3.
+6. Restart the Pharo image if it was already running.
+
+Do not copy only `my_occt_c_wrapper.dll` by itself. The wrapper depends on the
+OpenCascade DLLs in the same release bundle. Also do not put the DLLs in a nested
+subfolder under the image directory unless you also configure the Windows DLL
+search path.
 
 To check the path Pharo will use:
 
