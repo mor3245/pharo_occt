@@ -161,7 +161,8 @@ MyShape >> derivedBodyNameAt: oneBasedIndex [
 	"Keeps the first body name stable and numbers additional split bodies without nesting suffixes."
 
 	oneBasedIndex = 1 ifTrue: [ ^ self normalizedBodyName ].
-	^ self rootBodyName , ' - Body ' , (self startingBodyNumber + oneBasedIndex - 1) asString
+		^ self rootBodyName , self generatedBodyMarker , (self startingBodyNumber + oneBasedIndex - 1) asString
+
 ]
 
 { #category : 'rendering' }
@@ -266,6 +267,12 @@ MyShape >> free [
 ]
 
 { #category : 'private' }
+MyShape >> generatedBodyMarker [
+
+	^ ' - Body '
+]
+
+{ #category : 'private' }
 MyShape >> hasNativeHandle [
 	"Answers whether the native pointer is currently usable without rehydration."
 
@@ -331,8 +338,9 @@ MyShape >> normalBufferLength [
 MyShape >> normalizedBodyName [
 	"Answers the target name with at most one generated Body suffix."
 
-	(self name includesSubstring: ' - Body ') ifFalse: [ ^ self name ].
-	^ self rootBodyName , ' - Body ' , self startingBodyNumber asString
+	(self name includesSubstring: self generatedBodyMarker) ifFalse: [ ^ self name ].
+	^ self rootBodyName , self generatedBodyMarker , self startingBodyNumber asString
+
 ]
 
 { #category : 'accessing' }
@@ -436,7 +444,7 @@ MyShape >> rootBodyName [
 	"Answers the original body name before any generated Body suffix."
 
 	| markerIndex |
-	markerIndex := self name findString: ' - Body '.
+	markerIndex := self name findString: self generatedBodyMarker.
 	markerIndex = 0 ifTrue: [ ^ self name ].
 	^ self name copyFrom: 1 to: markerIndex - 1
 ]
@@ -576,16 +584,18 @@ MyShape >> solids [
 MyShape >> startingBodyNumber [
 	"Answers the existing generated body number, defaulting to one for an unsplit target."
 
-	| markerIndex suffix tokens |
-	markerIndex := self name findString: ' - Body '.
+	| markerIndex suffix suffixStart tokens |
+	markerIndex := self name findString: self generatedBodyMarker.
 	markerIndex = 0 ifTrue: [ ^ 1 ].
 
-	suffix := self name copyFrom: markerIndex + ' - Body ' size to: self name size.
+	suffixStart := markerIndex + self generatedBodyMarker size.
+	suffixStart > self name size ifTrue: [ ^ 1 ].
+
+	suffix := self name copyFrom: suffixStart to: self name size.
 	tokens := suffix substrings.
 	tokens ifEmpty: [ ^ 1 ].
-	^ [ tokens first asInteger ]
-		  on: Error
-		  do: [ 1 ]
+	(tokens first allSatisfy: [ :character | character isDigit ]) ifFalse: [ ^ 1 ].
+	^ tokens first asInteger
 ]
 
 { #category : 'persistence' }
