@@ -28,3 +28,11 @@ MyMakeShape class >> int32ArrayFromExternalAddress: address count: count [
 
 	^ (1 to: count) collect: [ :i | address signedLongAt: i - 1 * 4 + 1 ]
 ]
+
+{ #category : 'validation' }
+MyMakeShape class >> validatePositiveDimension: aNumber named: label [
+	"Primitive maker APIs reject invalid dimensions before calling into OCCT."
+
+	(aNumber isNumber and: [ aNumber > 0 ]) ifFalse: [
+		self error: label , ' must be positive' ]
+]

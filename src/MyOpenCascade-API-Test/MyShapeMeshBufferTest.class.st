@@ -46,6 +46,27 @@ MyShapeMeshBufferTest >> testMeshBuffersMatchReportedCounts [
 ]
 
 { #category : 'tests' }
+MyShapeMeshBufferTest >> testRepeatedTessellationKeepsCylinderBuffersConsistent [
+
+	| shape |
+	shape := MyCylinderMaker makeCylinderRadius: 0.5 height: 1.
+
+	[
+		shape tessellateDeflection: 0.1.
+		self assert: shape vertexBufferLength equals: shape vertexCount * 3.
+		self assert: shape normalBufferLength equals: shape vertexCount * 3.
+		self assert: shape triangleIndexCount equals: shape triangleCount * 3.
+
+		shape tessellateDeflection: 0.01.
+		self assert: shape vertexBufferLength equals: shape vertexCount * 3.
+		self assert: shape normalBufferLength equals: shape vertexCount * 3.
+		self assert: shape triangleIndexCount equals: shape triangleCount * 3.
+		self assert: shape vertices size equals: shape vertexBufferLength.
+		self assert: shape normals size equals: shape normalBufferLength.
+		self assert: shape triangles size equals: shape triangleIndexCount ] ensure: [ shape free ]
+]
+
+{ #category : 'tests' }
 MyShapeMeshBufferTest >> testUntessellatedShapeAnswersEmptyMeshBuffers [
 
 	| shape |

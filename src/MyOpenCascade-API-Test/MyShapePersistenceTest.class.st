@@ -40,6 +40,20 @@ MyShapePersistenceTest >> testFreeLeavesExplicitStorageFileOnDisk [
 ]
 
 { #category : 'tests' }
+MyShapePersistenceTest >> testLoadFromCorruptFileRaisesError [
+
+	| file |
+	file := FileLocator temp / ('corrupt-shape-' , UUID new asString , '.brep').
+	file writeStreamDo: [ :stream | stream nextPutAll: 'not a brep file' ].
+
+	[
+		self
+			should: [ MyShape loadFromFile: file ]
+			raise: Error ] ensure: [
+				file exists ifTrue: [ file delete ] ]
+]
+
+{ #category : 'tests' }
 MyShapePersistenceTest >> testLoadFromFileRestoresNameAndIdentity [
 
 	| original loaded file storageId |
@@ -142,6 +156,22 @@ MyShapePersistenceTest >> testRenameDoesNotWriteOrMoveBRepFile [
 		self assert: oldFile exists ] ensure: [
 			shape free.
 			oldFile exists ifTrue: [ oldFile delete ] ]
+]
+
+{ #category : 'tests' }
+MyShapePersistenceTest >> testSaveToFileUsesRequestedBasenameAsShapeName [
+
+	| shape file |
+	shape := MyBoxMaker makeBoxDx: 1 dy: 1 dz: 1 named: 'Original Name'.
+	file := FileLocator temp / ('requested-name-' , UUID new asString , '.brep').
+
+	[
+		shape saveToFile: file.
+		self assert: shape name equals: file basenameWithoutExtension.
+		self assert: shape storageFileReference fullName equals: file fullName.
+		self assert: file exists ] ensure: [
+			shape free.
+			file exists ifTrue: [ file delete ] ]
 ]
 
 { #category : 'tests' }

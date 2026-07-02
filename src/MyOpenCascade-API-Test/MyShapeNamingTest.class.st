@@ -30,6 +30,20 @@ MyShapeNamingTest >> testDefaultShapeNameAndStorageIdentityAreCreatedLazily [
 ]
 
 { #category : 'tests' }
+MyShapeNamingTest >> testLegacyStoragePathInfersNameAndCreatesStorageId [
+
+	| shape file storageId |
+	shape := MyShape new.
+	file := FileLocator temp / 'Legacy Housing.brep'.
+	shape storagePath: file fullName.
+	storageId := shape storageId.
+
+	self assert: shape name equals: 'Legacy Housing'.
+	self deny: storageId isNil.
+	self assert: shape storageFileName equals: 'Legacy Housing--' , storageId , '.brep'
+]
+
+{ #category : 'tests' }
 MyShapeNamingTest >> testNameSetterDelegatesToRename [
 
 	| shape |

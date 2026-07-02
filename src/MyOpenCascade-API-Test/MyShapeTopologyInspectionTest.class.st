@@ -33,6 +33,21 @@ MyShapeTopologyInspectionTest >> testDepthZeroRefreshPopulatesCountsOnly [
 ]
 
 { #category : 'tests' }
+MyShapeTopologyInspectionTest >> testSeparatedSolidsOfSimpleBoxAnswersNamedSolid [
+
+	| shape solids |
+	shape := MyBoxMaker makeBoxDx: 1 dy: 1 dz: 1 named: 'Base Box'.
+
+	[
+		solids := shape separatedSolids.
+		self assert: solids size equals: 1.
+		self assert: solids first class equals: MyShape.
+		self assert: solids first name equals: 'Base Box' ] ensure: [
+			solids ifNotNil: [ solids do: [ :each | each free ] ].
+			shape free ]
+]
+
+{ #category : 'tests' }
 MyShapeTopologyInspectionTest >> testTopologyAliasesReuseCachedSubshapes [
 
 	| shape faces edges vertices |
@@ -105,4 +120,14 @@ MyShapeTopologyInspectionTest >> testTopologyInspectionSubshapesAreNotPersisted 
 		self assert: (faces allSatisfy: [ :face | face storagePath isNil ]) ] ensure: [
 			faces ifNotNil: [ faces do: [ :face | face free ] ].
 			shape free ]
+]
+
+{ #category : 'tests' }
+MyShapeTopologyInspectionTest >> testUnsupportedSubshapeTypeAnswersEmptyCollection [
+
+	| shape |
+	shape := MyBoxMaker makeBoxDx: 1 dy: 1 dz: 1.
+
+	[
+		self assert: (shape subshapesOfType: 999 as: MyShape) isEmpty ] ensure: [ shape free ]
 ]

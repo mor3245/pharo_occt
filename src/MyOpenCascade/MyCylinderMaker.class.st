@@ -25,6 +25,9 @@ MyCylinderMaker class >> makeCylinderRadius: radius height: height named: aStrin
 		"Creates a named cylinder shape in memory. Persistence is always explicit."
 
 	| shape |
+	self validatePositiveDimension: radius named: 'radius'.
+	self validatePositiveDimension: height named: 'height'.
+
 	shape := CxxOcctLibrary cxxCreateCylinderRadius: radius height: height.
 	shape isNull ifTrue: [ self error: 'cxxCreateCylinder failed' ].
 	shape setName: aString.
