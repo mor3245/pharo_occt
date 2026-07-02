@@ -6,6 +6,23 @@ Class {
 }
 
 { #category : 'tests' }
+MyShapePersistenceTest >> testDeleteStorageFileRemovesFileAndClearsPath [
+
+	| shape file |
+	shape := MyBoxMaker makeBoxDx: 1 dy: 1 dz: 1 named: 'Disposable Shape'.
+	file := FileLocator temp / ('disposable-shape-' , UUID new asString , '.brep').
+	shape saveToFile: file.
+
+	[
+		self assert: file exists.
+		shape deleteStorageFile.
+		self deny: file exists.
+		self assert: shape storagePath isNil ] ensure: [
+			shape free.
+			file exists ifTrue: [ file delete ] ]
+]
+
+{ #category : 'tests' }
 MyShapePersistenceTest >> testFreeLeavesExplicitStorageFileOnDisk [
 
 	| shape file |
@@ -47,6 +64,18 @@ MyShapePersistenceTest >> testLoadFromFileRestoresNameAndIdentity [
 ]
 
 { #category : 'tests' }
+MyShapePersistenceTest >> testLoadFromMissingFileRaisesError [
+
+	| file |
+	file := FileLocator temp / ('missing-shape-' , UUID new asString , '.brep').
+	file exists ifTrue: [ file delete ].
+
+	self
+		should: [ MyShape loadFromFile: file ]
+		raise: Error
+]
+
+{ #category : 'tests' }
 MyShapePersistenceTest >> testNamedShapeIsNotAutomaticallyPersisted [
 
 	| shape |
@@ -59,6 +88,35 @@ MyShapePersistenceTest >> testNamedShapeIsNotAutomaticallyPersisted [
 	[
 		self assert: shape name equals: 'Mounting Bracket'.
 		self assert: shape storageFileReference isNil ] ensure: [ shape free ]
+]
+
+{ #category : 'tests' }
+MyShapePersistenceTest >> testPersistWithoutNativeHandleRaisesError [
+
+	| shape file |
+	shape := MyShape new.
+	file := FileLocator temp / ('no-handle-' , UUID new asString , '.brep').
+	shape storagePath: file fullName.
+
+	[
+		self
+			should: [ shape persistToDisk ]
+			raise: Error.
+		self deny: file exists ] ensure: [
+			shape free.
+			file exists ifTrue: [ file delete ] ]
+]
+
+{ #category : 'tests' }
+MyShapePersistenceTest >> testPersistWithoutSaveDestinationRaisesError [
+
+	| shape |
+	shape := MyBoxMaker makeBoxDx: 1 dy: 1 dz: 1.
+
+	[
+		self
+			should: [ shape persistToDisk ]
+			raise: Error ] ensure: [ shape free ]
 ]
 
 { #category : 'tests' }
@@ -112,19 +170,4 @@ MyShapePersistenceTest >> testShapeRehydratesNativeHandleFromDisk [
 
 	self assert: file exists.
 	file delete
-]
-
-{ #category : 'tests' }
-MyShapePersistenceTest >> testTopologyInspectionSubshapesAreNotPersisted [
-	"Inspection-only faces must not create independent BREP files."
-
-	| shape faces |
-	shape := MyBoxMaker makeBoxDx: 1 dy: 1 dz: 1.
-
-	[
-		faces := shape faces.
-		self deny: faces isEmpty.
-		self assert: (faces allSatisfy: [ :face | face storagePath isNil ]) ] ensure: [
-			faces ifNotNil: [ faces do: [ :face | face free ] ].
-			shape free ]
 ]

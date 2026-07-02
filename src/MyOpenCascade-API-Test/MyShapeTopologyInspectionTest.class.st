@@ -6,6 +6,53 @@ Class {
 }
 
 { #category : 'tests' }
+MyShapeTopologyInspectionTest >> testClearTopologyInspectionDataRemovesCachedChildren [
+
+	| shape |
+	shape := MyBoxMaker makeBoxDx: 1 dy: 1 dz: 1.
+
+	[
+		shape refreshTopologyForInspectionDepth: 1.
+		self deny: shape topologyChildrenForInspection isEmpty.
+
+		shape clearTopologyInspectionData.
+		self deny: shape hasTopologyInspectionData.
+		self assert: shape topologyChildrenForInspection isEmpty ] ensure: [ shape free ]
+]
+
+{ #category : 'tests' }
+MyShapeTopologyInspectionTest >> testDepthZeroRefreshPopulatesCountsOnly [
+
+	| shape |
+	shape := MyBoxMaker makeBoxDx: 1 dy: 1 dz: 1.
+
+	[
+		shape refreshTopologyForInspectionDepth: 0.
+		self assert: shape hasTopologyInspectionData.
+		self assert: shape topologyChildrenForInspection isEmpty ] ensure: [ shape free ]
+]
+
+{ #category : 'tests' }
+MyShapeTopologyInspectionTest >> testTopologyAliasesReuseCachedSubshapes [
+
+	| shape faces edges vertices |
+	shape := MyBoxMaker makeBoxDx: 1 dy: 1 dz: 1.
+
+	[
+		faces := shape faces.
+		edges := shape edges.
+		vertices := shape topologicalVertices.
+
+		self assert: shape topologicalFaces == faces.
+		self assert: shape topologicalEdges == edges.
+		self assert: shape topologicalVertices == vertices ] ensure: [
+			faces ifNotNil: [ faces do: [ :each | each free ] ].
+			edges ifNotNil: [ edges do: [ :each | each free ] ].
+			vertices ifNotNil: [ vertices do: [ :each | each free ] ].
+			shape free ]
+]
+
+{ #category : 'tests' }
 MyShapeTopologyInspectionTest >> testTopologyCacheIsClearedAfterTransform [
 
 	| shape |
