@@ -223,7 +223,8 @@ individual faces, wires, edges, and vertices.
 - `MyOpenCascade-Rendering`: OCCT shape to Woden scene bridge
 - `MyOpenCascade-Model`: CAD document and object model
 - `MyOpenCascade-Spec`: Spec UI presenters
-- `MyOpenCascade-UFFI-Test`: native wrapper tests
+- `MyOpenCascade-API-Test`: native wrapper/API tests
+- `MyOpenCascade-CAD-GUI-Test`: Spec/workbench CAD GUI tests
 - `BaselineOfPharoOCCT`: Metacello baseline
 
 ## Acknowledgements
