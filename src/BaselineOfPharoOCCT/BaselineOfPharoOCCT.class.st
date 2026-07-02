@@ -24,15 +24,19 @@ BaselineOfPharoOCCT >> baseline: spec [
 				with: [ spec requires: #( 'MyOpenCascade' 'MyOpenCascade-Rendering' ) ];
 			package: 'MyOpenCascade-Spec'
 				with: [ spec requires: #( 'MyOpenCascade-Model' 'MyOpenCascade-Rendering' 'WodenSceneGraph' ) ];
-			package: 'MyOpenCascade-UFFI-Test'
-				with: [ spec requires: #( 'MyOpenCascade' ) ].
+			package: 'MyOpenCascade-API-Test'
+				with: [ spec requires: #( 'MyOpenCascade' ) ];
+			package: 'MyOpenCascade-CAD-GUI-Test'
+				with: [ spec requires: #( 'MyOpenCascade-Spec' ) ].
 
 		spec
 			group: 'Core' with: #( 'LibImports-UFFI-CWrap' 'MyOpenCascade' );
 			group: 'Rendering' with: #( 'MyOpenCascade-Rendering' );
 			group: 'Model' with: #( 'MyOpenCascade-Model' );
 			group: 'UI' with: #( 'MyOpenCascade-Spec' );
-			group: 'Tests' with: #( 'MyOpenCascade-UFFI-Test' );
+			group: 'API Tests' with: #( 'MyOpenCascade-API-Test' );
+			group: 'CAD GUI Tests' with: #( 'MyOpenCascade-CAD-GUI-Test' );
+			group: 'Tests' with: #( 'API Tests' 'CAD GUI Tests' );
 			group: 'default' with: #( 'Core' 'Rendering' 'Model' 'UI' 'Tests' );
 			group: 'all' with: #( 'default' ) ].
 ]
