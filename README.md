@@ -235,6 +235,6 @@ Thanks to everyone who contributed ideas, testing, examples, and feedback while 
 
 Additional thanks to:
 
-- Dr. Aik Siong Koh: for allowing me to take on this project, and for his encouragement and guidance
+- Dr. Aik-Siong Koh: for allowing me to take on this project, and for his encouragement and guidance
 - Dr. Chai Ian: for being open to my outreach and helping this project get started
 - Ronie Salgado: for developing Woden
