@@ -724,11 +724,12 @@ MyShape >> topologyChildrenForInspection [
 
 { #category : 'private' }
 MyShape >> transferShape: aShape to: shapeClass [
-	"Transfers a native handle from a generic MyShape into a typed MyShape subclass."
+	"Transfers ownership of a native handle from a generic MyShape into a typed MyShape subclass."
 
 	| typedShape |
 	typedShape := shapeClass new.
 	typedShape setHandle: aShape getHandle.
+	aShape setHandle: nil.
 	typedShape storagePath: aShape storagePath.
 	aShape storagePath: nil.
 	^ typedShape
