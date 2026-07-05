@@ -21,6 +21,10 @@ In Pharo Launcher
     Windows 11 Window Explorer will open
         Will show contents C:\Users\<your_user>\Documents\Pharo\images\pharo_opencascade_integration
         Example: C:\Users\morgan\Documents\Pharo\images\pharo_opencascade_integration
+    In Pharo itself
+        Click/Pharo/Quit/
+            A question will appear
+            Click/Save/
 
 In Windows 11 File Explorer
     Go to

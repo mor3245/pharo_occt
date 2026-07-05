@@ -4,6 +4,17 @@ How to use basic Pharo functionalities
         Click/Pharo/Quit
             A question will appear
             Click/Save/
+    To save image manually
+        In Pharo itself
+        Click/Pharo/Save/
+    To save image and quit
+        In Pharo itself
+        Click/Pharo/Save and quit/
+    To quit without saving
+        In Pharo itself
+        Click/Pharo/Quit/
+            A question will appear
+            Click/Discard/
     To start Pharo again
         In Pharo Launcher
         Select/Pharo 14.0 - 64bit (development version, latest)/
@@ -23,7 +34,41 @@ In Pharo itself
         Click/Browse/System Browser/
     To open Playground
         Click/Browse/Playground/
-    Create a package
+    To open Transcript
+        Click/Browse/Transcript/
+    To clear Transcript
+        In Transcript
+        Right click/Transcript text area/
+        In context menu
+            Click/Clear/
+    To evaluate code in Playground
+        In Playground
+            Type
+                1 + 2
+            Highlight text
+            Right click/Highlighted text/
+            In context menu
+                Click/Do it and go/
+            Result will appear
+    To inspect result in Playground
+        In Playground
+            Type
+                Date today
+            Highlight text
+            Right click/Highlighted text/
+            In context menu
+                Click/Inspect it/
+            Inspector window will appear
+    To print result in Playground
+        In Playground
+            Type
+                1 + 2
+            Highlight text
+            Right click/Highlighted text/
+            In context menu
+                Click/Print it/
+            Result will appear beside the text
+    To Create a package
         In System Browser
         Right click/Area in top left panel/
             A context menu will appear
@@ -33,10 +78,10 @@ In Pharo itself
         Name the package
             MyCounter
         Click/Ok/
-            MyPackage will be automatically selected
-    Create a class
+            MyCounter will be automatically selected
+    To Create a class
         Right click/Area in 2nd top panel from the left/
-            The pannel near the middle with a Filter... at its bottom
+            The panel near the middle with a Filter... at its bottom
             A context menu will appear
         In context menu
         Click/New class/
@@ -53,7 +98,7 @@ In Pharo itself
         Click/Ok/
             MyCounter class will appear in the class panel
             MyCounter is automatically selected
-    Create method
+    To Create method
         Click/Inst. side radio button/
         Click/+ Inst. side method tab/
         Replace text, with 
@@ -64,3 +109,90 @@ In Pharo itself
             Right click/Empty spaces/
             In context menu
                 Click/Accept/
+    To find a package
+        In System Browser
+            In Package List Panel
+                        Click/Search box/
+                        Type
+                            MyOpenCascade
+                        Press Enter/
+                        Matching package will appear
+                        Click/MyOpenCascade/
+                        If package is not empty, the Class List Panel show classes
+    To find a class
+        In System Browser   
+            In Class List Panel
+                Click/Search box/
+                Type
+                    MyShape
+                Press Enter/
+                Matching class will appear
+    To browse implementors of a method
+        In System Browser
+        Right click/Method name/
+        In context menu
+            Click/Implementors/
+        Implementors window will appear
+    To browse senders of a method
+        In System Browser
+        Right click/Method name/
+        In context menu
+            Click/Senders/
+        Senders window will appear
+    To accept method changes
+        In method editor
+            Edit method text
+            Right click/Empty space/
+            In context menu
+                Click/Accept/
+        If confirmation appears
+            Click/Proceed/
+    To discard method changes
+        In method editor
+            Right click/Empty space/
+            In context menu
+                Click/Cancel/
+    To edit method protocol
+        In System Browser
+            In Method Panel
+                Select/aMethod/
+            At bottom right of System Browser
+                Left click/Edit protocol:/
+            A Protocol Window appear
+        In Protocol Window
+            Select/text area/
+            Type
+                your protocol name
+            Click/Choose/
+
+In Debugger
+    To continue from debugger
+        In Debugger window
+        Click/Proceed/
+    To step into code
+        In Debugger window
+        Click/Into/
+    To step over code
+        In Debugger window
+        Click/Over/
+    To restart current method
+        In Debugger window
+        Click/Restart/
+    To close debugger without continuing
+        In Debugger window
+        Click/Close button/
+
+In Pharo OCCT
+    To check native DLL lookup path
+        In Playground
+            Type
+                MyOCPStLib uniqueInstance win32LibraryName
+            Highlight text
+            Right click/Highlighted text/
+            In context menu
+                Click/Print it/
+            Path to my_occt_c_wrapper.dll will appear
+    To open Pharo CAD workbench
+        In Pharo itself
+        Click/Library/Pharo CAD/
+        MyCAD workbench window will appear

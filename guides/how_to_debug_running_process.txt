@@ -1,6 +1,8 @@
 Complete instructions from
-    C:\dev\opencascade\project_my_c_wrapper\README.md
-    
+    how_to_setup_build_occt.txt
+    how_to_setup_compile_c_wrapper_project.txt
+    how_to_setup_pharo_project.txt
+
 In Pharo Launcher
     Right click/<your_image_name>/
         Example: Right click/Pharo 14.0 - 64bit (development version, latest)/
@@ -13,6 +15,14 @@ In Pharo Launcher
 In Windows 11 File Explorer
     Go to C:\dev\opencascade\occt_install\v8_0_0_rc5\win64\vc14\bind
     Copy all .dll and .pdb files
+    To
+    C:\Users\<your_user>\Documents\Pharo\images\<image_name>
+            Example: C:\Users\morgan\Documents\Pharo\images\Pharo 14.0 - 64bit (development version, latest)
+
+In Windows 11 File Explorer
+    Go to C:\dev\opencascade\tmp\project_my_c_wrapper_build_vc143_x64\Debug
+    Copy
+        my_occt_c_wrapper.dll
     To
     C:\Users\<your_user>\Documents\Pharo\images\<image_name>
             Example: C:\Users\morgan\Documents\Pharo\images\Pharo 14.0 - 64bit (development version, latest)
@@ -32,7 +42,8 @@ In Visual Studio 2026
     In Solution Explorer
         Click/my_occt_c_wrapper/Source Files/my_c_wrapper.cpp
     In my_c_wrapper.cpp
-    Put a breakpoint at Line 35
+    Put a breakpoint inside function
+        cxxCreateBox
     Click/Debug/Attach to Process.../
     In Attach to Process
         Click/Tree/
@@ -44,28 +55,16 @@ In Visual Studio 2026
         Click/Attach/
 
 In Pharo
-    Run [MyOpenCascade-UFFI-Test] MyBoxTest>>testCreatingClass
+    Open System Browser
+    Go to package
+        MyOpenCascade-API-Test
+    Go to class
+        MyShapeFactoryTest
+    Go to method
+        testDefaultBoxFactoryCreatesNamedNativeShape
+    Run test
         Pharo UFFI loads DLLs lazily; the DLL is only loaded into the process the first moment a function inside is actually called.
-    In [MyOpenCascade-UFFI] MyBox>>isDone:
-        Right Click/line 4/4[27]/
-            Illustration shown below
-                ^ cxxBRepPrimAPI_MakeBox isDone: bRepPrimAPI_MakeBoxHandle
-                                         ^               
-                                         Right click here
-        In context menu
-            Hover on/Debug Points/
-            Click/Break on "isDone:"/
-    Run [MyOpenCascade-UFFI-Test] MyBoxTest>>testCreatingShape
-        A debug window will open
-        Debugger will stop at [MyOpenCASCADE-UFFI] MyBox>>isDone line 4/4[27]
-    In debug window
-        Click/Into/
-        Click/Into/
-        Debugger will stop at [MyOpenCascade-UFFI] CxxBRepPrimAPI_MakeBox>>isDone: line 4/4 [2]
-        Click/Over/
-        Click/Over/
-        Click/Over/
-        Visual Studio will automatically open.
+        Visual Studio will stop at cxxCreateBox in my_c_wrapper.cpp.
         Pharo window will be uninteractable.
 
 In Visual Studio 2026
@@ -74,27 +73,20 @@ In Visual Studio 2026
         Step over is a blue arrow pointing over and to the right of the blue dot.
         Step out is a blue arrow pointing up from the blue dot.
     Click/Step into/
+        Debugger will step into
+            cxxBoxNew
     Click/Step into/
-    Click/Step into/
-    Debugger will now step into BRepBuilderAPI_Command.cxxBRepPrimAPI_MakeBox
-    Click/Step into/
-    Click/Step into/
-    Click/Step into/
-    Debugger will now step back to my_c_wrapper.cpp
-    Click/Step into/
-    Debugger will now show Source Not Available.
+        Debugger may step into OpenCASCADE source from inside cxxBoxNew if OCCT_SOURCE_DIR was configured when generating the wrapper solution.
+    Click/Step out/
+        Debugger will return to my_c_wrapper.cpp
+    Click/Step over/
+        Debugger will continue through
+            cxxToShape
+            cxxMakeBoxDelete
     Click/Continue/
     The previously open Pharo window will reappear.
 
 In Pharo
-    In debug window
-        Debugger will stop at [MyOpenCascade-UFFI] CxxBRepPrimAPI_MakeBox>>isDone: line 4/4 [2]
-        Click/Into/
-        Click/Into/
-        Debugger will stop at [MyOpenCASCADE-UFFI] MyBox>>isDone line 4/4[27]
-        Click/Into/
-        Debugger will stop at [MyOpenCascade-UFFI-Test] MyBoxTest>>testCreatingShape line 7
-        Click/Continue/
-    Debugger will automatically close and exit.
-    Green square at bottom left of window will appear.
+    The test runner will continue.
+    Green test result will appear.
     The test has passed.
