@@ -3,7 +3,9 @@ I am the high level API used for creating a Cylinder for WODEN
 
 Public API:
 
-•	#tessellatedBoxDx:dy:dz:deflection: - Creates a box and immediately calculates its mesh based on a deflection tolerance.
+- #makeCylinderRadius:height: - Creates a cylinder shape.
+- #tessellatedCylinderRadius:height:deflection: - Creates a cylinder and immediately calculates its mesh based on a deflection tolerance.
+
 "
 Class {
 	#name : 'MyCylinderMaker',
@@ -20,7 +22,7 @@ MyCylinderMaker class >> makeCylinderRadius: radius height: height [
 	^ self makeCylinderRadius: radius height: height named: 'Cylinder'
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'factory' }
 MyCylinderMaker class >> makeCylinderRadius: radius height: height named: aString [
 		"Creates a named cylinder shape in memory. Persistence is always explicit."
 

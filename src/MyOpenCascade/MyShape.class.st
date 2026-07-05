@@ -75,7 +75,7 @@ MyShape class >> loadFromFile: aFileReference [
 	^ shape
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'private' }
 MyShape class >> safeFileComponentFor: aString [
 	"Answers a readable Windows-safe filename component."
 

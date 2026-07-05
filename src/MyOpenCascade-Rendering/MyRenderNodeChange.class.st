@@ -27,7 +27,7 @@ MyRenderNodeChange class >> oldNode: oldNode newNode: newNode [
 		  yourself
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'instance creation' }
 MyRenderNodeChange class >> unchanged [
 
 	^ self oldNode: nil newNode: nil

@@ -19,12 +19,6 @@ API Highlights:
 - #cxxTessellate:deflection: - Triggers the mesh generation algorithm on a shape.
 - #cxxVertexCount: / #cxxTriangleCount: - Returns the size of the mesh arrays.
 
-Class {
-	#name : 'CxxBoxLibrary',
-	#superclass : 'Object',
-	#category : 'MyOpenCascade-UFFI',
-	#package : 'MyOpenCascade-UFFI'
-}
 "
 Class {
 	#name : 'CxxOcctLibrary',
@@ -41,21 +35,21 @@ CxxOcctLibrary class >> cxxBoxNewDx: dx dy: dy dz: dz [
 	^ self ffiCall: #( MyShape* cxxBoxNew ( double dx, double dy, double dz ) )
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'factory' }
 CxxOcctLibrary class >> cxxCreateBoxDx: dx dy: dy dz: dz [
 	"Creates and returns a completed box shape directly, bypassing the MakeBox builder step."
 	
     ^ self ffiCall: #( MyShape* cxxCreateBox ( double dx, double dy, double dz ) )
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'factory' }
 CxxOcctLibrary class >> cxxCreateCylinderRadius: radius height: height [
 	"Creates and returns a completed cylinder shape directly, bypassing the MakeBox builder step."
 
 	^ self ffiCall: #( MyShape* cxxCreateCylinder ( double radius, double height ) )
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'boolean operation' }
 CxxOcctLibrary class >> cxxCut: shape1 with: shape2 [
 	"Performs a Boolean cut of shape2 from shape1 and returns the resulting shape handle."
 	
@@ -118,42 +112,42 @@ CxxOcctLibrary class >> cxxGetEdgeVertices: shape [
 	^ self ffiCall: #( void* cxxGetEdgeVertices ( MyShape* shape ) )
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'rendering' }
 CxxOcctLibrary class >> cxxGetNormalBufferLength: shape [
 	"Returns the total number of doubles in the normal buffer (vertexCount * 3)."
 	
     ^ self ffiCall: #( int cxxGetNormalBufferLength ( MyShape* shape ) )
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'rendering' }
 CxxOcctLibrary class >> cxxGetNormals: shape [
 	"Returns a raw pointer to the tessellated normal data buffer."
 	
     ^ self ffiCall: #( void* cxxGetNormals ( MyShape* shape ) )
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'rendering' }
 CxxOcctLibrary class >> cxxGetTriangleIndexCount: shape [
 	"Returns the total number of int32 indices in the triangle buffer (triangleCount * 3)."
 	
     ^ self ffiCall: #( int cxxGetTriangleIndexCount ( MyShape* shape ) )
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'rendering' }
 CxxOcctLibrary class >> cxxGetTriangles: shape [
 	"Returns a raw pointer to the tessellated triangle index buffer."
 	
     ^ self ffiCall: #( void* cxxGetTriangles ( MyShape* shape ) )
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'rendering' }
 CxxOcctLibrary class >> cxxGetVertexBufferLength: shape [
 	"Returns the total number of doubles in the vertex buffer (vertexCount * 3)."
 	
     ^ self ffiCall: #( int cxxGetVertexBufferLength ( MyShape* shape ) )
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'rendering' }
 CxxOcctLibrary class >> cxxGetVertices: shape [
 	"Returns a raw pointer to the tessellated vertex position buffer."
 	
@@ -162,16 +156,9 @@ CxxOcctLibrary class >> cxxGetVertices: shape [
 
 { #category : 'ffi-calls' }
 CxxOcctLibrary class >> cxxHasNoMemoryDifference [
-	"Returns non-zero if no memory change has occurred since the last checkpoint."
+	"Answers the native memory-difference flag; callers compare with zero for no difference."
 	
     ^ self ffiCall: #(int cxxHasMemoryDifference())
-]
-
-{ #category : 'persistence' }
-CxxOcctLibrary class >> cxxImportBRep: buffer length: bufferLength [
-	"Recreates a native shape from OCCT BREP bytes."
-
-	^ self ffiCall: #( MyShape* cxxImportBRep ( void* buffer, int bufferLength ) )
 ]
 
 { #category : 'unused' }
@@ -210,14 +197,14 @@ CxxOcctLibrary class >> cxxReadBRepFile: filePath [
 
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'transforming' }
 CxxOcctLibrary class >> cxxRotateShape: shape xDegrees: xDegrees yDegrees: yDegrees zDegrees: zDegrees [
 	"Applies Euler rotations in degrees to the underlying OpenCascade shape."
 
 	^ self ffiCall: #( void cxxRotateShapeDegrees ( MyShape* shape, double xDegrees, double yDegrees, double zDegrees ) )
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'transforming' }
 CxxOcctLibrary class >> cxxRotateShape: shape xDegrees: xDegrees yDegrees: yDegrees zDegrees: zDegrees centerX: centerX centerY: centerY centerZ: centerZ [
 	"Applies Euler rotations in degrees around a specific world-space point."
 
@@ -240,7 +227,7 @@ CxxOcctLibrary class >> cxxSampleEdges: shape deflection: deflection [
 
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'transforming' }
 CxxOcctLibrary class >> cxxScaleShape: shape sx: sx sy: sy sz: sz [
 	"Applies non-uniform scale to the underlying OpenCascade shape."
 
@@ -297,7 +284,7 @@ CxxOcctLibrary class >> cxxToShape: makeBoxHandle [
 	^ self ffiCall: #( void* cxxToShape ( void* makeBoxHandle ) )
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'transforming' }
 CxxOcctLibrary class >> cxxTranslateShape: shape x: x y: y z: z [
 	"Applies a translation to the underlying OpenCascade shape."
 

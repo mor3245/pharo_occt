@@ -1,5 +1,8 @@
 "
-I am responsible for translating byte arrays for Woden to understand.
+I am the shared factory support for OpenCascade shape makers.
+
+I validate primitive dimensions before native calls and translate raw native buffers into Smalltalk arrays.
+
 "
 Class {
 	#name : 'MyMakeShape',
@@ -9,7 +12,7 @@ Class {
 	#tag : 'Base'
 }
 
-{ #category : 'as yet unclassified' }
+{ #category : 'conversion' }
 MyMakeShape class >> float64ArrayFromExternalAddress: address count: count [
 	"Reads count 64-bit doubles from a raw C pointer into a Float64Array (or plain Array if unavailable)."
 
@@ -22,7 +25,7 @@ MyMakeShape class >> float64ArrayFromExternalAddress: address count: count [
 	^ array
 ]
 
-{ #category : 'as yet unclassified' }
+{ #category : 'conversion' }
 MyMakeShape class >> int32ArrayFromExternalAddress: address count: count [
 	"Reads count signed 32-bit integers from a raw C pointer into a Pharo Array."
 
