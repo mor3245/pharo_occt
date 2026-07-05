@@ -24,7 +24,7 @@ In Pharo Launcher
 
 In Windows 11 File Explorer
     Go to
-    C:\occt_projects\project_my_c_wrapper\occt_install_vc145\win64\vc14\bind
+    C:\dev\opencascade\occt_install\v8_0_0_rc5\win64\vc14\bind
     Click/Sort/
     In drop down menu
         Click/Type/
@@ -52,7 +52,7 @@ In Windows 11 File Explorer
         
 In Windows 11 File Explorer
     Go to
-    C:\occt_projects\project_my_c_wrapper\build_vc145\my_occt_c_wrapper\Debug
+    C:\dev\opencascade\tmp\project_my_c_wrapper_build_vc143_x64\Debug
     Right click/my_occt_c_wrapper.dll/
     In context menu
         Click/Copy/
@@ -69,21 +69,21 @@ In Pharo Launcher
     Click/Launch/
     Pharo will open
     
-In Windows Explorer
-    Go to C:\Users\morgan\Documents\final_year_project\smalltalk_codes
-    Drag and drop
-        LibImports-UFFI-CWrap.st
-    Into Pharo
-
 In Pharo
-    A Choose window will open
-    In Choose window
-        Click/Changelist browser/
-    In Change Browser
-        Click/select all/
-        Click/file in selected/
-    The LibImports-UFFI-CWrap package will appear in the System Browser
-    Repeat this for other smalltalk code (I will make this more specific)
+    Click/Browse/Playground/
+    In Playground
+        Type
+            Metacello new
+              baseline: 'PharoOCCT';
+              repository: 'github://mor3245/pharo_occt:master/src';
+              onConflictUseIncoming;
+              load.
+        Right click/Playground text/
+        In context menu
+            Click/Do it/
+        The BaselineOfPharoOCCT package will load
+        The LibImports-UFFI-CWrap package will load
+        The MyOpenCascade packages will load
         
         
     

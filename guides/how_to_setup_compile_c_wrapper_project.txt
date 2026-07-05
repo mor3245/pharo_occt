@@ -1,43 +1,24 @@
 How to setup & compile C wrapper dll
 
+Complete OpenCASCADE setup first
+    Follow
+        how_to_setup_build_occt.txt
+    Until OpenCASCADE is installed at
+        C:\dev\opencascade\occt_install\v8_0_0_rc5
+    OpenCASCADEConfig.cmake should exist at
+        C:\dev\opencascade\occt_install\v8_0_0_rc5\cmake\OpenCASCADEConfig.cmake
+
 In Windows 11 File Explorer
+    Create folder
+        C:\dev\opencascade
+    Create folder
+        C:\dev\opencascade\tmp
     Extract project_my_c_wrapper.zip contents to
-        C:\occt_projects\project_my_c_wrapper
-
-Download OpenCASCADE 
-    Download
-        https://dev.opencascade.org/system/files/occt/3rdparty/freetype-2.5.5-vc14-64.zip
-        To
-        C:\occt_projects\project_my_c_wrapper\occt\3rdparty\freetype-2.5.5-vc14-64.zip
-        Extract contents
-            freetype-2.5.5-vc14-64.zip
-        To
-        C:\occt_projects\project_my_c_wrapper\occt\3rdparty\freetype-2.5.5-vc14-64
-    Download
-        https://dev.opencascade.org/system/files/occt/3rdparty/rapidjson-1.1.0.zip
-        To
-        C:\occt_projects\project_my_c_wrapper\occt\3rdparty\rapidjson-1.1.0.zip
-        Extract contents
-            rapidjson-1.1.0.zip
-        To
-        C:\occt_projects\project_my_c_wrapper\occt\3rdparty\rapidjson-1.1.0
-    Download
-        https://dev.opencascade.org/system/files/occt/3rdparty/tcltk-86-64.zip
-        To
-        C:\occt_projects\project_my_c_wrapper\occt\3rdparty\tcltk-86-64.zip
-        Extract contents
-            tcltk-86-64.zip
-        To
-        C:\occt_projects\project_my_c_wrapper\occt\3rdparty\tcltk-86-64
-    Download source code
-        https://github.com/Open-Cascade-SAS/OCCT/archive/refs/tags/V8_0_0_rc4.zip
-        To
-        C:\occt_projects\project_my_c_wrapper\occt\V8_0_0_rc4.zip
-        Extract contents
-            V8_0_0_rc4.zip
-        To
-        C:\occt_projects\project_my_c_wrapper\occt\V8_0_0_rc4
-
+        C:\dev\opencascade\project_my_c_wrapper
+    The wrapper project root should contain
+        C:\dev\opencascade\project_my_c_wrapper\CMakeLists.txt
+        C:\dev\opencascade\project_my_c_wrapper\src\my_c_wrapper.cpp
+        C:\dev\opencascade\project_my_c_wrapper\src\my_c_wrapper.h
 
 Setup the Visual Studio solution
     In Windows search, type
@@ -46,68 +27,50 @@ Setup the Visual Studio solution
     In CMake (cmake-gui)
         Click/Browse Source.../
             Select folder
-            C:\occt_projects\project_my_c_wrapper
+            C:\dev\opencascade\project_my_c_wrapper
         Click/Browse Build.../
             Select folder
-            C:\occt_projects\project_my_c_wrapper\build_vc145
+            C:\dev\opencascade\tmp\project_my_c_wrapper_build_vc143_x64
         Click/Configure/
-            Proceed with default options
-            An error message will appear
+            Select generator
+                Visual Studio 18 2026
+            Select platform
+                x64
+            Click/Finish/
+        Click/OpenCASCADE_DIR/
+            Fill
+            C:\dev\opencascade\occt_install\v8_0_0_rc5\cmake
         Click/OCCT_SOURCE_DIR/
             Fill
-            C:\occt_projects\project_my_c_wrapper\occt\OCCT-8_0_0_rc4
+            C:\dev\opencascade\OCCT
         Click/Configure/
-            An error message will appear
-            On Error window
-                Click/OK/
-        Click/3RDPARTY_DIR/
-            Fill 
-            C:\occt_projects\project_my_c_wrapper\occt\3rdparty
-        Click/BUILD_USE_PCH/
-            Tick checkbox
-        Click/INSTALL_DIR/
-            Fill
-            C:\occt_projects\project_my_c_wrapper\occt_install_vc145
-        Click/INSTALL_FREETYPE/
-            Tick checkbox
-        Click/INSTALL_TCL/
-            Tick checkbox
-        Click/INSTALL_TK/
-            Tick checkbox
-        Click/USE_RAPIDJSON/
-            Tick checkbox
-        Click/Configure/
-            Wait approximately 20s
-            Ignore Warnings
+            Wait until output shows
+                Configuring done
         Click/Generate/
-            Wait approximately 10s
-            No errors appear
+            Wait until output shows
+                Generating done
             Solution file created at
-                C:\occt_projects\project_my_c_wrapper\build_vc145
+                C:\dev\opencascade\tmp\project_my_c_wrapper_build_vc143_x64\my_occt_c_wrapper.slnx
         Click/Open Project/
             Visual Studio 2026 will open
-            
+
 Build Project
     In Visual Studio 2026
+        In toolbar
+            Select/Debug/
+            Select/x64/
         Click/Build/Build Solution/
-            Wait approximately 8 minutes
             In output
-                73 succeeded
+                2 succeeded
                 0 failed
-                0 up-to-date
-                1 skipped
             dll file created
-            C:\occt_projects\project_my_c_wrapper\build_vc145\my_occt_c_wrapper\Debug\my_occt_c_wrapper.dll
-        In Solution Explorer
-            Right Click/INSTALL_OCCT/
-            Click/Build/
-                Wait apprximately 4 minutes
-            On first install, a window will appear
-            Click/Reload all/
-        In output
-            2 succeeded
-            0 failed
-            0 up-to-date
-            0 skipped
-        Installed files at
-             C:\occt_projects\project_my_c_wrapper\occt_install_vc145
+                C:\dev\opencascade\tmp\project_my_c_wrapper_build_vc143_x64\Debug\my_occt_c_wrapper.dll
+
+Copy DLLs to Pharo image folder
+    Copy wrapper DLL from
+        C:\dev\opencascade\tmp\project_my_c_wrapper_build_vc143_x64\Debug\my_occt_c_wrapper.dll
+    Copy all .dll and .pdb files from
+        C:\dev\opencascade\occt_install\v8_0_0_rc5\win64\vc14\bind
+    To
+        C:\Users\<your_user>\Documents\Pharo\images\<image_name>
+        Example: C:\Users\morgan\Documents\Pharo\images\pharo_opencascade_integration

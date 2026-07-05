@@ -1,0 +1,139 @@
+How to setup & build OpenCASCADE
+
+In Windows 11 File Explorer
+    Create folder
+        C:\dev\opencascade
+    Create folder
+        C:\dev\opencascade\3rdparty
+    Create folder
+        C:\dev\opencascade\tmp
+
+Download OpenCASCADE dependencies
+    Download
+        https://dev.opencascade.org/system/files/occt/3rdparty/freetype-2.5.5-vc14-64.zip
+        To
+        C:\dev\opencascade\3rdparty\freetype-2.5.5-vc14-64.zip
+        Extract contents
+            freetype-2.5.5-vc14-64.zip
+        To
+            C:\dev\opencascade\3rdparty\freetype-2.5.5-vc14-64
+    Download
+        https://dev.opencascade.org/system/files/occt/3rdparty/rapidjson-1.1.0.zip
+        To
+        C:\dev\opencascade\3rdparty\rapidjson-1.1.0.zip
+        Extract contents
+            rapidjson-1.1.0.zip
+        To
+            C:\dev\opencascade\3rdparty\rapidjson-1.1.0
+    Download
+        https://dev.opencascade.org/system/files/occt/3rdparty/tcltk-86-64.zip
+        To
+        C:\dev\opencascade\3rdparty\tcltk-86-64.zip
+        Extract contents
+            tcltk-86-64.zip
+        To
+            C:\dev\opencascade\3rdparty\tcltk-86-64
+    Check extracted folders
+        Correct example
+            C:\dev\opencascade\3rdparty\freetype-2.5.5-vc14-64\include
+        Wrong example
+            C:\dev\opencascade\3rdparty\freetype-2.5.5-vc14-64\freetype-2.5.5-vc14-64\include
+
+Download OpenCASCADE source code
+    Download
+        https://github.com/Open-Cascade-SAS/OCCT/archive/refs/tags/V8_0_0_rc5.zip
+        To
+        C:\dev\opencascade\V8_0_0_rc5.zip
+    Extract contents
+        V8_0_0_rc5.zip
+    To
+        C:\dev\opencascade\OCCT-8_0_0_rc5
+    Rename folder
+        C:\dev\opencascade\OCCT-8_0_0_rc5
+    To
+        C:\dev\opencascade\OCCT
+    The folder should contain
+        C:\dev\opencascade\OCCT\CMakeLists.txt
+
+Setup the Visual Studio solution
+    In Windows search, type
+        CMake (cmake-gui)
+        Select/Cmake (cmake-gui)/
+    In CMake (cmake-gui)
+        Click/Browse Source.../
+            Select folder
+            C:\dev\opencascade\OCCT
+        Click/Browse Build.../
+            Select folder
+            C:\dev\opencascade\tmp\occt_build_vc143_x64
+        Click/Configure/
+            Select generator
+                Visual Studio 18 2026
+            Leave optional platform field blank
+            Click/Finish/
+            First configure may show missing dependency errors
+        Tick/Grouped/
+        Open/3RDPARTY group/
+        Click/3RDPARTY_DIR/
+            Fill
+            C:\dev\opencascade\3rdparty
+        Click/Configure/
+            CMake should fill freetype, rapidjson, TCL, and TK paths
+        Open/BUILD group/
+        Click/BUILD_USE_PCH/
+            Tick checkbox
+        Open/INSTALL group/
+        Click/INSTALL_DIR/
+            Fill
+            C:\dev\opencascade\occt_install\v8_0_0_rc5
+        Click/INSTALL_FREETYPE/
+            Tick checkbox
+        Click/INSTALL_TCL/
+            Tick checkbox
+        Click/INSTALL_TK/
+            Tick checkbox
+        Open/USE group/
+        Click/USE_FREETYPE/
+            Tick checkbox
+        Click/USE_RAPIDJSON/
+            Tick checkbox
+        Click/USE_TCL/
+            Tick checkbox
+        Click/USE_TK/
+            Tick checkbox
+        Click/Configure/
+            Wait until output shows
+                Configuring done
+        Click/Generate/
+            Wait until output shows
+                Generating done
+            Solution file created at
+                C:\dev\opencascade\tmp\occt_build_vc143_x64\OCCT.slnx
+        Click/Open Project/
+            Visual Studio 2026 will open
+
+Build OpenCASCADE
+    In Visual Studio 2026
+        In toolbar
+            Select/Debug/
+            Select/x64/
+        Click/Build/Build Solution/
+            Wait several minutes
+            In output
+                Approximately 70 succeeded
+                0 failed
+        In Solution Explorer
+            Right Click/INSTALL/
+            Click/Build/
+        In output
+            1 succeeded
+            0 failed
+
+Check installed OpenCASCADE files
+    In Windows 11 File Explorer
+        Go to
+            C:\dev\opencascade\occt_install\v8_0_0_rc5
+        Check file exists
+            C:\dev\opencascade\occt_install\v8_0_0_rc5\cmake\OpenCASCADEConfig.cmake
+        Check runtime DLL folder exists
+            C:\dev\opencascade\occt_install\v8_0_0_rc5\win64\vc14\bind
