@@ -1,0 +1,26 @@
+Install WSL
+    https://learn.microsoft.com/en-us/windows/wsl/install
+    
+In Windows 11 Search, type
+    WSL
+    Click/WSL/
+    The linux terminal will open.
+    
+In Linux terminal, type
+    sudo apt install clang
+    Press/Enter/
+    
+In Linux terminal, type
+    curl -o pharo-launcher-linux-3.4.3-x64.tar -L https://files.pharo.org/pharo-launcher/linux64
+    Press/Enter/
+
+In Linux terminal, type
+    tar -xzf pharo-launcher-linux-3.4.3-x64.tar
+    Press/Enter/
+
+In Linux terminal, type
+    pharo-launcher/pharo-launcher-ui/
+    Press/Enter/
+    Pharo launcher will open
+
+Instructions reference https://pharo-project.github.io/pharo-launcher/installation/

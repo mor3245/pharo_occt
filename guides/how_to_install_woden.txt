@@ -1,0 +1,9 @@
+How to install WODEN in Pharo 14
+
+from https://github.com/desromech/woden-core-examples
+In playground, run
+    Metacello new
+    baseline: 'WodenCoreExamples';
+    repository: 'github://desromech/woden-core-examples';
+    onConflictUseIncoming;
+    load

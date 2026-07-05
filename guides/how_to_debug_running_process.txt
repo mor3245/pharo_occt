@@ -1,0 +1,100 @@
+Complete instructions from
+    C:\occt_projects\project_opencascade_c_wrapper\instructions.txt
+    
+In Pharo Launcher
+    Right click/<your_image_name>/
+        Example: Right click/Pharo 14.0 - 64bit (development version, latest)/
+    In context menu
+    Click/Show in folder/
+        Windows 11 Window Explorer will open
+            Will show contents C:\Users\<your_user>\Documents\Pharo\images\<image_name>
+            Example: C:\Users\morgan\Documents\Pharo\images\Pharo 14.0 - 64bit (development version, latest)
+    
+In Windows 11 File Explorer
+    Go to C:\occt_projects\project_opencascade_c_wrapper\occt_install_vc145\win64\vc14\bind
+    Copy all .dll and .pdb files
+    To
+    C:\Users\<your_user>\Documents\Pharo\images\<image_name>
+            Example: C:\Users\morgan\Documents\Pharo\images\Pharo 14.0 - 64bit (development version, latest)
+            
+In Pharo Launcher
+    Click/<your_image_name>/
+        Example: Click/Pharo 14.0 - 64bit (development version, latest)/
+            The row will be highlighted blue
+    Click/Launch button/
+
+In Windows 11 File Explorer
+    Go to C:\occt_projects\project_opencascade_c_wrapper\build_vc145
+    Double click/project_opencascade_c_wrapper.slnx/
+    Visual Studio 2026 will open
+
+In Visual Studio 2026
+    In Solution Explorer
+        Click/box_c_wrapper/Source Files/my_c_wrapper.cpp
+    In my_c_wrapper.cpp
+    Put a breakpoint at Line 35
+    Click/Debug/Attach to Process.../
+    In Attach to Process
+        Click/Tree/
+        In Filter processes (Ctrl + E), type
+            Pharo
+        Select/Pharo.exe/
+            With Pharo image file path as title
+            Example:        C:\Users\morgan\Documents\Pharo\images\pharo_opencascade_integrationX\pharo_opencascade_integrationX.image
+        Click/Attach/
+
+In Pharo
+    Run [MyOpenCascade-UFFI-Test] MyBoxTest>>testCreatingClass
+        Pharo UFFI loads DLLs lazily; the DLL is only loaded into the process the first moment a function inside is actually called.
+    In [MyOpenCascade-UFFI] MyBox>>isDone:
+        Right Click/line 4/4[27]/
+            Illustration shown below
+                ^ cxxBRepPrimAPI_MakeBox isDone: bRepPrimAPI_MakeBoxHandle
+                                         ^               
+                                         Right click here
+        In context menu
+            Hover on/Debug Points/
+            Click/Break on "isDone:"/
+    Run [MyOpenCascade-UFFI-Test] MyBoxTest>>testCreatingShape
+        A debug window will open
+        Debugger will stop at [MyOpenCASCADE-UFFI] MyBox>>isDone line 4/4[27]
+    In debug window
+        Click/Into/
+        Click/Into/
+        Debugger will stop at [MyOpenCascade-UFFI] CxxBRepPrimAPI_MakeBox>>isDone: line 4/4 [2]
+        Click/Over/
+        Click/Over/
+        Click/Over/
+        Visual Studio will automatically open.
+        Pharo window will be uninteractable.
+
+In Visual Studio 2026
+    These buttons are on the right side of the red square pause button.
+        Step into is a blue arrow pointing down to the blue dot.
+        Step over is a blue arrow pointing over and to the right of the blue dot.
+        Step out is a blue arrow pointing up from the blue dot.
+    Click/Step into/
+    Click/Step into/
+    Click/Step into/
+    Debugger will now step into BRepBuilderAPI_Command.cxxBRepPrimAPI_MakeBox
+    Click/Step into/
+    Click/Step into/
+    Click/Step into/
+    Debugger will now step back to my_c_wrapper.cpp
+    Click/Step into/
+    Debugger will now show Source Not Available.
+    Click/Continue/
+    The previously open Pharo window will reappear.
+
+In Pharo
+    In debug window
+        Debugger will stop at [MyOpenCascade-UFFI] CxxBRepPrimAPI_MakeBox>>isDone: line 4/4 [2]
+        Click/Into/
+        Click/Into/
+        Debugger will stop at [MyOpenCASCADE-UFFI] MyBox>>isDone line 4/4[27]
+        Click/Into/
+        Debugger will stop at [MyOpenCascade-UFFI-Test] MyBoxTest>>testCreatingShape line 7
+        Click/Continue/
+    Debugger will automatically close and exit.
+    Green square at bottom left of window will appear.
+    The test has passed.

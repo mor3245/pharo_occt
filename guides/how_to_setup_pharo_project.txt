@@ -1,0 +1,89 @@
+How to setup Pharo Project
+
+In Windows 11
+    In search, type
+        Pharo Launcher
+        Select/Pharo Launcher/
+        
+In Pharo Launcher
+    Click/New button/
+    Select/Pharo 14.0 - 64bit (development version, latest)/
+    Click/Image name:/, type
+        pharo_opencascade_integration
+    Click/Create image/
+        New image created at
+        C:\Users\<your_user>\Documents\Pharo\images\pharo_opencascade_integration
+        Example: C:\Users\morgan\Documents\Pharo\images\pharo_opencascade_integration
+        Pharo automatically starts
+    Right click/pharo_opencascade_integration
+    In context menu
+    Click/Show in folder/
+    Windows 11 Window Explorer will open
+        Will show contents C:\Users\<your_user>\Documents\Pharo\images\pharo_opencascade_integration
+        Example: C:\Users\morgan\Documents\Pharo\images\pharo_opencascade_integration
+
+In Windows 11 File Explorer
+    Go to
+    C:\occt_projects\project_opencascade_c_wrapper\occt_install_vc145\win64\vc14\bind
+    Click/Sort/
+    In drop down menu
+        Click/Type/
+    Click/Sort/
+    In drop down menu
+        Click/Ascending/
+    Click/View/
+    In drop down menu
+        Click/Details/
+    In Content Panel
+        Left click/freetype.dll/
+        Scroll down to/TKXSDRAWVRML.dll/
+        Holding Shift/Left click/TKXSDRAWVRML.dll/
+        Release Shift/
+        Right click/Highlighted rows/
+        In context menu
+            Click/Copy/
+
+In Windows 11 File Explorer
+    Go to
+    C:\Users\morgan\Documents\Pharo\images\pharo_opencascade_integration
+    Right click/An empty space of Content Panel/
+    In context menu
+        Click/Paste/
+        
+In Windows 11 File Explorer
+    Go to
+    C:\occt_projects\project_taco\build_vc145\box_c_wrapper\Debug
+    Right click/box_c_wrapper.dll/
+    In context menu
+        Click/Copy/
+    
+In Windows 11 File Explorer
+    Go to
+    C:\Users\morgan\Documents\Pharo\images\pharo_opencascade_integration
+    Right click/An empty space of Content Panel/
+    In context menu
+        Click/Paste/
+
+In Pharo Launcher
+    Click/pharo_opencascade_integration/
+    Click/Launch/
+    Pharo will open
+    
+In Windows Explorer
+    Go to C:\Users\morgan\Documents\final_year_project\smalltalk_codes
+    Drag and drop
+        LibImports-UFFI-CWrap.st
+    Into Pharo
+
+In Pharo
+    A Choose window will open
+    In Choose window
+        Click/Changelist browser/
+    In Change Browser
+        Click/select all/
+        Click/file in selected/
+    The LibImports-UFFI-CWrap package will appear in the System Browser
+    Repeat this for other smalltalk code (I will make this more specific)
+        
+        
+    

@@ -1,0 +1,66 @@
+How to use basic Pharo functionalities
+    To exit Pharo
+        In Pharo itself
+        Click/Pharo/Quit
+            A question will appear
+            Click/Save/
+    To start Pharo again
+        In Pharo Launcher
+        Select/Pharo 14.0 - 64bit (development version, latest)/
+            The row will be highlighted blue
+        Click/Launch button/
+    To open image folder
+        In Pharo Launcher
+        Right click/Pharo 14.0 - 64bit (development version, latest)/
+        In context menu
+        Click/Show in folder/
+            Windows 11 Window Explorer will open
+                Will show contents C:\Users\<your_user>\Documents\Pharo\images\<image_name>
+                Example: C:\Users\morgan\Documents\Pharo\images\Pharo 14.0 - 64bit (development version, latest)
+
+In Pharo itself
+    To open System Browser
+        Click/Browse/System Browser/
+    To open Playground
+        Click/Browse/Playground/
+    Create a package
+        In System Browser
+        Right click/Area in top left panel/
+            A context menu will appear
+        In context menu
+        Click/New package/
+            A window will appear
+        Name the package
+            MyCounter
+        Click/Ok/
+            MyPackage will be automatically selected
+    Create a class
+        Right click/Area in 2nd top panel from the left/
+            The pannel near the middle with a Filter... at its bottom
+            A context menu will appear
+        In context menu
+        Click/New class/
+            A window will appear
+        In the Information Required window, type
+            Object << #MyCounter
+                layout: FixedLayout;
+                traits: {};
+                slots: {#value};
+                sharedVariables: {};
+                sharedPools: {};
+                tag: '' ;
+                package: 'MyCounter'
+        Click/Ok/
+            MyCounter class will appear in the class panel
+            MyCounter is automatically selected
+    Create method
+        Click/Inst. side radio button/
+        Click/+ Inst. side method tab/
+        Replace text, with 
+            value: anObject
+
+                value := anObject
+        In text editor
+            Right click/Empty spaces/
+            In context menu
+                Click/Accept/

@@ -1,0 +1,434 @@
+Pharo OpenCASCADE Interface
+
+
+In Windows 11 File Explorer
+    Extract project_opencascade_demo.zip contents to
+        C:\occt_projects\project_opencascade_demo
+
+Download Pharo from
+    https://files.pharo.org/pharo-launcher/windows
+    To
+    C:\Users\<your_user>\Downloads\
+        Example: C:\Users\morgan\Downloads\
+    Double click/pharo-launcher-X.X.X.msi/
+        Example: Double click/pharo-launcher-3.4.3.msi/
+        X are version placeholders
+    Proceed with default options
+    
+In Windows 11
+    In search, type
+        Pharo Launcher
+        Select/Pharo Launcher/
+    
+In Pharo Launcher
+    Click/New button/
+    Select/Pharo 14.0 - 64bit (development version, latest)/
+    Click/Create image/
+        New image created at
+        "C:\Users\morgan\Documents\Pharo\images\Pharo 14.0 - 64bit (development version, latest)\Pharo 14.0 - 64bit (development version, latest).image"
+        Pharo automatically starts
+
+Download Visual Studio 2026 Community Edition
+    https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=Community&channel=Insiders&version=VS18&source=VSLandingPage&cid=2600&passive=false
+    To
+    C:\Users\morgan\Downloads\
+    Double click/VisualStudioSetup.exe/
+
+Download OpenCASCADE 
+    Download
+        https://dev.opencascade.org/system/files/occt/3rdparty/freetype-2.5.5-vc14-64.zip
+        To
+        C:\occt_projects\project_opencascade_demo\occt\3rdparty\freetype-2.5.5-vc14-64.zip
+        Extract contents
+            freetype-2.5.5-vc14-64.zip
+        To
+        C:\occt_projects\project_opencascade_demo\occt\3rdparty\freetype-2.5.5-vc14-64
+    Download
+        https://dev.opencascade.org/system/files/occt/3rdparty/rapidjson-1.1.0.zip
+        To
+        C:\occt_projects\project_opencascade_demo\occt\3rdparty\rapidjson-1.1.0.zip
+        Extract contents
+            rapidjson-1.1.0.zip
+        To
+        C:\occt_projects\project_opencascade_demo\occt\3rdparty\rapidjson-1.1.0
+    Download
+        https://dev.opencascade.org/system/files/occt/3rdparty/tcltk-86-64.zip
+        To
+        C:\occt_projects\project_opencascade_demo\occt\3rdparty\tcltk-86-64.zip
+        Extract contents
+            tcltk-86-64.zip
+        To
+        C:\occt_projects\project_opencascade_demo\occt\3rdparty\tcltk-86-64
+    Download source code
+        https://github.com/Open-Cascade-SAS/OCCT/archive/refs/tags/V8_0_0_rc4.zip
+        To
+        C:\occt_projects\project_opencascade_demo\occt\V8_0_0_rc4.zip
+        Extract contents
+            V8_0_0_rc4.zip
+        To
+        C:\occt_projects\project_opencascade_demo\occt\V8_0_0_rc4
+
+Download CMake
+    https://github.com/Kitware/CMake/releases/download/v4.2.3/cmake-4.2.3-windows-x86_64.msi
+    To 
+    C:\Users\morgan\Downloads\
+    Double click/cmake-X.X.X-windows-x86_64/
+        Example: Double click/cmake-4.2.3-windows-x86_64/
+    Proceed with default options
+
+***************************************************************************************************************************************************************************
+How to use basic Pharo functionalities
+    To exit Pharo
+        In Pharo itself
+        Click/Pharo/Quit
+            A question will appear
+            Click/Save/
+    To start Pharo again
+        In Pharo Launcher
+        Select/Pharo 14.0 - 64bit (development version, latest)/
+            The row will be highlighted blue
+        Click/Launch button/
+    To open image folder
+        In Pharo Launcher
+        Right click/Pharo 14.0 - 64bit (development version, latest)/
+        In context menu
+        Click/Show in folder/
+            Windows 11 Window Explorer will open
+                Will show contents C:\Users\<your_user>\Documents\Pharo\images\<image_name>
+                Example: C:\Users\morgan\Documents\Pharo\images\Pharo 14.0 - 64bit (development version, latest)
+
+In Pharo itself
+    To open System Browser
+        Click/Browse/System Browser/
+    To open Playground
+        Click/Browse/Playground/
+    Create a package
+        In System Browser
+        Right click/Area in top left panel/
+            A context menu will appear
+        In context menu
+        Click/New package/
+            A window will appear
+        Name the package
+            MyCounter
+        Click/Ok/
+            MyPackage will be automatically selected
+    Create a class
+        Right click/Area in 2nd top panel from the left/
+            The pannel near the middle with a Filter... at its bottom
+            A context menu will appear
+        In context menu
+        Click/New class/
+            A window will appear
+        In the Information Required window, type
+            Object << #MyCounter
+                layout: FixedLayout;
+                traits: {};
+                slots: {#value};
+                sharedVariables: {};
+                sharedPools: {};
+                tag: '' ;
+                package: 'MyCounter'
+        Click/Ok/
+            MyCounter class will appear in the class panel
+            MyCounter is automatically selected
+    Create method
+        Click/Inst. side radio button/
+        Click/+ Inst. side method tab/
+        Replace text, with 
+            value: anObject
+
+                value := anObject
+        In text editor
+            Right click/Empty spaces/
+            In context menu
+                Click/Accept/
+         
+    
+***************************************************************************************************************************************************************************
+How to setup OpenCASCADE project
+How to Setup the Visual Studio solution
+    In Windows search, type
+        CMake (cmake-gui)
+        Select/Cmake (cmake-gui)/
+    In CMake (cmake-gui)
+        Click/Browse Source.../
+            Select folder
+            C:\occt_projects\project_opencascade_demo   
+        Click/Browse Build.../
+            Select folder
+            C:\occt_projects\project_opencascade_demo\build_vc145
+        Click/Configure/
+            Proceed with default options
+            An error message will appear
+        Click/OCCT_SOURCE_DIR/
+            Fill
+            C:\occt_projects\project_opencascade_demo\occt\OCCT-8_0_0_rc4
+        Click/Configure/
+            An error message will appear
+            On Error window
+                Click/OK/
+        Click/3RDPARTY_DIR/
+            Fill 
+            C:\occt_projects\project_opencascade_demo\occt\3rdparty
+        Click/BUILD_USE_PCH/
+            Tick checkbox
+        Click/INSTALL_DIR/
+            Fill
+            C:\occt_projects\project_opencascade_demo\occt_install_vc145
+        Click/INSTALL_FREETYPE/
+            Tick checkbox
+        Click/INSTALL_TCL/
+            Tick checkbox
+        Click/INSTALL_TK/
+            Tick checkbox
+        Click/USE_RAPIDJSON/
+            Tick checkbox
+        Click/Configure/
+            Wait approximately 20s
+            Ignore Warnings
+        Click/Generate/
+            Wait approximately 10s
+            No errors appear
+            Solution file created at
+                C:\occt_projects\project_opencascade_demo\build_vc145
+        Click/Open Project/
+            Visual Studio 2026 will open
+
+How to Build Project
+    In Visual Studio 2026
+        Click/Build/Build Solution/
+            Wait approximately 8 minutes
+            In output
+                73 succeeded
+                0 failed
+                0 up-to-date
+                1 skipped
+        In Solution Explorer
+            Right Click/INSTALL_OCCT/
+            Click/Build/
+                Wait apprximately 4 minutes
+            On first install, a window will appear
+            Click/Reload all/
+        In output
+            2 succeeded
+            0 failed
+            0 up-to-date
+            0 skipped
+        Installed files at
+             C:\occt_projects\project_opencascade_demo\occt_install_vc145    
+   
+In Windows 11 File Explorer
+    Go to C:\occt_projects\project_opencascade_demo\install_vc145\win64\vc14\bind
+    Double click/DRAWEXE.exe/
+
+In DRAWEXE
+    Type/pload ALL/
+        wait until 1 is printed
+    Type/box a 10 10 10/
+    Type/vinit display/
+        A 3D View window will appear
+    Type/vdisplay a/
+        A box will appear in 3D View
+    
+In 3D View 
+    Hold left click black space/Drag to rotate object/
+    Hold middle mouse button/Drag to pan camera/
+    Scroll mouse wheel/Zoom in and out camera/
+    Ctrl + S/enable shaded display/
+    Press f key/zoom to shape/
+    
+    
+************************************************************************************************************************************************************************* 
+How to compile C wrapper dll
+
+In Windows 11 File Explorer
+    Extract project_opencascade_c_wrapper.zip contents to
+        C:\occt_projects\project_opencascade_c_wrapper
+
+Download OpenCASCADE 
+    Download
+        https://dev.opencascade.org/system/files/occt/3rdparty/freetype-2.5.5-vc14-64.zip
+        To
+        C:\occt_projects\project_opencascade_c_wrapper\occt\3rdparty\freetype-2.5.5-vc14-64.zip
+        Extract contents
+            freetype-2.5.5-vc14-64.zip
+        To
+        C:\occt_projects\project_opencascade_c_wrapper\occt\3rdparty\freetype-2.5.5-vc14-64
+    Download
+        https://dev.opencascade.org/system/files/occt/3rdparty/rapidjson-1.1.0.zip
+        To
+        C:\occt_projects\project_opencascade_c_wrapper\occt\3rdparty\rapidjson-1.1.0.zip
+        Extract contents
+            rapidjson-1.1.0.zip
+        To
+        C:\occt_projects\project_opencascade_c_wrapper\occt\3rdparty\rapidjson-1.1.0
+    Download
+        https://dev.opencascade.org/system/files/occt/3rdparty/tcltk-86-64.zip
+        To
+        C:\occt_projects\project_opencascade_c_wrapper\occt\3rdparty\tcltk-86-64.zip
+        Extract contents
+            tcltk-86-64.zip
+        To
+        C:\occt_projects\project_opencascade_c_wrapper\occt\3rdparty\tcltk-86-64
+    Download source code
+        https://github.com/Open-Cascade-SAS/OCCT/archive/refs/tags/V8_0_0_rc4.zip
+        To
+        C:\occt_projects\project_opencascade_c_wrapper\occt\V8_0_0_rc4.zip
+        Extract contents
+            V8_0_0_rc4.zip
+        To
+        C:\occt_projects\project_opencascade_c_wrapper\occt\V8_0_0_rc4
+
+
+Setup the Visual Studio solution
+    In Windows search, type
+        CMake (cmake-gui)
+        Select/Cmake (cmake-gui)/
+    In CMake (cmake-gui)
+        Click/Browse Source.../
+            Select folder
+            C:\occt_projects\project_opencascade_c_wrapper
+        Click/Browse Build.../
+            Select folder
+            C:\occt_projects\project_opencascade_c_wrapper\build_vc145
+        Click/Configure/
+            Proceed with default options
+            An error message will appear
+        Click/OCCT_SOURCE_DIR/
+            Fill
+            C:\occt_projects\project_opencascade_c_wrapper\occt\OCCT-8_0_0_rc4
+        Click/Configure/
+            An error message will appear
+            On Error window
+                Click/OK/
+        Click/3RDPARTY_DIR/
+            Fill 
+            C:\occt_projects\project_opencascade_c_wrapper\occt\3rdparty
+        Click/BUILD_USE_PCH/
+            Tick checkbox
+        Click/INSTALL_DIR/
+            Fill
+            C:\occt_projects\project_opencascade_c_wrapper\occt_install_vc145
+        Click/INSTALL_FREETYPE/
+            Tick checkbox
+        Click/INSTALL_TCL/
+            Tick checkbox
+        Click/INSTALL_TK/
+            Tick checkbox
+        Click/USE_RAPIDJSON/
+            Tick checkbox
+        Click/Configure/
+            Wait approximately 20s
+            Ignore Warnings
+        Click/Generate/
+            Wait approximately 10s
+            No errors appear
+            Solution file created at
+                C:\occt_projects\project_opencascade_c_wrapper\build_vc145
+        Click/Open Project/
+            Visual Studio 2026 will open
+            
+Build Project
+    In Visual Studio 2026
+        Click/Build/Build Solution/
+            Wait approximately 8 minutes
+            In output
+                73 succeeded
+                0 failed
+                0 up-to-date
+                1 skipped
+            dll file created
+            C:\occt_projects\project_opencascade_c_wrapper\build_vc145\box_c_wrapper\Debug\box_c_wrapper.dll
+        In Solution Explorer
+            Right Click/INSTALL_OCCT/
+            Click/Build/
+                Wait apprximately 4 minutes
+            On first install, a window will appear
+            Click/Reload all/
+        In output
+            2 succeeded
+            0 failed
+            0 up-to-date
+            0 skipped
+        Installed files at
+             C:\occt_projects\project_opencascade_c_wrapper\occt_install_vc145
+             
+             
+************************************************************************************************************************************************************************* 
+How to setup Pharo Project
+
+In Windows 11
+    In search, type
+        Pharo Launcher
+        Select/Pharo Launcher/
+        
+In Pharo Launcher
+    Click/New button/
+    Select/Pharo 14.0 - 64bit (development version, latest)/
+    Click/Image name:/, type
+        pharo_opencascade_integration
+    Click/Create image/
+        New image created at
+        C:\Users\<your_user>\Documents\Pharo\images\pharo_opencascade_integration
+        Example: C:\Users\morgan\Documents\Pharo\images\pharo_opencascade_integration
+        Pharo automatically starts
+    Right click/pharo_opencascade_integration
+    In context menu
+    Click/Show in folder/
+    Windows 11 Window Explorer will open
+        Will show contents C:\Users\<your_user>\Documents\Pharo\images\pharo_opencascade_integration
+        Example: C:\Users\morgan\Documents\Pharo\images\pharo_opencascade_integration
+
+In Windows 11 File Explorer
+    Go to
+    C:\occt_projects\project_opencascade_c_wrapper\occt_install_vc145\win64\vc14\bind
+    Click/Sort/
+    In drop down menu
+        Click/Type/
+    Click/Sort/
+    In drop down menu
+        Click/Ascending/
+    Click/View/
+    In drop down menu
+        Click/Details/
+    In Content Panel
+        Left click/freetype.dll/
+        Scroll down to/TKXSDRAWVRML.dll/
+        Holding Shift/Left click/TKXSDRAWVRML.dll/
+        Release Shift/
+        Right click/Highlighted rows/
+        In context menu
+            Click/Copy/
+
+In Windows 11 File Explorer
+    Go to
+    C:\Users\morgan\Documents\Pharo\images\pharo_opencascade_integration
+    Right click/An empty space of Content Panel/
+    In context menu
+        Click/Paste/
+        
+In Windows 11 File Explorer
+    Go to
+    C:\occt_projects\project_taco\build_vc145\box_c_wrapper\Debug
+    Right click/box_c_wrapper.dll/
+    In context menu
+        Click/Copy/
+    
+In Windows 11 File Explorer
+    Go to
+    C:\Users\morgan\Documents\Pharo\images\pharo_opencascade_integration
+    Right click/An empty space of Content Panel/
+    In context menu
+        Click/Paste/
+
+In Pharo Launcher
+    Click/pharo_opencascade_integration/
+    Click/Launch/
+    Pharo will open
+    
+In Pharo
+    
+    
+    
+    
