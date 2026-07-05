@@ -53,7 +53,7 @@ MyCADWorkbenchPresenter class >> layoutWithoutTaskPanel [
 MyCADWorkbenchPresenter class >> leftPanelLayout [
 
 	^ SpPanedLayout newVertical
-		  positionOfSlider: 2 / 3;
+		  positionOfSlider: 3 / 5;
 		  add: #geometryTree;
 		  add: #propertyPanel;
 		  yourself

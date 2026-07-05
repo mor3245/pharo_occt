@@ -38,42 +38,64 @@ MyCADPropertyPanelPresenter class >> emptyLayout [
 { #category : 'layout' }
 MyCADPropertyPanelPresenter class >> propertyLayoutWithDimensionRows: dimensionRowCount [
 
-	| layout rowCount statisticsRow |
+	| layout rowCount |
 	rowCount := dimensionRowCount min: 3.
-	layout := SpGridLayout new.
+	layout := SpBoxLayout newVertical.
 	layout
-		add: 'Name' atPoint: 1 @ 1;
-		add: #nameValue atPoint: 2 @ 1;
-		add: 'Type' atPoint: 1 @ 2;
-		add: #typeValue atPoint: 2 @ 2;
-		add: 'Placement U (mm)' atPoint: 1 @ 3;
-		add: #uValue atPoint: 2 @ 3;
-		add: 'Placement V (mm)' atPoint: 1 @ 4;
-		add: #vValue atPoint: 2 @ 4;
-		add: 'Placement W (mm)' atPoint: 1 @ 5;
-		add: #wValue atPoint: 2 @ 5.
+		add: (self propertyRowLabel: 'Name' value: #nameValue)
+		withConstraints: [ :constraints | constraints height: self propertyRowHeight ];
+		add: (self propertyRowLabel: 'Type' value: #typeValue)
+		withConstraints: [ :constraints | constraints height: self propertyRowHeight ];
+		add: (self propertyRowLabel: 'Placement U (mm)' value: #uValue)
+		withConstraints: [ :constraints | constraints height: self propertyRowHeight ];
+		add: (self propertyRowLabel: 'Placement V (mm)' value: #vValue)
+		withConstraints: [ :constraints | constraints height: self propertyRowHeight ];
+		add: (self propertyRowLabel: 'Placement W (mm)' value: #wValue)
+		withConstraints: [ :constraints | constraints height: self propertyRowHeight ].
 
 	rowCount >= 1 ifTrue: [
 			layout
-				add: #dimensionOneLabel atPoint: 1 @ 6;
-				add: #dimensionOneInput atPoint: 2 @ 6 ].
+				add: (self propertyRowLabel: #dimensionOneLabel value: #dimensionOneInput)
+				withConstraints: [ :constraints | constraints height: self propertyRowHeight ] ].
 	rowCount >= 2 ifTrue: [
 			layout
-				add: #dimensionTwoLabel atPoint: 1 @ 7;
-				add: #dimensionTwoInput atPoint: 2 @ 7 ].
+				add: (self propertyRowLabel: #dimensionTwoLabel value: #dimensionTwoInput)
+				withConstraints: [ :constraints | constraints height: self propertyRowHeight ] ].
 	rowCount >= 3 ifTrue: [
 			layout
-				add: #dimensionThreeLabel atPoint: 1 @ 8;
-				add: #dimensionThreeInput atPoint: 2 @ 8 ].
+				add: (self propertyRowLabel: #dimensionThreeLabel value: #dimensionThreeInput)
+				withConstraints: [ :constraints | constraints height: self propertyRowHeight ] ].
 
-	statisticsRow := 6 + rowCount.
 	layout
-		add: 'Triangles' atPoint: 1 @ statisticsRow;
-		add: #trianglesValue atPoint: 2 @ statisticsRow;
-		add: 'Vertices' atPoint: 1 @ (statisticsRow + 1);
-		add: #verticesValue atPoint: 2 @ (statisticsRow + 1).
+		add: (self propertyRowLabel: 'Triangles' value: #trianglesValue)
+		withConstraints: [ :constraints | constraints height: self propertyRowHeight ];
+		add: (self propertyRowLabel: 'Vertices' value: #verticesValue)
+		withConstraints: [ :constraints | constraints height: self propertyRowHeight ].
+
 
 	^ layout
+]
+
+{ #category : 'layout' }
+MyCADPropertyPanelPresenter class >> propertyRowHeight [
+
+	^ 21
+
+]
+
+{ #category : 'layout' }
+MyCADPropertyPanelPresenter class >> propertyRowLabel: labelPresenter value: valuePresenter [
+
+	^ SpBoxLayout newHorizontal
+		  add: labelPresenter;
+		  add: valuePresenter withConstraints: [ :constraints | constraints width: self propertyValueWidth ];
+		  yourself
+]
+
+{ #category : 'layout' }
+MyCADPropertyPanelPresenter class >> propertyValueWidth [
+
+	^ 76
 ]
 
 { #category : 'updating' }
