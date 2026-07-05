@@ -24,7 +24,7 @@ In Pharo Launcher
 
 In Windows 11 File Explorer
     Go to
-    C:\occt_projects\project_opencascade_c_wrapper\occt_install_vc145\win64\vc14\bind
+    C:\occt_projects\project_my_c_wrapper\occt_install_vc145\win64\vc14\bind
     Click/Sort/
     In drop down menu
         Click/Type/
@@ -52,8 +52,8 @@ In Windows 11 File Explorer
         
 In Windows 11 File Explorer
     Go to
-    C:\occt_projects\project_taco\build_vc145\box_c_wrapper\Debug
-    Right click/box_c_wrapper.dll/
+    C:\occt_projects\project_my_c_wrapper\build_vc145\my_occt_c_wrapper\Debug
+    Right click/my_occt_c_wrapper.dll/
     In context menu
         Click/Copy/
     

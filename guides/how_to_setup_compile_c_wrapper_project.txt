@@ -1,42 +1,42 @@
 How to setup & compile C wrapper dll
 
 In Windows 11 File Explorer
-    Extract project_opencascade_c_wrapper.zip contents to
-        C:\occt_projects\project_opencascade_c_wrapper
+    Extract project_my_c_wrapper.zip contents to
+        C:\occt_projects\project_my_c_wrapper
 
 Download OpenCASCADE 
     Download
         https://dev.opencascade.org/system/files/occt/3rdparty/freetype-2.5.5-vc14-64.zip
         To
-        C:\occt_projects\project_opencascade_c_wrapper\occt\3rdparty\freetype-2.5.5-vc14-64.zip
+        C:\occt_projects\project_my_c_wrapper\occt\3rdparty\freetype-2.5.5-vc14-64.zip
         Extract contents
             freetype-2.5.5-vc14-64.zip
         To
-        C:\occt_projects\project_opencascade_c_wrapper\occt\3rdparty\freetype-2.5.5-vc14-64
+        C:\occt_projects\project_my_c_wrapper\occt\3rdparty\freetype-2.5.5-vc14-64
     Download
         https://dev.opencascade.org/system/files/occt/3rdparty/rapidjson-1.1.0.zip
         To
-        C:\occt_projects\project_opencascade_c_wrapper\occt\3rdparty\rapidjson-1.1.0.zip
+        C:\occt_projects\project_my_c_wrapper\occt\3rdparty\rapidjson-1.1.0.zip
         Extract contents
             rapidjson-1.1.0.zip
         To
-        C:\occt_projects\project_opencascade_c_wrapper\occt\3rdparty\rapidjson-1.1.0
+        C:\occt_projects\project_my_c_wrapper\occt\3rdparty\rapidjson-1.1.0
     Download
         https://dev.opencascade.org/system/files/occt/3rdparty/tcltk-86-64.zip
         To
-        C:\occt_projects\project_opencascade_c_wrapper\occt\3rdparty\tcltk-86-64.zip
+        C:\occt_projects\project_my_c_wrapper\occt\3rdparty\tcltk-86-64.zip
         Extract contents
             tcltk-86-64.zip
         To
-        C:\occt_projects\project_opencascade_c_wrapper\occt\3rdparty\tcltk-86-64
+        C:\occt_projects\project_my_c_wrapper\occt\3rdparty\tcltk-86-64
     Download source code
         https://github.com/Open-Cascade-SAS/OCCT/archive/refs/tags/V8_0_0_rc4.zip
         To
-        C:\occt_projects\project_opencascade_c_wrapper\occt\V8_0_0_rc4.zip
+        C:\occt_projects\project_my_c_wrapper\occt\V8_0_0_rc4.zip
         Extract contents
             V8_0_0_rc4.zip
         To
-        C:\occt_projects\project_opencascade_c_wrapper\occt\V8_0_0_rc4
+        C:\occt_projects\project_my_c_wrapper\occt\V8_0_0_rc4
 
 
 Setup the Visual Studio solution
@@ -46,28 +46,28 @@ Setup the Visual Studio solution
     In CMake (cmake-gui)
         Click/Browse Source.../
             Select folder
-            C:\occt_projects\project_opencascade_c_wrapper
+            C:\occt_projects\project_my_c_wrapper
         Click/Browse Build.../
             Select folder
-            C:\occt_projects\project_opencascade_c_wrapper\build_vc145
+            C:\occt_projects\project_my_c_wrapper\build_vc145
         Click/Configure/
             Proceed with default options
             An error message will appear
         Click/OCCT_SOURCE_DIR/
             Fill
-            C:\occt_projects\project_opencascade_c_wrapper\occt\OCCT-8_0_0_rc4
+            C:\occt_projects\project_my_c_wrapper\occt\OCCT-8_0_0_rc4
         Click/Configure/
             An error message will appear
             On Error window
                 Click/OK/
         Click/3RDPARTY_DIR/
             Fill 
-            C:\occt_projects\project_opencascade_c_wrapper\occt\3rdparty
+            C:\occt_projects\project_my_c_wrapper\occt\3rdparty
         Click/BUILD_USE_PCH/
             Tick checkbox
         Click/INSTALL_DIR/
             Fill
-            C:\occt_projects\project_opencascade_c_wrapper\occt_install_vc145
+            C:\occt_projects\project_my_c_wrapper\occt_install_vc145
         Click/INSTALL_FREETYPE/
             Tick checkbox
         Click/INSTALL_TCL/
@@ -83,7 +83,7 @@ Setup the Visual Studio solution
             Wait approximately 10s
             No errors appear
             Solution file created at
-                C:\occt_projects\project_opencascade_c_wrapper\build_vc145
+                C:\occt_projects\project_my_c_wrapper\build_vc145
         Click/Open Project/
             Visual Studio 2026 will open
             
@@ -97,7 +97,7 @@ Build Project
                 0 up-to-date
                 1 skipped
             dll file created
-            C:\occt_projects\project_opencascade_c_wrapper\build_vc145\box_c_wrapper\Debug\box_c_wrapper.dll
+            C:\occt_projects\project_my_c_wrapper\build_vc145\my_occt_c_wrapper\Debug\my_occt_c_wrapper.dll
         In Solution Explorer
             Right Click/INSTALL_OCCT/
             Click/Build/
@@ -110,4 +110,4 @@ Build Project
             0 up-to-date
             0 skipped
         Installed files at
-             C:\occt_projects\project_opencascade_c_wrapper\occt_install_vc145
+             C:\occt_projects\project_my_c_wrapper\occt_install_vc145

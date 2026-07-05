@@ -1,5 +1,5 @@
 Complete instructions from
-    C:\occt_projects\project_opencascade_c_wrapper\instructions.txt
+    C:\occt_projects\project_my_c_wrapper\instructions.txt
     
 In Pharo Launcher
     Right click/<your_image_name>/
@@ -11,7 +11,7 @@ In Pharo Launcher
             Example: C:\Users\morgan\Documents\Pharo\images\Pharo 14.0 - 64bit (development version, latest)
     
 In Windows 11 File Explorer
-    Go to C:\occt_projects\project_opencascade_c_wrapper\occt_install_vc145\win64\vc14\bind
+    Go to C:\occt_projects\project_my_c_wrapper\occt_install_vc145\win64\vc14\bind
     Copy all .dll and .pdb files
     To
     C:\Users\<your_user>\Documents\Pharo\images\<image_name>
@@ -24,13 +24,13 @@ In Pharo Launcher
     Click/Launch button/
 
 In Windows 11 File Explorer
-    Go to C:\occt_projects\project_opencascade_c_wrapper\build_vc145
-    Double click/project_opencascade_c_wrapper.slnx/
+    Go to C:\occt_projects\project_my_c_wrapper\build_vc145
+    Double click/my_occt_c_wrapper.slnx/
     Visual Studio 2026 will open
 
 In Visual Studio 2026
     In Solution Explorer
-        Click/box_c_wrapper/Source Files/my_c_wrapper.cpp
+        Click/my_occt_c_wrapper/Source Files/my_c_wrapper.cpp
     In my_c_wrapper.cpp
     Put a breakpoint at Line 35
     Click/Debug/Attach to Process.../
